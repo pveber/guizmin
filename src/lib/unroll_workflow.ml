@@ -66,7 +66,7 @@ module Make(S : Settings) = struct
 	  | _ -> None
 	)
 
-    let short_read_format = snd
+    let decons = ident
 
     let sanger_fastq_of_url format url =
       let f x = Fastq.to_sanger x (unsafe_file_of_url url) in
@@ -84,3 +84,7 @@ module Make(S : Settings) = struct
 
 end
 
+let from_description ged =
+  let module X = struct let config_file = ged end in
+  let module W = Make(X) in
+  (module W : Unrolled_workflow.S)

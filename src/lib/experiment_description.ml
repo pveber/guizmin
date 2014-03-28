@@ -31,7 +31,7 @@ and model = {
   model_id : string ;
   model_genome : genome ;
 }
-and genome = [`mm9]
+and genome = [`sacCer2 | `mm9]
 with sexp
 
 let load path =

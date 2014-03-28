@@ -1,10 +1,4 @@
-module type Settings =
-  sig
-    val config_file : Experiment_description.t
-  end
-
-module Make(S : Settings) :
-sig
+module type S = sig
   open Experiment_description
 
   val conditions : condition list
@@ -20,9 +14,9 @@ sig
     type t = private sample * short_read_format
     val list : t list
 
-    val short_read_format : t -> short_read_format
+    val decons : t -> sample * short_read_format
+
     val sanger_fastq : t -> [`sanger] Fastq.workflow list
     val fastQC_report : t -> FastQC.workflow list
   end
 end
-

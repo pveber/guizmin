@@ -12,7 +12,8 @@ Library guizmin_workflow
   Pack:             true
   Modules:          Bowtie, Experiment_description,
                     Fasta, Fastq, FastQC, Jaspar,
-                    Sam, Sra, Ucsc_gb, Unroll
+                    Sam, Sra, Ucsc_gb, Unroll_workflow, Unrolled_workflow,
+                    Utils
   FindlibName:      guizmin_workflow
   BuildDepends:     bistro, bistro.syntax, core, sexplib.syntax, threads
   XMETARequires:    bistro, core, threads
@@ -20,8 +21,10 @@ Library guizmin_workflow
 Executable guizmin_workflow_app
   Path:             src/app
   MainIs:           guizmin_workflow_app.ml
-  BuildDepends:     cmdliner, core, guizmin, guizmin_workflow, threads, sexplib.syntax
+  BuildDepends:     bistro.lwt, cmdliner, core, guizmin_workflow,
+                    threads, sexplib.syntax
   CompiledObject:   native
+  Install:          false
   
 Document guizmin_workflow_doc
   Title:                API reference for Guizmin_workflow

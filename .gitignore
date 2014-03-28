@@ -5,3 +5,4 @@ _build
 *.ba[0123457890k]
 *.native
 *.byte
+_guizmin
