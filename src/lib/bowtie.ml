@@ -6,7 +6,6 @@ let package = Bistro_workflow.make <:script<
 
 URL=http://sourceforge.net/projects/bowtie-bio/files/bowtie/1.0.0/bowtie-1.0.0-src.zip/download
 ARCHIVE=`basename ${URL%\/download}`
-PACKAGE=${ARCHIVE%\.tar.gz}
 
 wget -O ${ARCHIVE} ${URL}
 unzip ${ARCHIVE}

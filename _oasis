@@ -7,10 +7,12 @@ License:     GPL-3.0
 Plugins:     META (0.4), DevFiles (0.4)
 BuildTools:  ocamlbuild
 
-Library guizmin_workflow_lib
+Library guizmin_workflow
   Path:             src/lib
   Pack:             true
-  Modules:          Bowtie, Experiment_description, Fasta, Fastq, Jaspar, Sam, Unroll
+  Modules:          Bowtie, Experiment_description,
+                    Fasta, Fastq, FastQC, Jaspar,
+                    Sam, Sra, Ucsc_gb, Unroll
   FindlibName:      guizmin_workflow
   BuildDepends:     bistro, bistro.syntax, core, sexplib.syntax, threads
   XMETARequires:    bistro, core, threads

@@ -7,9 +7,9 @@ val string_of_genome : [< genome] -> string
 type twobit
 
 (** {5 Download of genome sequences} *)
-val chromosome_sequences : [< genome] -> [`ucsc_chromosome_sequences] dir workflow
+val chromosome_sequences : [< genome] -> [`ucsc_chromosome_sequences] directory workflow
 val genome_sequence : [< genome] -> Fasta.workflow
-val genome_2bit_sequence : [< genome] -> [`ucsc_2bit] file
+(* val genome_2bit_sequence : [< genome] -> twobit file workflow *)
 
 (* type bigWig *)
 (* type wig *)

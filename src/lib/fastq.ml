@@ -11,3 +11,13 @@ let phred64 = Phred64
 
 
 type 'a workflow = 'a format file Bistro_workflow.t
+
+let sanger_of_solexa fq = assert false
+
+let sanger_of_phred64 fq = assert false
+
+let to_sanger (type s) (format : s format) (fq : s workflow) : [`sanger] workflow=
+  match format with
+  | Sanger -> fq
+  | Solexa -> sanger_of_solexa fq
+  | Phred64 -> sanger_of_phred64 fq
