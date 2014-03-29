@@ -17,14 +17,17 @@ module Make_website(W : Guizmin_workflow.Unrolled_workflow.S) = struct
 
   let bam_bai_items_of_short_reads_samples_with_reference =
     List.map W.DNA_seq_with_reference.list ~f:(fun x ->
+      x,
       Bistro_repo.item
         [ "aligned_reads" ; (x # sample).sample_id ]
         (W.DNA_seq_with_reference.aligned_reads_indexed_bam x)
     )
 
+  let lsnd = List.map ~f:snd
+
   let repo = [
     fastQC_reports_items ;
-    bam_bai_items_of_short_reads_samples_with_reference
+    bam_bai_items_of_short_reads_samples_with_reference |> lsnd
   ]
   |> List.concat
   |> Bistro_repo.make
@@ -52,19 +55,19 @@ module Make_website(W : Guizmin_workflow.Unrolled_workflow.S) = struct
   let link_of_item text = function Bistro_repo.Item (_,_,path) ->
     link_of_path text path
 
-  (* let custom_track_link_of_bam_bai_item webroot x (Bistro_repo.Item (_,_,path)) = *)
-  (*   let local_path = String.concat ~sep:"/" path in *)
-  (*   let name = x#sample.sample_id ^ " aligned_reads" in *)
-  (*   let opts = [ *)
-  (*     `track_type "bam" ; *)
-  (*     `bigDataUrl (webroot ^ "/" ^ local_path ^ "/reads.bam") ; *)
-  (*     `visibility `dense ; *)
-  (*     `name name ; *)
-  (*     `description name ; *)
-  (*   ] *)
-  (*   in *)
-  (*   let url = Guizmin.Ucsc_gb.CustomTrack.url (x#genomic_reference : W.Genome.t :> Ucsc_gb.genome) opts in *)
-  (*   Html5.M.(a ~a:[a_href url] [ pcdata sample.sample_id ]) *)
+  let custom_track_link_of_bam_bai_item webroot ucsc_genome sample_id (Bistro_repo.Item (_,_,path)) =
+    let local_path = String.concat ~sep:"/" path in
+    let name = sample_id ^ " aligned_reads" in
+    let opts = [
+      `track_type "bam" ;
+      `bigDataUrl (webroot ^ "/" ^ local_path ^ "/reads.bam") ;
+      `visibility `dense ;
+      `name name ;
+      `description name ;
+    ]
+    in
+    let url = Guizmin.Ucsc_gb.CustomTrack.url ucsc_genome opts in
+    Html5.M.(a ~a:[a_href url] [ pcdata sample_id ])
 
   (* let custom_track_link_of_bigwig_item webroot = *)
   (*   function (sample, Guizmin_repo.Item (_,_,path)) -> *)
@@ -82,61 +85,61 @@ module Make_website(W : Guizmin_workflow.Unrolled_workflow.S) = struct
   (*     let url = Ucsc.CustomTrack.url (model sample.sample_model).model_genome opts in *)
   (*     Html5.M.(a ~a:[a_href url] [ pcdata sample.sample_id ]) *)
 
-  (* let string_of_experiment = function *)
-  (*   | `whole_cell_extract -> "WCE" *)
-  (*   | `TF_ChIP tf -> Printf.sprintf "ChIP-seq (%s)" tf *)
-  (*   | `FAIRE -> "FAIRE" *)
-  (*   | `mRNA -> "mRNA" *)
+  let string_of_experiment = function
+    | `whole_cell_extract -> "WCE"
+    | `TF_ChIP tf -> Printf.sprintf "ChIP-seq (%s)" tf
+    | `FAIRE -> "FAIRE"
+    | `mRNA -> "mRNA"
 
-  (* let link_table filter link_of_item collections = *)
-  (*   let open Html5.M in *)
-  (*   let links = *)
-  (*     List.concat collections *)
-  (*     |> List.filter ~f:(fun (s,_) -> filter s) *)
-  (*     |> List.map ~f:(fun ((s,item) as e) -> (s, link_of_item e)) *)
-  (*   in *)
-  (*   let header = tr [ th [ k "Model" ] ; th [ k "Condition" ] ; th [ k "Experiment" ] ; th [ k "Sample" ] ] in *)
-  (*   let lines = List.map links ~f:(fun (s,link) -> *)
-  (*     tr [ *)
-  (* 	td [ k s.sample_model ] ; *)
-  (* 	td [ k s.sample_condition ] ; *)
-  (* 	td [ k (string_of_experiment s.sample_exp) ] ; *)
-  (* 	td [ link ] ; *)
-  (*     ] *)
-  (*   ) *)
-  (*   in *)
-  (*   table ~a:[a_class ["table"]] header lines *)
+  let link_table filter link_of_item collections =
+    let open Html5.M in
+    let links =
+      List.concat collections
+      |> List.filter ~f:(fun (s,_) -> filter s)
+      |> List.map ~f:(fun ((s,item) as e) -> (s, link_of_item e))
+    in
+    let header = tr [ th [ k "Model" ] ; th [ k "Condition" ] ; th [ k "Experiment" ] ; th [ k "Sample" ] ] in
+    let lines = List.map links ~f:(fun (s,link) ->
+      tr [
+  	td [ k s.sample_model ] ;
+  	td [ k s.sample_condition ] ;
+  	td [ k (string_of_experiment s.sample_exp) ] ;
+  	td [ link ] ;
+      ]
+    )
+    in
+    table ~a:[a_class ["table"]] header lines
 
-  (* let index_custom_tracks_section webroot = *)
-  (*   let open Html5.M in *)
-  (*   let aligned_reads_link_table = *)
-  (*     link_table *)
-  (* 	(const true) *)
-  (* 	(custom_track_link_of_bam_bai_item webroot) *)
-  (* 	[  ] *)
-  (*   in *)
-  (*   (\* let signal_link_table = *\) *)
-  (*   (\*   link_table *\) *)
-  (*   (\* 	(const true) *\) *)
-  (*   (\* 	(custom_track_link_of_bigwig_item webroot) *\) *)
-  (*   (\* 	[ chipseq_bigwig_items ; wceseq_bigwig_items ; faireseq_bigwig_items (\\* ; rnaseq_bigwig_items *\\) ] *\) *)
-  (*   (\* in *\) *)
-  (*   div [ *)
-  (*     h2 ~a:[a_id "custom-tracks"] [k "UCSC Genome Browser custom tracks"] ; *)
-  (*     p [k "The datasets can be visualized on the " ; *)
-  (* 	 a ~a:[a_href "http://genome.ucsc.edu/cgi-bin/hgTracks"] [k"UCSC Genome Browser"] ; *)
-  (* 	 k ". To achieve this, simply click on the link corresponding to the sample you want to visualize." ; *)
-  (* 	 k " In order to keep a particular combination of custom tracks on the browser, consider using " ; *)
-  (* 	 a ~a:[a_href "http://genome.ucsc.edu/goldenPath/help/hgSessionHelp.html"] [k"sessions"] ; *)
-  (* 	 k"." *)
-  (* 	] ; *)
-  (*     h3 ~a:[a_id "custom-tracks-aligned-reads"] [k "Aligned reads"] ; *)
-  (*     p [k "These tracks display the raw alignments of reads from HTS samples. "] ; *)
-  (*     aligned_reads_link_table ; *)
-  (*     (\* h3 ~a:[a_id "custom-tracks-signal"] [k "Signal"] ; *\) *)
-  (*     (\* p [k "These tracks display the raw signal from HTS samples. "] ; *\) *)
-  (*     (\* signal_link_table ; *\) *)
-  (*   ] *)
+  let index_custom_tracks_section webroot =
+    let open Html5.M in
+    let aligned_reads_link_table =
+      link_table
+  	(const true)
+  	(assert false (* custom_track_link_of_bam_bai_item webroot*))
+  	[assert false ]
+    in
+    (* let signal_link_table = *)
+    (*   link_table *)
+    (* 	(const true) *)
+    (* 	(custom_track_link_of_bigwig_item webroot) *)
+    (* 	[ chipseq_bigwig_items ; wceseq_bigwig_items ; faireseq_bigwig_items (\* ; rnaseq_bigwig_items *\) ] *)
+    (* in *)
+    div [
+      h2 ~a:[a_id "custom-tracks"] [k "UCSC Genome Browser custom tracks"] ;
+      p [k "The datasets can be visualized on the " ;
+  	 a ~a:[a_href "http://genome.ucsc.edu/cgi-bin/hgTracks"] [k"UCSC Genome Browser"] ;
+  	 k ". To achieve this, simply click on the link corresponding to the sample you want to visualize." ;
+  	 k " In order to keep a particular combination of custom tracks on the browser, consider using " ;
+  	 a ~a:[a_href "http://genome.ucsc.edu/goldenPath/help/hgSessionHelp.html"] [k"sessions"] ;
+  	 k"."
+  	] ;
+      h3 ~a:[a_id "custom-tracks-aligned-reads"] [k "Aligned reads"] ;
+      p [k "These tracks display the raw alignments of reads from HTS samples. "] ;
+      aligned_reads_link_table ;
+      (* h3 ~a:[a_id "custom-tracks-signal"] [k "Signal"] ; *)
+      (* p [k "These tracks display the raw signal from HTS samples. "] ; *)
+      (* signal_link_table ; *)
+    ]
 
 
   (* let index_quality_control_section () = *)

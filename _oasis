@@ -25,7 +25,6 @@ Executable guizmin_workflow_app
                     guizmin_workflow,
                     threads, sexplib.syntax, tyxml
   CompiledObject:   native
-  Install:          false
   
 Document guizmin_workflow_doc
   Title:                API reference for Guizmin_workflow
