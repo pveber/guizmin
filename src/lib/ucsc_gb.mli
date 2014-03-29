@@ -1,6 +1,6 @@
 open Bistro_types
 
-type genome = [ `dm3 | `hg18 | `hg19 | `mm8 | `mm9 | `sacCer2 ]
+type genome = [ `dm3 | `hg18 | `hg19 | `mm8 | `mm9 | `sacCer2 ] with sexp
 val string_of_genome : [< genome] -> string
 
 (** {5 Twobit sequence format} *)

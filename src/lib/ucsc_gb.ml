@@ -1,4 +1,4 @@
-type genome = [ `dm3 | `hg18 | `hg19 | `mm8 | `mm9 | `sacCer2 ]
+type genome = [ `dm3 | `hg18 | `hg19 | `mm8 | `mm9 | `sacCer2 ] with sexp
 
 let string_of_genome = function
 | `dm3 -> "dm3"

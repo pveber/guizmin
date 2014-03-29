@@ -32,7 +32,7 @@ and model = {
   model_genome : genome ;
 }
 and genome = [
-| `ucsc of [`sacCer2 | `mm9]
+| `ucsc of Ucsc_gb.genome
 | `fasta of string
 ]
 with sexp
