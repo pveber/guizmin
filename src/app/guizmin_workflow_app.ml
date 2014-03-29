@@ -76,12 +76,17 @@ let unroll_cmd =
     let docv = "OUTPUT" in
     Arg.(required & pos 1 (some string) None & info [] ~doc ~docv)
   in
+  let webroot =
+    let doc = "webroot" in
+    let docv = "WEBROOT" in
+    Arg.(required & pos 2 (some string) None & info [] ~doc ~docv)
+  in
   let doc = "runs a fully automated analysis of a dataset" in
   let man = [
     `S "DESCRIPTION";
     `P "Given a .ged file (read `$(mname) help ged'), guizmin-unroll will compute a suitable analysis pipeline and run it, producing its output in $(i,OUTPUT). The execution will also produce a _guizmin directory, which contains cached intermediate results." ;
   ] @ help_secs in
-  Term.(pure Unroll_mode.main $ data_description_file $ output),
+  Term.(pure Unroll_mode.main $ data_description_file $ output $ webroot),
   Term.info "unroll" ~version:"0.1" ~doc ~sdocs:copts_sect ~man
 
 let default_cmd =

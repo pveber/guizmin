@@ -19,6 +19,19 @@ cp bowtie bowtie-build bowtie-inspect $PREFIX/bin
 
 >>
 
+let package = Bistro_workflow.make <:script<
+
+PREFIX=`readlink -f #DEST`
+mkdir -p #TMP
+cd #TMP
+wget -O bowtie.zip "http://downloads.sourceforge.net/project/bowtie-bio/bowtie/1.0.1/bowtie-1.0.1-linux-x86_64.zip?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fbowtie-bio%2Ffiles%2Fbowtie%2F1.0.1%2F&ts=1396093686&use_mirror=freefr"
+unzip bowtie.zip
+cd bowtie-1.0.1
+mkdir -p $PREFIX/bin
+cp bowtie bowtie-build bowtie-inspect $PREFIX/bin
+
+
+>>
 let bowtie_build ?packed ?color fa = Bistro_workflow.make <:script<
   export PATH=#w:package#/bin:$PATH
   mkdir #DEST

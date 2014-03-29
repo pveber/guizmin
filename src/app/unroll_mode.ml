@@ -110,13 +110,19 @@ module Make_website(W : Guizmin_workflow.Unrolled_workflow.S) = struct
     in
     table ~a:[a_class ["table"]] header lines
 
+  let filter_ucsc_samples = List.filter_map ~f:(fun (s,item) ->
+    match (s # genomic_reference : W.Genome.t :> genome) with 
+    | `ucsc genome -> Some (s#sample, (genome, (s#sample).sample_id, item))
+    | _ -> None
+					   )
+
   let index_custom_tracks_section webroot =
     let open Html5.M in
     let aligned_reads_link_table =
       link_table
   	(const true)
-  	(assert false (* custom_track_link_of_bam_bai_item webroot*))
-  	[assert false ]
+  	(fun (sample, (sample_id, genome, item)) -> custom_track_link_of_bam_bai_item webroot sample_id genome item)
+  	[filter_ucsc_samples bam_bai_items_of_short_reads_samples_with_reference]
     in
     (* let signal_link_table = *)
     (*   link_table *)
@@ -156,17 +162,17 @@ module Make_website(W : Guizmin_workflow.Unrolled_workflow.S) = struct
   (*     fastQC_reports_table ; *)
   (*   ] *)
 
-  (* let index webroot = *)
-  (*   let open Html5.M in html_page "Guizmin workflow" [ *)
-  (*     h1 [b [k"Guizmin_workflow"]] ; *)
-  (*     hr () ; *)
-  (*     (\* index_quality_control_section () ; *\) *)
-  (*     index_custom_tracks_section webroot ; *)
-  (*   ] *)
+  let index webroot =
+    let open Html5.M in html_page "Guizmin workflow" [
+      h1 [b [k"Guizmin_workflow"]] ;
+      hr () ;
+      (* index_quality_control_section () ; *)
+      index_custom_tracks_section webroot ;
+    ]
 
 end
 
-let main ged_file output = Guizmin_workflow.(
+let main ged_file output webroot = Guizmin_workflow.(
   let description = Experiment_description.load ged_file in
   let module W = (val Unroll_workflow.from_description description) in
   let module WWW = Make_website(W) in
@@ -176,5 +182,10 @@ let main ged_file output = Guizmin_workflow.(
   let logger_thread = Lwt_stream.iter_s Lwt_io.printl (Lwt_react.E.to_stream (Bistro_logger.to_strings logger)) in
   let backend = Bistro_concurrent.local_worker ~np:6 ~mem:(6 * 1024) in
   let t = Bistro_concurrent.build_repo ~base:output ~wipeout:true db logger backend WWW.repo in
-  Lwt_unix.run t
+  Lwt_unix.run t ;
+  let path = Filename.concat output "index.html" in
+  Out_channel.with_file path ~f:(fun oc ->
+    Html5.P.print ~output:(output_string oc) (WWW.index webroot)
+  )
+
 )
