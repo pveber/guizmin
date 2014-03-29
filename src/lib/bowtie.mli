@@ -12,5 +12,5 @@ val bowtie_build :
 val bowtie :
   ?l:int -> ?e:int -> ?m:int ->
   ?fastq_format:'a Fastq.format ->
-  ?n:int -> ?v:int ->
+  ?n:int -> ?v:int -> ?p:int ->
   index workflow -> 'a Fastq.workflow list -> Sam.workflow

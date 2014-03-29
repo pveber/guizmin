@@ -21,8 +21,7 @@ let chromosome_sequences org =
 let genome_sequence org =
   let chr_seqs = chromosome_sequences org in
   Bistro_workflow.make <:script<
-    shopt -s nullglob
-    cat #w:chr_seqs#/{chr?.fa,chr??.fa,chr???.fa,chr????.fa} > #DEST
+    bash -c "shopt -s nullglob ; cat #w:chr_seqs#/{chr?.fa,chr??.fa,chr???.fa,chr????.fa} > #DEST"
   >>
 
 (* UGLY hack due to twoBitToFa: this tool requires that the 2bit

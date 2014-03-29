@@ -4,20 +4,27 @@ module Make_website(W : Guizmin_workflow.Unrolled_workflow.S) = struct
   open Guizmin_workflow
   open Experiment_description
 
-  let fastQC_reports =
+  let fastQC_reports_items =
     W.Short_read_sample.(
       List.bind list (fun x ->
         List.mapi (fastQC_report x) ~f:(fun i report ->
-  	  let sample,_ = decons x in
    	  Bistro_repo.item
-	    ["quality_control" ; "FastQC" ; sample.sample_id ; string_of_int i ]
+	    ["quality_control" ; "FastQC" ; x#sample.sample_id ; string_of_int i ]
 	    report
         )
       )
     )
 
+  let bam_bai_items_of_short_reads_samples_with_reference =
+    List.map W.DNA_seq_with_reference.list ~f:(fun x ->
+      Bistro_repo.item
+        [ "aligned_reads" ; (x # sample).sample_id ]
+        (W.DNA_seq_with_reference.aligned_reads_indexed_bam x)
+    )
+
   let repo = [
-    fastQC_reports
+    fastQC_reports_items ;
+    bam_bai_items_of_short_reads_samples_with_reference
   ]
   |> List.concat
   |> Bistro_repo.make

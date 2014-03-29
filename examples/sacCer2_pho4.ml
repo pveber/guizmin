@@ -21,7 +21,7 @@ let chIP_pho4_noPi = {
 let noPi = "noPi"
 let sacCer = {
   model_id = "sacCer" ;
-  model_genome = `sacCer2
+  model_genome = `ucsc `sacCer2
 }
 
 let config = [

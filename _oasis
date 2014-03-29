@@ -12,8 +12,8 @@ Library guizmin_workflow
   Pack:             true
   Modules:          Bowtie, Experiment_description,
                     Fasta, Fastq, FastQC, Jaspar,
-                    Sam, Sra, Ucsc_gb, Unroll_workflow, Unrolled_workflow,
-                    Utils
+                    Sam, Samtools, Sra, Ucsc_gb, Unroll_workflow,
+                    Unrolled_workflow, Utils
   FindlibName:      guizmin_workflow
   BuildDepends:     bistro, bistro.syntax, core, sexplib.syntax, threads
   XMETARequires:    bistro, core, threads
