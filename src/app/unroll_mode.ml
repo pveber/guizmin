@@ -31,41 +31,40 @@ module Make_website(W : Guizmin_workflow.Unrolled_workflow.S) = struct
 
 
 
-  (* let k = Html5.M.pcdata *)
+  let k = Html5.M.pcdata
 
-  (* let html_page page_title contents = Html5.M.( *)
-  (*   let head = *)
-  (*     head (title (pcdata page_title)) [ *)
-  (* 	link ~rel:[`Stylesheet] ~href:"http://netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css" () ; *)
-  (* 	link ~rel:[`Stylesheet] ~href:"http://netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap-theme.min.css" () ; *)
-  (*     ] in *)
-  (*   let scripts = [ *)
-  (*     script ~a:[a_src "http://netdna.bootstrapcdn.com/bootstrap/3.0.2/js/bootstrap.min.js"] (pcdata "") ; *)
-  (*     script ~a:[a_src "https://code.jquery.com/jquery.js"] (pcdata "") ; *)
-  (*   ] in *)
-  (*   html head (body (div ~a:[a_class ["container"]] contents :: scripts)) *)
-  (* ) *)
+  let html_page page_title contents = Html5.M.(
+    let head =
+      head (title (pcdata page_title)) [
+  	link ~rel:[`Stylesheet] ~href:"http://netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css" () ;
+  	link ~rel:[`Stylesheet] ~href:"http://netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap-theme.min.css" () ;
+      ] in
+    let scripts = [
+      script ~a:[a_src "http://netdna.bootstrapcdn.com/bootstrap/3.0.2/js/bootstrap.min.js"] (pcdata "") ;
+      script ~a:[a_src "https://code.jquery.com/jquery.js"] (pcdata "") ;
+    ] in
+    html head (body (div ~a:[a_class ["container"]] contents :: scripts))
+  )
 
-  (* let link_of_path text path = *)
-  (*   Html5.M.(a ~a:[a_href (String.concat ~sep:"/" path) ] [ pcdata text ]) *)
+  let link_of_path text path =
+    Html5.M.(a ~a:[a_href (String.concat ~sep:"/" path) ] [ pcdata text ])
 
-  (* let link_of_item text = function Bistro_repo.Item (_,_,path) -> *)
-  (*   link_of_path text path *)
+  let link_of_item text = function Bistro_repo.Item (_,_,path) ->
+    link_of_path text path
 
-  (* let custom_track_link_of_bam_bai_item webroot = *)
-  (*   function (sample, Bistro_repo.Item (_,_,path)) -> *)
-  (*     let local_path = String.concat ~sep:"/" path in *)
-  (*     let name = sample.sample_id ^ " aligned_reads" in *)
-  (*     let opts = [ *)
-  (* 	`track_type "bam" ; *)
-  (* 	`bigDataUrl (webroot ^ "/" ^ local_path ^ "/reads.bam") ; *)
-  (*   	`visibility `dense ; *)
-  (*   	`name name ; *)
-  (*   	`description name ; *)
-  (*     ] *)
-  (*     in *)
-  (*     let url = Guizmin.Ucsc_gb.CustomTrack.url (model (sample#genomic_reference).sample_model).model_genome opts in *)
-  (*     Html5.M.(a ~a:[a_href url] [ pcdata sample.sample_id ]) *)
+  (* let custom_track_link_of_bam_bai_item webroot x (Bistro_repo.Item (_,_,path)) = *)
+  (*   let local_path = String.concat ~sep:"/" path in *)
+  (*   let name = x#sample.sample_id ^ " aligned_reads" in *)
+  (*   let opts = [ *)
+  (*     `track_type "bam" ; *)
+  (*     `bigDataUrl (webroot ^ "/" ^ local_path ^ "/reads.bam") ; *)
+  (*     `visibility `dense ; *)
+  (*     `name name ; *)
+  (*     `description name ; *)
+  (*   ] *)
+  (*   in *)
+  (*   let url = Guizmin.Ucsc_gb.CustomTrack.url (x#genomic_reference : W.Genome.t :> Ucsc_gb.genome) opts in *)
+  (*   Html5.M.(a ~a:[a_href url] [ pcdata sample.sample_id ]) *)
 
   (* let custom_track_link_of_bigwig_item webroot = *)
   (*   function (sample, Guizmin_repo.Item (_,_,path)) -> *)
