@@ -21,8 +21,9 @@ Library guizmin_workflow
 Executable guizmin_workflow_app
   Path:             src/app
   MainIs:           guizmin_workflow_app.ml
-  BuildDepends:     bistro.lwt, cmdliner, core, guizmin_workflow,
-                    threads, sexplib.syntax
+  BuildDepends:     bistro.lwt, cmdliner, core, guizmin,
+                    guizmin_workflow,
+                    threads, sexplib.syntax, tyxml
   CompiledObject:   native
   Install:          false
   
