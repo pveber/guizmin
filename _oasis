@@ -1,5 +1,5 @@
 OASISFormat: 0.4
-Name:        guizmin_workflow
+Name:        guizmin
 Version:     0.1
 Synopsis:    stuff
 Authors:     Philippe Veber
@@ -7,30 +7,30 @@ License:     GPL-3.0
 Plugins:     META (0.4), DevFiles (0.4)
 BuildTools:  ocamlbuild
 
-Library guizmin_workflow
+Library guizmin
   Path:             src/lib
   Pack:             true
   Modules:          Bowtie, Experiment_description,
                     Fasta, Fastq, FastQC, Jaspar,
                     Sam, Samtools, Sra, Ucsc_gb, Unroll_workflow,
                     Unrolled_workflow, Utils
-  FindlibName:      guizmin_workflow
+  FindlibName:      guizmin
   BuildDepends:     bistro, bistro.syntax, core, sexplib.syntax, threads
   XMETARequires:    bistro, core, threads
 
-Executable guizmin_workflow_app
+Executable guizmin_app
   Path:             src/app
-  MainIs:           guizmin_workflow_app.ml
-  BuildDepends:     bistro.lwt, cmdliner, core, guizmin,
-                    guizmin_workflow,
-                    threads, sexplib.syntax, tyxml
+  MainIs:           guizmin_app.ml
+  BuildDepends:     bistro.lwt, cmdliner, core,
+                    guizmin, gzt, react,
+                    sexplib.syntax, threads, tyxml
   CompiledObject:   native
   
-Document guizmin_workflow_doc
-  Title:                API reference for Guizmin_workflow
+Document guizmin_doc
+  Title:                API reference for Guizmin
   Type:                 OCamlbuild (0.4)
   InstallDir:           $docdir/api
   BuildTools:	        ocamldoc, ocamlbuild
   XOCamlbuildPath:      .
-  XOCamlbuildLibraries: guizmin_workflow
+  XOCamlbuildLibraries: guizmin
   

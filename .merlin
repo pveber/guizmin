@@ -4,3 +4,5 @@ PKG bistro
 PKG bistro.lwt
 PKG cmdliner
 PKG core
+PKG gzt
+PKG tyxml

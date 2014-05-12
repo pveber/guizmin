@@ -1,4 +1,4 @@
-open Bistro_types
+open Bistro_workflow.Types
 
 let package = Bistro_workflow.make <:script<
 

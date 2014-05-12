@@ -1,7 +1,7 @@
 open Core.Std
 
-module Make_website(W : Guizmin_workflow.Unrolled_workflow.S) = struct
-  open Guizmin_workflow
+module Make_website(W : Guizmin.Unrolled_workflow.S) = struct
+  open Guizmin
   open Experiment_description
 
   let fastQC_reports_items =
@@ -66,7 +66,7 @@ module Make_website(W : Guizmin_workflow.Unrolled_workflow.S) = struct
       `description name ;
     ]
     in
-    let url = Guizmin.Ucsc_gb.CustomTrack.url ucsc_genome opts in
+    let url = Gzt.Ucsc_gb.CustomTrack.url ucsc_genome opts in
     Html5.M.(a ~a:[a_href url] [ pcdata sample_id ])
 
   (* let custom_track_link_of_bigwig_item webroot = *)
@@ -172,16 +172,16 @@ module Make_website(W : Guizmin_workflow.Unrolled_workflow.S) = struct
 
 end
 
-let main ged_file output webroot = Guizmin_workflow.(
+let main ged_file output webroot = Guizmin.(
   let description = Experiment_description.load ged_file in
   let module W = (val Unroll_workflow.from_description description) in
   let module WWW = Make_website(W) in
-  let db = Bistro_db.make "_guizmin" in
-  let () = Bistro_db.setup db in
-  let logger = Bistro_logger.make () in
-  let logger_thread = Lwt_stream.iter_s Lwt_io.printl (Lwt_react.E.to_stream (Bistro_logger.to_strings logger)) in
-  let backend = Bistro_concurrent.local_worker ~np:6 ~mem:(6 * 1024) in
-  let t = Bistro_concurrent.build_repo ~base:output ~wipeout:true db logger backend WWW.repo in
+  let log_event, send_to_log_event = React.E.create () in
+  let db = Bistro_db.init "_guizmin" in
+  let blog = Bistro_log.make ~db () in
+  let blog_thread = Lwt_stream.iter_s Lwt_io.printl (Lwt_react.E.to_stream log_event) in
+  let backend = Bistro_engine_lwt.local_worker ~np:6 ~mem:(6 * 1024) blog in
+  let t = Bistro_engine_lwt.build_repo ~base:output ~wipeout:true db blog backend WWW.repo in
   Lwt_unix.run t ;
   let path = Filename.concat output "index.html" in
   Out_channel.with_file path ~f:(fun oc ->

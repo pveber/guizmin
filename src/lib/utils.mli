@@ -1,4 +1,4 @@
-open Bistro_types
+open Bistro_workflow.Types
 
 val wget : string -> 'a file workflow
 val gunzip : 'a gz workflow -> 'a file workflow

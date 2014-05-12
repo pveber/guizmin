@@ -1,4 +1,4 @@
-open Bistro_types
+open Bistro_workflow.Types
 
 type genome = [ `dm3 | `hg18 | `hg19 | `mm8 | `mm9 | `sacCer2 ] with sexp
 val string_of_genome : [< genome] -> string

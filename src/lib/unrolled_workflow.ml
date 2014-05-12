@@ -1,5 +1,5 @@
 module type S = sig
-  open Bistro_types
+  open Bistro_workflow.Types
   open Experiment_description
 
   val conditions : condition list

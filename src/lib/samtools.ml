@@ -1,4 +1,4 @@
-open Bistro_types
+open Bistro_workflow.Types
 
 let package = Bistro_workflow.make <:script<
   URL=http://sourceforge.net/projects/samtools/files/samtools/0.1.19/samtools-0.1.19.tar.bz2/download

@@ -1,4 +1,4 @@
-open Bistro_types
+open Bistro_workflow.Types
 
 val package : package workflow
 

@@ -1,5 +1,5 @@
 open Core.Std
-open Bistro_types
+open Bistro_workflow.Types
 
 type format
 
