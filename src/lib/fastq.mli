@@ -9,7 +9,7 @@ val sanger : [`sanger] format
 val solexa : [`solexa] format
 val phred64 : [`phred64] format
 
-type 'a workflow = 'a format file Bistro_workflow.t
+type 'a workflow = ([`fastq of 'a format], [`text]) file Bistro_workflow.t
 
 val sanger_of_solexa : [`solexa] workflow -> [`sanger] workflow
 val sanger_of_solexa : [`phred64] workflow -> [`sanger] workflow

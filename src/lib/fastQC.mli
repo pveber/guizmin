@@ -6,4 +6,4 @@ type report
 type workflow = report directory Bistro_workflow.t
 
 val run : 'a Fastq.workflow -> workflow
-val html_report : workflow -> [`html] file Bistro_workflow.t
+val html_report : workflow -> html Bistro_workflow.t

@@ -1,0 +1,1 @@
+* fix uses of python2.7 paths for PYTHONPATH in scripts

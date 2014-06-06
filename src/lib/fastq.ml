@@ -10,7 +10,7 @@ let solexa = Solexa
 let phred64 = Phred64
 
 
-type 'a workflow = 'a format file Bistro_workflow.t
+type 'a workflow = ([`fastq of 'a format], [`text]) file Bistro_workflow.t
 
 let sanger_of_solexa fq = assert false
 
