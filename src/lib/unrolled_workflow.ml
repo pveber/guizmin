@@ -37,9 +37,17 @@ module type S = sig
     val aligned_reads_bam : 'a #t -> Bam.workflow
   end
 
+  module TF_chIP_seq : sig
+    class type t = object
+      inherit [[`TF_ChIP of string]] DNA_seq_with_reference.t
+      method tf : string
+    end
+
+    val list : t list
+  end
+
   module FAIRE_seq : sig
     type t = [`FAIRE] DNA_seq_with_reference.t
-
   end
 
 end

@@ -122,6 +122,26 @@ module Make(S : Settings) = struct
     let aligned_reads_bam x = Samtools.bam_of_indexed_bam (aligned_reads_indexed_bam x)
   end
 
+  module TF_chIP_seq = struct
+    class type t = object
+      inherit [[`TF_ChIP of string]] DNA_seq_with_reference.t
+      method tf : string
+    end
+
+    let list = List.filter_map DNA_seq_with_reference.list ~f:(fun x ->
+      match x # experiment with
+      | `TF_ChIP tf ->
+	     Some (object
+		      method sample = x#sample
+		      method format = x#format
+		      method experiment = `TF_ChIP tf
+		      method genomic_reference = (model (x # sample).sample_model).model_genome
+                      method tf = tf
+		    end)
+      | _ -> None
+    )
+  end
+
   module FAIRE_seq = struct
     type t = [`FAIRE] DNA_seq_with_reference.t
 
