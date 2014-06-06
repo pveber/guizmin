@@ -1,8 +1,6 @@
 (** {:{http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE29506}GEO Series GSE29506} *)
 
-#require "guizmin_workflow"
-
-open Guizmin_workflow
+open Guizmin
 
 open Experiment_description
 
@@ -30,6 +28,30 @@ let config = [
   Sample chIP_pho4_noPi ;
 ]
 
+
+open Cmdliner
+
+let version = "0.1"
+
+let save_config_cmd =
+  let output =
+    let doc = "Output path for saving the configuration file" in
+    let docv = "OUTPUT" in
+    Arg.(required & pos 0 (some string) None & info [] ~doc ~docv)
+  in
+  Term.(pure (Experiment_description.save config) $ output),
+  Term.info "saveconfig" ~version
+
+
+let default_cmd =
+  Term.(ret (pure (`Help (`Pager, None)))),
+  Term.info "sacCer2" ~version
+
+let cmds = [ default_cmd ; save_config_cmd ]
+
 let () =
-  Experiment_description.save config Sys.argv.(1)
+  match Term.eval_choice default_cmd cmds with
+  | `Error _ -> exit 1
+  | _ -> exit 0
+
 

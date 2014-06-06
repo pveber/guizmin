@@ -26,6 +26,12 @@ Executable guizmin_app
                     guizmin, gzt, react,
                     sexplib.syntax, threads, tyxml
   CompiledObject:   native
+
+Executable sacCer2_pho4
+  Path:             examples
+  MainIs:           sacCer2_pho4.ml
+  BuildDepends:     bistro.lwt, cmdliner, guizmin
+  CompiledObject:   byte
   
 Document guizmin_doc
   Title:                API reference for Guizmin
