@@ -8,7 +8,7 @@ open Experiment_description
 let chIP_pho4_noPi = {
   sample_id = "chIP_pho4_noPi" ;
   sample_type = `short_reads `sra ;
-  sample_exp = `FAIRE ;
+  sample_exp = `TF_ChIP "Pho4" ;
   sample_files = [
     "ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/SRR/SRR217/SRR217304/SRR217304.sra" ;
     "ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/SRR/SRR217/SRR217305/SRR217305.sra" ;
@@ -53,6 +53,10 @@ open Cmdliner
 
 let version = "0.1"
 
+let macs_vs_macs2_cmd =
+  Term.(pure macs_vs_macs2 $ pure ()),
+  Term.info "macs_vs_macs2" ~version
+
 let save_config_cmd =
   let output =
     let doc = "Output path for saving the configuration file" in
@@ -65,9 +69,9 @@ let save_config_cmd =
 
 let default_cmd =
   Term.(ret (pure (`Help (`Pager, None)))),
-  Term.info "sacCer2" ~version
+  Term.info "sacCer2_pho4" ~version
 
-let cmds = [ default_cmd ; save_config_cmd ]
+let cmds = [ save_config_cmd ; macs_vs_macs2_cmd ]
 
 let () =
   match Term.eval_choice default_cmd cmds with

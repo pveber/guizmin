@@ -10,10 +10,10 @@ PREFIX=`readlink -f #DEST`
 mkdir -p #TMP
 cd #TMP
 
-wget ${URL} || echo "failed to fetch ${PACKAGE}" && exit 1
+wget ${URL} || (echo "failed to fetch ${PACKAGE}" && exit 1)
 tar xvfz ${ARCHIVE}
 cd ${ARCHIVE%-1\.tar.gz}
-python setup.py install --prefix ${PREFIX} || echo "failed to install ${PACKAGE}" && exit 1
+python setup.py install --prefix ${PREFIX} || (echo "failed to install ${PACKAGE}" && exit 1)
 
 >>
 
