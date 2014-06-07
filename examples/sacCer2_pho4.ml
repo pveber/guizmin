@@ -1,5 +1,6 @@
 (** {:{http://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE29506}GEO Series GSE29506} *)
 
+open Core.Std
 open Guizmin
 
 open Experiment_description
@@ -28,6 +29,25 @@ let config = [
   Sample chIP_pho4_noPi ;
 ]
 
+let build_repo repo label =
+  let db = Bistro_db.init "_guizmin" in
+  let blog = Bistro_log.make ~db () in
+  let log_event, send_to_log_event = React.E.create () in
+  let _ = Lwt_stream.iter_s Lwt_io.printl (Lwt_react.E.to_stream log_event) in
+  let backend = Bistro_engine_lwt.local_worker ~np:6 ~mem:(6 * 1024) blog in
+  let t = Bistro_engine_lwt.build_repo ~base:(Filename.concat "sacCer2" label) ~wipeout:false db blog backend repo in
+  Lwt_unix.run t
+
+let macs_vs_macs2 () =
+  let module W = (val Unroll_workflow.from_description config) in
+  let repo = Bistro_repo.make (List.concat [
+      List.map W.TF_chIP_seq.list ~f:(fun s ->
+          let w = Macs.No_control.run ~gsize:(`gsize 12100000) ~pvalue:1e-5 (W.DNA_seq_with_reference.aligned_reads_bam s) in
+          Bistro_repo.item ["peaks";"macs"] w
+        )
+    ])
+  in
+  build_repo repo "macs_vs_macs2"
 
 open Cmdliner
 
