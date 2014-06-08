@@ -1,3 +1,5 @@
+open Bistro_workflow.Types
+
 type genome = [ `dm3 | `hg18 | `hg19 | `mm8 | `mm9 | `sacCer2 ] with sexp
 
 let string_of_genome = function
@@ -8,7 +10,7 @@ let string_of_genome = function
 | `mm9 -> "mm9"
 | `sacCer2 -> "sacCer2"
 
-type twobit
+type twobit = ([`twobit], [`binary]) file
 
 let chromosome_sequences org =
   let org = string_of_genome org in Bistro_workflow.make <:script<
@@ -27,20 +29,15 @@ let genome_sequence org =
 (* UGLY hack due to twoBitToFa: this tool requires that the 2bit
    sequence should be put in a file with extension 2bit. So I'm forced
    to create first a directory and then to select the unique file in it...*)
-(* let genome_2bit_sequence_dir org = *)
-(*   let org = string_of_genome org in *)
-(*   d0 *)
-(*     "guizmin.bioinfo.ucsc.genome_sequence[1]" *)
-(*     [ Param.string "org" org ] *)
-(*     (fun env path -> *)
-(*       env.bash [ *)
-(*         sp "mkdir %s" path ; *)
-(*         sp "cd %s" path ; *)
-(*         sp "wget ftp://hgdownload.cse.ucsc.edu/goldenPath/%s/bigZips/%s.2bit" org org *)
-(*       ]) *)
+let genome_2bit_sequence_dir org =
+  let org = string_of_genome org in
+  Bistro_workflow.make <:script<
+mkdir #DEST
+cd #DEST
+wget ftp://hgdownload.cse.ucsc.edu/goldenPath/#s:org#/bigZips/#s:org#.2bit
+>>
 
-(* let genome_2bit_sequence org = *)
-(*   select (genome_2bit_sequence_dir org) ((string_of_genome org) ^ ".2bit") *)
+let genome_2bit_sequence org = Bistro_workflow.select (genome_2bit_sequence_dir org) ((string_of_genome org) ^ ".2bit")
 
 (* type bigWig *)
 (* type wig *)

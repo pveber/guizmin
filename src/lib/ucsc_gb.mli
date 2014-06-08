@@ -3,13 +3,12 @@ open Bistro_workflow.Types
 type genome = [ `dm3 | `hg18 | `hg19 | `mm8 | `mm9 | `sacCer2 ] with sexp
 val string_of_genome : [< genome] -> string
 
-(** {5 Twobit sequence format} *)
-type twobit
+type twobit = ([`twobit], [`binary]) file
 
 (** {5 Download of genome sequences} *)
 val chromosome_sequences : [< genome] -> [`ucsc_chromosome_sequences] directory workflow
 val genome_sequence : [< genome] -> Fasta.workflow
-(* val genome_2bit_sequence : [< genome] -> twobit file workflow *)
+val genome_2bit_sequence : [< genome] -> twobit workflow
 
 (* type bigWig *)
 (* type wig *)
