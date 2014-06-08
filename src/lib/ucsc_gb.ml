@@ -10,6 +10,39 @@ let string_of_genome = function
 | `mm9 -> "mm9"
 | `sacCer2 -> "sacCer2"
 
+
+let package = Bistro_workflow.make <:script<
+URL=git://genome-source.cse.ucsc.edu/kent.git
+PREFIX=#DEST
+
+git clone ${URL} || (echo "Failed to git kent repository" && exit 1)
+BINDIR=${PREFIX}/bin 
+MACHTYPE=`echo ${MACHTYPE} | cut -d '-' -f 1`
+MYSQLLIBS=`mysql_config --libs` || (echo "improper mysql install" && exit 1)
+MYSQLINC=`mysql_config --include | sed -e 's/-I//g'` || (echo "improper mysql install" && exit 1)
+sed -i -e 's/-Werror//g' kent/src/inc/common.mk
+sed -i -e 's/\\$A: \\$O \\${MYLIBS}/\\$A: \\$O/g' kent/src/hg/pslCDnaFilter/makefile
+make -C kent/src userApps \
+	BINDIR="${BINDIR}" \
+	SCRIPTS="${BINDIR}" \
+	MACHTYPE="${MACHTYPE}" \
+	MYSQLLIBS="${MYSQLLIBS} -lz" \
+	MYSQLINC="${MYSQLINC}"
+make -C kent/src/hg/genePredToGtf \
+	BINDIR="${BINDIR}" \
+	SCRIPTS="${BINDIR}" \
+	MACHTYPE="${MACHTYPE}" \
+	MYSQLLIBS="${MYSQLLIBS} -lz" \
+	MYSQLINC="${MYSQLINC}"
+make -C kent/src/hg/gpToGtf \
+	BINDIR="${BINDIR}" \
+	SCRIPTS="${BINDIR}" \
+	MACHTYPE="${MACHTYPE}" \
+	MYSQLLIBS="${MYSQLLIBS} -lz" \
+	MYSQLINC="${MYSQLINC}"
+>>
+
+
 type twobit = ([`twobit], [`binary]) file
 
 let chromosome_sequences org =
@@ -56,15 +89,15 @@ let genome_2bit_sequence org = Bistro_workflow.select (genome_2bit_sequence_dir 
 (* let wg_encode_crg_mappability_75 org = wg_encode_crg_mappability 75 org *)
 (* let wg_encode_crg_mappability_100 org = wg_encode_crg_mappability 100 org *)
 
-(* let twoBitToFa ~positions ~seq2b ~fa = *)
-(*   let arg, fn = match positions with *)
-(*   | `bed fn -> "bed", fn *)
-(*   | `seqList fn -> "seqList", fn *)
-(*   in *)
-(*   sh "twoBitToFa -%s=%s %s %s" arg fn seq2b fa *)
+let twoBitToFa bed twobits = Bistro_workflow.make <:script<
+export PATH=#w:package#:$PATH
+twoBitToFa -bed=#w:bed# #w:twobits# #DEST
+>>
 
-(* let fasta_of_bed org bed = *)
-(*   let seq2b = genome_2bit_sequence org in *)
+let fasta_of_bed org bed =
+  let seq2b = genome_2bit_sequence org in
+  twoBitToFa bed (genome_2bit_sequence org)
+
 (*   f2 *)
 (*     "guizmin.bioinfo.ucsc.fasta_of_bed[1]" [] *)
 (*     seq2b bed *)

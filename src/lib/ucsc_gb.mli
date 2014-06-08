@@ -21,7 +21,8 @@ val genome_2bit_sequence : [< genome] -> twobit workflow
 (* val wg_encode_crg_mappability_75  : [`mm9 | `hg18 | `hg19] -> bigWig file *)
 (* val wg_encode_crg_mappability_100 : [`mm9 | `hg18 | `hg19] -> bigWig file *)
 
-(* val fasta_of_bed : [< genome] -> 'a Bed.named_file -> Fasta.file *)
+val twoBitToFa : 'a Bed.bed4_like workflow -> twobit workflow -> Fasta.workflow
+val fasta_of_bed : [< genome] -> 'a Bed.bed4_like workflow -> Fasta.workflow
 (* val fetch_sequences : [`ucsc_2bit] file_path -> Fungen.Location.t list -> string list *)
 
 (* module Chrom_info : sig *)
