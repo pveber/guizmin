@@ -32,12 +32,13 @@ cp bowtie bowtie-build bowtie-inspect $PREFIX/bin
 
 
 >>
+
 let bowtie_build ?packed ?color fa = Bistro_workflow.make <:script<
   export PATH=#w:package#/bin:$PATH
   mkdir #DEST
   bowtie-build \
-    #? p <- packed #[if p then "-a -p" else ""] \
-    #? c <- color #[ if c then "--color" else ""] \
+    #? p <- packed #[#s:if p then "-a -p" else ""#] \
+    #? c <- color #[#s:if c then "--color" else ""#] \
     -f #w:fa# #DEST/index
   FASTA=`readlink -f #w:fa#`
   (cd #DEST && cp $FASTA index.fa)
