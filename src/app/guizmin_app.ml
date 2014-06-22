@@ -1,10 +1,5 @@
 open Core.Std
-
-type verbosity = Normal | Quiet | Verbose
-type copts = {
-  debug : bool ;
-  verbosity : verbosity
-}
+open Common
 
 let help copts man_format cmds topic = match topic with
   | None -> `Help (`Pager, None) (* help about the program. *)
@@ -86,7 +81,7 @@ let unroll_cmd =
     `S "DESCRIPTION";
     `P "Given a .ged file (read `$(mname) help ged'), guizmin-unroll will compute a suitable analysis pipeline and run it, producing its output in $(i,OUTPUT). The execution will also produce a _guizmin directory, which contains cached intermediate results." ;
   ] @ help_secs in
-  Term.(pure Unroll_mode.main $ data_description_file $ output $ webroot),
+  Term.(pure Unroll_mode.main $ copts_t $ data_description_file $ output $ webroot),
   Term.info "unroll" ~version:"0.1" ~doc ~sdocs:copts_sect ~man
 
 let default_cmd =
