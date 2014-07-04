@@ -10,7 +10,8 @@ BuildTools:  ocamlbuild
 Library guizmin
   Path:             src/lib
   Pack:             true
-  Modules:          Bed, Bowtie, Experiment_description,
+  Modules:          Bed, Bedtools, Bowtie,
+                    Experiment_description,
                     Fasta, Fastq, FastQC, Jaspar,
                     Macs,
                     Sam, Samtools, Sra, Ucsc_gb, Unroll_workflow,
