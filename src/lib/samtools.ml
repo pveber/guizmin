@@ -1,21 +1,25 @@
 open Bistro_workflow.Types
 
 let package = Bistro_workflow.make <:script<
-  URL=http://sourceforge.net/projects/samtools/files/samtools/0.1.19/samtools-0.1.19.tar.bz2/download
-  ARCHIVE=samtools-0.1.19.tar.bz2
-  PACKAGE=samtools-0.1.19
 
+set -e
+URL=http://sourceforge.net/projects/samtools/files/samtools/0.1.19/samtools-0.1.19.tar.bz2/download
+ARCHIVE=samtools-0.1.19.tar.bz2
+
+(
   cd #TMP
   wget -O $ARCHIVE $URL
-  tar xvfj $ARCHIVE
-  cd $PACKAGE
+  tar xvfj $ARCHIVE --strip-components=1
   make
-  mkdir -p #DEST/bin
-  mkdir -p #DEST/include/bam
-  mkdir -p #DEST/lib
-  cp samtools #DEST/bin
-  cp *.h #DEST/include/bam
-  cp libbam.a #DEST/lib
+)
+
+mkdir -p #DEST/bin
+mkdir -p #DEST/include/bam
+mkdir -p #DEST/lib
+cp #TMP/samtools #DEST/bin
+cp #TMP/*.h #DEST/include/bam
+cp #TMP/libbam.a #DEST/lib
+
 >>
 
 let sam_of_bam bam =
