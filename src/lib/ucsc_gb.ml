@@ -95,7 +95,6 @@ twoBitToFa -bed=#w:bed# #w:twobits# #DEST
 >>
 
 let fasta_of_bed org bed =
-  let seq2b = genome_2bit_sequence org in
   twoBitToFa bed (genome_2bit_sequence org)
 
 (*   f2 *)
