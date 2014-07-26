@@ -84,13 +84,27 @@ let unroll_cmd =
   Term.(pure Unroll_mode.main $ copts_t $ data_description_file $ output $ webroot),
   Term.info "unroll" ~version:"0.1" ~doc ~sdocs:copts_sect ~man
 
+let quickstart_cmd =
+  let output =
+    let doc = "Output path (default STDOUT). Overwrites any existing file" in
+    let docv = "OUTPUT" in
+    Arg.(value & opt (some string) None & info [ "o" ; "output" ] ~docv ~doc)
+  in
+  let doc = "Interactive construction of a ged file." in
+  let man = [
+    `S "DESCRIPTION";
+    `P "Interactive construction of a guizmin experiment description (.ged) file."
+  ] @ help_secs in
+  Term.(pure Quickstart.main $ copts_t $ output),
+  Term.info "quickstart" ~version:"0.1" ~doc ~sdocs:copts_sect ~man
+
 let default_cmd =
   let doc = "a bioinformatics toolbox" in
   let man = help_secs in
   Term.(ret (pure (fun _ -> `Help (`Pager, None)) $ copts_t)),
   Term.info "guizmin" ~version:"0.1" ~sdocs:copts_sect ~doc ~man
 
-let cmds = [ help_cmd ; unroll_cmd ]
+let cmds = [ help_cmd ; quickstart_cmd ; unroll_cmd ]
 
 let () =
   match Term.eval_choice default_cmd cmds with

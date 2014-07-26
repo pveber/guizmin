@@ -24,7 +24,8 @@ Executable guizmin_app
   Path:             src/app
   MainIs:           guizmin_app.ml
   BuildDepends:     bistro.lwt, cmdliner, core,
-                    guizmin, gzt, lwt.syntax,
+                    guizmin, gzt, lambda-term,
+                    lwt.syntax,
                     react,
                     sexplib.syntax, threads, tyxml
   CompiledObject:   native
