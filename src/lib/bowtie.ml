@@ -33,7 +33,10 @@ cp bowtie bowtie-build bowtie-inspect $PREFIX/bin
 
 >>
 
-let bowtie_build ?packed ?color fa = Bistro_workflow.make <:script<
+(* memory bound correspond to storing a human index in memory, following bowtie manual *)
+let bowtie_build ?packed ?color fa =
+  Bistro_workflow.make ~mem:(3 * 1024) ~timeout:`day <:script<
+
   export PATH=#w:package#/bin:$PATH
   mkdir #DEST
   bowtie-build \
@@ -50,7 +53,9 @@ let qual_option (type s) x = match (x : s Fastq.format) with
   | Fastq.Sanger -> "--phred33-quals"
   | Fastq.Phred64 -> "--phred64-quals"
 
-let bowtie ?l ?e ?m ?fastq_format ?n ?v ?p index fastq_files = Bistro_workflow.make ?np:p <:script<
+let bowtie ?l ?e ?m ?fastq_format ?n ?v ?p index fastq_files =
+  Bistro_workflow.make ~mem:(3 * 1024) ~timeout:`day ?np:p <:script<
+
   export PATH=#w:package#/bin:$PATH
   bowtie -S \
     #? n <- n #[-n #i:n#] \
