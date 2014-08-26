@@ -1,95 +1,104 @@
 open Core.Std
 open Common
 
+let string_of_path l = String.concat ~sep:"/" l
+
 module type Params = sig
   val workflow_output : Bistro_workflow.u -> string Lwt.t
   val output_dir : string
   val webroot : string
 end
 
-type document = {
-  path : string list ; (* path in the website *)
-  dst : string ; (* path of the document on the file system *)
-  contents : [
-    | `Page of [`Html] Html5.M.elt
-    | `Raw of Bistro_workflow.u
-  ]
-}
+module Document : sig
+  type t
+  type href
 
+  val page : string list -> [`Html] Html5.M.elt -> t
+  val raw  : string list -> _ Bistro_workflow.t -> t
+  val use  : t -> f:(href -> t) -> t
+  val use' : _ Bistro_workflow.t -> f:(href -> t) -> t
+
+  val a : href -> 'a Html5.M.elt list -> [`A of 'a] Html5.M.elt
+
+  val path : t -> string list
+  (** path in the website *)
+
+  val generate : (Bistro_workflow.u -> string Lwt.t) -> (string list -> string) -> t -> unit Lwt.t
+end
+=
+struct
+  type t =
+    | Page of string list * [`Html] Html5.M.elt
+    | Raw  of string list * Bistro_workflow.u
+    | Dep  of href * t
+  and href =
+    | Doc_link of t
+    | Workflow_link of Bistro_workflow.u
+
+
+  let page path elt = Page (path, elt)
+  let raw path w = Raw (path, Bistro_workflow.u w)
+  let use d ~f =
+    let href = Doc_link d in
+    Dep (href, f href)
+
+  let use' w ~f =
+    let href = Workflow_link (Bistro_workflow.u w) in
+    Dep (href, f href)
+
+  let workflow_private_path u = [ "files" ; Bistro_workflow.digest u ]
+
+  let rec path = function
+    | Page (p,_) | Raw (p,_) -> p
+    | Dep (_,d) -> path d
+
+  let a href elts =
+    let path = match href with
+      | Doc_link d -> path d
+      | Workflow_link u -> workflow_private_path u
+    in
+    Html5.M.(a ~a:[a_href (string_of_path path)] elts)
+
+  let rec generate f dst = function
+    | Page (path, page) ->
+      let dst_page = dst path in
+      mkdir_p (Filename.dirname dst_page) ;
+      Out_channel.with_file dst_page ~f:(fun oc ->
+          Html5.P.print ~output:(output_string oc) page
+        ) ;
+      Lwt.return ()
+    | Raw (path, u) ->
+      let dst_p = dst path in
+      f u >>= fun fn ->
+      symlink fn dst_p ;
+      Lwt.return ()
+    | Dep (Doc_link dep, d) ->
+      Lwt.join [ generate f dst dep ; generate f dst d ]
+    | Dep (Workflow_link u, d) ->
+      Lwt.join [ f u >|= ignore ; generate f dst d ]
+
+end
 
 module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
   open P
   open Guizmin
   open Experiment_description
 
-  let workflow_output' w = workflow_output (Bistro_workflow.u w)
 
-  let string_of_path l = String.concat ~sep:"/" l
+  let keyval_table items =
+    let open Html5.M in
+    let lines = List.map items (fun (k,v) -> tr [ td [ pcdata k ] ; td [ pcdata v ] ]) in
+    table ~a:[a_class ["table"]] lines
 
-  let dst path = Filename.concat output_dir (string_of_path path)
-
-  let symlink src dst =
-    let create_link =
-      if Sys.file_exists dst = `Yes then Unix.(
-          if (lstat dst).st_kind <> S_LNK || readlink dst <> src
-          then (
-            unlink dst ;
-            true
-          )
-          else false
-        )
-      else true
-    in
-    if create_link
-    then
-      Sys.command_exn (Printf.sprintf "ln -s `readlink -f %s` %s" src dst)
-
-  let page path page =
-    let dst = dst path in
-    mkdir_p (Filename.dirname dst) ;
-    Out_channel.with_file dst ~f:(fun oc ->
-        Html5.P.print ~output:(output_string oc) page
-      ) ;
-    { path ; dst ; contents = `Page page }
-
-  let raw ?(cherry_pick = false) path w =
-    lwt fn = workflow_output' w in
-    let dst_base = dst path in
-    lwt path = match cherry_pick, Bistro_workflow.u w with
-      | false, Bistro_workflow.Select (u, path_in_u) ->
-        lwt fn_u = workflow_output u in
-        mkdir_p (Filename.dirname dst_base) ;
-        symlink fn_u dst_base ;
-        Lwt.return (path @ [path_in_u])
-      | _ ->
-        mkdir_p (Filename.dirname dst_base) ;
-        symlink fn dst_base ;
-        Lwt.return path
-    in
-    Lwt.return { path ;
-                 dst = dst path ;
-                 contents = `Raw (Bistro_workflow.u w) }
-
-  let fastQC_reports =
-    let open W.Short_read_sample in
-    List.bind list (fun x ->
-        List.mapi (fastQC_report x) ~f:(fun i report ->
-            raw
-              ["quality_control" ; "FastQC" ; x#sample.sample_id ; string_of_int i ]
-              report
-          )
-      )
-
-  let bam_bai_of_short_reads_samples_with_reference =
-    List.map W.DNA_seq_with_reference.list ~f:(fun x ->
-      x,
-      raw
-        [ "aligned_reads" ; (x # sample).sample_id ]
-        (W.DNA_seq_with_reference.aligned_reads_indexed_bam x)
-    )
+  let multicolumn_ul items =
+    let open Html5.M in
+    let items = List.map items ~f:(fun item -> li ~a:[a_style "float:left;width:10em"] [item]) in
+    div ~a:[a_style "margin-bottom:1em"] [
+      ul ~a:[a_style "width:30em"] items ;
+      br ~a:[a_style "clear:left"] () ;
+    ]
 
   let lsnd = List.map ~f:snd
-
 
   let k = Html5.M.pcdata
 
@@ -99,22 +108,65 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
       head (title (pcdata page_title)) [
         link ~rel:[`Stylesheet] ~href:"http://netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css" () ;
         link ~rel:[`Stylesheet] ~href:"http://netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap-theme.min.css" () ;
+        script ~a:[a_src "https://code.jquery.com/jquery.js"] (pcdata "") ;
+        script ~a:[a_src "http://netdna.bootstrapcdn.com/bootstrap/3.0.2/js/bootstrap.min.js"] (pcdata "") ;
       ] in
-    let scripts = [
-      script ~a:[a_src "http://netdna.bootstrapcdn.com/bootstrap/3.0.2/js/bootstrap.min.js"] (pcdata "") ;
-      script ~a:[a_src "https://code.jquery.com/jquery.js"] (pcdata "") ;
-    ]
-    in
-    html head (body (div ~a:[a_class ["container"]] contents :: scripts))
+    html head (body [ div ~a:[a_class ["container"]]  contents ])
 
   let link_of_path text path =
     Html5.M.(a ~a:[a_href (String.concat ~sep:"/" path) ] [ pcdata text ])
 
-  let link_of_doc text d =
-    link_of_path text d.path
+
+  let tabs contents =
+    let open Html5.M in
+    let tab_toggle = a_user_data "toggle" "tab" in
+    [
+      ul ~a:[a_class ["nav";"nav-tabs"]] (
+        match contents with
+        | [] -> []
+        | (id, label, _) :: t ->
+          let first_item = li ~a:[a_class ["active"]] [ a ~a:[a_href ("#" ^ id) ; tab_toggle] [k label]] in
+          let other_items = List.map t ~f:(fun (id, label, _) ->
+              li [a ~a:[a_href ("#" ^ id) ; tab_toggle] [k label]]
+            )
+          in
+          first_item :: other_items
+      ) ;
+      div ~a:[a_class ["tab-content"]] (
+        match contents with
+        | [] -> []
+        | (id, _, contents) :: t ->
+          let first_div = div ~a:[a_id id ; a_class ["tab-pane";"fade";"in";"active"]] contents in
+          let other_divs = List.map t ~f:(fun (id,_,contents) ->
+              div ~a:[a_id id ; a_class ["tab-pane";"fade"]] contents
+            )
+          in
+          first_div :: other_divs
+      )
+    ]
+
+
+
+  let fastQC_reports =
+    let open W.Short_read_sample in
+    List.bind list (fun x ->
+        List.mapi (fastQC_report x) ~f:(fun i report ->
+            Document.raw
+              ["quality_control" ; "FastQC" ; x#sample.sample_id ; string_of_int i ]
+              report
+          )
+      )
+
+  let bam_bai_of_short_reads_samples_with_reference =
+    List.map W.DNA_seq_with_reference.list ~f:(fun x ->
+      x,
+      Document.raw
+        [ "aligned_reads" ; (x # sample).sample_id ]
+        (W.DNA_seq_with_reference.aligned_reads_indexed_bam x)
+    )
 
   let custom_track_link_of_bam_bai ucsc_genome sample_id d =
-    let local_path = String.concat ~sep:"/" d.path in
+    let local_path = String.concat ~sep:"/" (Document.path d) in
     let name = sample_id ^ " aligned_reads" in
     let opts = [
       `track_type "bam" ;
@@ -156,7 +208,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
       |> List.filter ~f:(fun (s,_) -> filter s)
       |> List.map ~f:(fun ((s,_) as e) -> (s, link_of_sample_doc e))
     in
-    let header = tr [ th [ k "Model" ] ; th [ k "Condition" ] ; th [ k "Experiment" ] ; th [ k "Sample" ] ] in
+    let header = thead [ tr [ td [ k "Model" ] ; td [ k "Condition" ] ; td [ k "Experiment" ] ; td [ k "Sample" ] ] ] in
     let lines = List.map links ~f:(fun (s,link) ->
       tr [
         td [ k s.sample_model ] ;
@@ -166,7 +218,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
       ]
     )
     in
-    table ~a:[a_class ["table"]] header lines
+    table ~a:[a_class ["table"]] ~thead:header lines
 
   let filter_ucsc_samples = List.filter_map ~f:(fun (s,item) ->
     match (s # genomic_reference : W.Genome.t :> genome) with
@@ -178,7 +230,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
     let open Html5.M in
     lwt ucsc_samples =
       Lwt_list.map_p
-        (fun (sample, (sample_id, genome, doc)) -> lwt doc = doc in Lwt.return (sample, (sample_id, genome, doc)))
+        (fun (sample, (sample_id, genome, doc)) -> Lwt.return (sample, (sample_id, genome, doc)))
         (filter_ucsc_samples bam_bai_of_short_reads_samples_with_reference)
     in
     let aligned_reads_link_table =
@@ -226,20 +278,71 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
   (*     fastQC_reports_table ; *)
   (*   ] *)
 
+  let sample_page s =
+    let open Html5.M in
+    html_page (sprintf "Sample :: %s" s.sample_id) [
+      h3 [k "Infos"] ;
+      keyval_table [ ("Type", "FIXME") ]
+    ]
+
+  let browse_by_sample_div () =
+    let open Html5.M in
+    let items = List.map W.samples ~f:(fun s -> k s.sample_id) in
+    multicolumn_ul items
+
+
+  let browse_by_div () =
+    let open Html5.M in
+    let tab_toggle = a_user_data "toggle" "tab" in
+    div [
+      k "Browse by..." ;
+      ul ~a:[a_class ["nav";"nav-tabs"]] [
+        li ~a:[a_class ["active"]] [ a ~a:[a_href "#browse-by-sample" ; tab_toggle] [k"Samples"]] ;
+        li [a ~a:[a_href "#browse-by-condition" ; tab_toggle] [k"Conditions"]] ;
+      ] ;
+      div ~a:[a_class ["tab-content"]] [
+        div ~a:[a_id "browse-by-sample" ; a_class ["tab-pane";"fade";"in";"active"]] [
+          browse_by_sample_div ()
+        ] ;
+        div ~a:[a_id "browse-by-condition" ; a_class ["tab-pane";"fade"]] [
+          k"conditions"
+        ]
+
+      ]
+    ]
+
+  let browse_by_div () =
+    let open Html5.M in
+    let tabs = tabs [
+        "browse-by-sample", "Samples", [ browse_by_sample_div () ] ;
+        "browse-by-condition", "Conditions", [ k"Under construction" ]
+      ]
+    in
+    div ((k "Browse by...") :: tabs)
+
   let index =
     let open Html5.M in
     lwt index_custom_tracks_section = index_custom_tracks_section in
     html_page "Guizmin workflow" [
       h1 [b [k"Guizmin_workflow"]] ;
       hr () ;
+      browse_by_div () ;
       (* index_quality_control_section () ; *)
       index_custom_tracks_section ;
     ]
-  |> page ["index.html"]
-  |> Lwt.return
+    |> Document.page ["index.html"]
+    |> Lwt.return
+
+
+  (* WEBSITE GENERATION *)
+
+  let workflow_output' w = workflow_output (Bistro_workflow.u w)
+
+  let dst path = Filename.concat output_dir (string_of_path path)
 
   let generate () =
-    Lwt.map ignore index
+    index >>= Document.generate workflow_output dst
+
 end
 
 let make_website (module W : Guizmin.Unrolled_workflow.S) workflow_output ~output_dir ~webroot =
