@@ -5,26 +5,21 @@ type format
 
 type workflow = ([`sra], [`binary]) file Bistro_workflow.t
 
-let package = Bistro_workflow.make <:script<
+let package = Bistro_workflow.make ~interpreter:`bash <:script<
 
-MACHINE_TYPE=`uname -m`
-if \[ ${MACHINE_TYPE} == 'x86_64' \]; then
-  URL=http://ftp-private.ncbi.nlm.nih.gov/sra/sdk/2.1.16/sratoolkit.2.1.16-centos_linux64.tar.gz
-  ARCHIVE=`basename ${URL}`
-else
-  URL=http://ftp-private.ncbi.nlm.nih.gov/sra/sdk/2.1.16/sratoolkit.2.1.16-ubuntu32.tar.gz
-  ARCHIVE=`basename ${URL}`
-fi ;
-
+URL=http://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/2.3.5-2/sratoolkit.2.3.5-2-centos_linux64.tar.gz
+ARCHIVE=`basename ${URL}`
 PACKAGE=${ARCHIVE%\.tar.gz}
 mkdir -p #TMP
-cd #TMP
-wget -O ${ARCHIVE} ${URL}
-tar xvfz ${ARCHIVE}
-cd ${PACKAGE}
-rm -rf USAGE README help
+(
+  cd #TMP
+  wget -O ${ARCHIVE} ${URL}
+  tar xvfz ${ARCHIVE}
+  cd ${PACKAGE}
+  rm -rf USAGE README help
+)
 mkdir -p #DEST/bin
-cp bin/* #DEST/bin
+cp -r #TMP/${PACKAGE}/bin/* #DEST/bin
 
 >>
 
@@ -38,7 +33,7 @@ let fetch_srr id =
   else failwithf "Guizmin_workflow.Sra.fetch_srr: id %s is invalid (not 9 characters long)" id ()
 
 let fastq_dump sra = Bistro_workflow.make <:script<
-  export PATH=$w:package$/bin:$PATH
+  export PATH=#w:package#/bin:$PATH
   fastq-dump -Z #w:sra# > #DEST
 >>
 
