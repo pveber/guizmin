@@ -29,7 +29,7 @@ and short_read_format = [
 ]
 and model = {
   model_id : string ;
-  model_genome : genome ;
+  model_genome : genome option ;
 }
 and genome = [
 | `ucsc of Ucsc_gb.genome

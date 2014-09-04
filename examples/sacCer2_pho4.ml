@@ -20,7 +20,7 @@ let chIP_pho4_noPi = {
 let noPi = "noPi"
 let sacCer = {
   model_id = "sacCer" ;
-  model_genome = `ucsc `sacCer2
+  model_genome = Some (`ucsc `sacCer2)
 }
 
 let config = [
@@ -41,8 +41,8 @@ let build_repo repo label =
 let macs_vs_macs2 () =
   let module W = (val Unroll_workflow.from_description config) in
   let repo = Bistro_repo.make (List.concat [
-      List.map W.TF_chIP_seq.list ~f:(fun s ->
-          let w = Macs.No_control.run ~gsize:(`gsize 12100000) ~pvalue:1e-5 (W.DNA_seq_with_reference.aligned_reads_bam s) in
+      List.map W.tf_chip_seq_samples ~f:(fun s ->
+          let w = Macs.No_control.run ~gsize:(`gsize 12100000) ~pvalue:1e-5 s#aligned_reads_bam in
           Bistro_repo.item ["peaks";"macs"] w
         )
     ])

@@ -1,53 +1,54 @@
+open Bistro_workflow.Types
+open Experiment_description
+
+class type genome = object
+  method repr : Experiment_description.genome
+  method sequence : Fasta.workflow
+  method bowtie_index : Bowtie.index workflow
+end
+
+class type sample = object
+  method repr : Experiment_description.sample
+  method id : string
+  method _type : sample_type
+  method experiment : experiment
+  method model : model
+  method condition : string
+end
+
+class type short_read_sample = object
+  inherit sample
+  method format : short_read_format
+  method sanger_fastq : [`sanger] Fastq.workflow list
+  method fastQC_report : FastQC.workflow list
+end
+
+class type mappable_short_read_sample = object
+  inherit short_read_sample
+  method reference_genome : genome
+  method aligned_reads : Sam.workflow
+  method aligned_reads_indexed_bam : [ `indexed_bam ] directory workflow
+  method aligned_reads_bam : Bam.workflow
+end
+
+class type tf_chip_seq_sample = object
+  inherit mappable_short_read_sample
+  method tf : string
+end
+
 module type S = sig
-  open Bistro_workflow.Types
-  open Experiment_description
 
   val conditions : condition list
+  val genomes : genome list
+
   val samples : sample list
 
-  module Genome : sig
-    type t = private genome
-    val list : t list
-    val sequence : t -> Fasta.workflow
-  end
+  val short_read_samples : short_read_sample list
 
-  module Short_read_sample : sig
-    class type t = object
-		     method sample : sample
-		     method format : short_read_format
-		   end
-    val list : t list
+  val mappable_short_read_samples : mappable_short_read_sample list
 
-    val sanger_fastq : #t -> [`sanger] Fastq.workflow list
-    val fastQC_report : #t -> FastQC.workflow list
-  end
+  val tf_chip_seq_samples : tf_chip_seq_sample list
 
-  module DNA_seq_with_reference : sig
-    type exp = [ `TF_ChIP of string | `FAIRE | `whole_cell_extract]
-    class type [+'a] t = object
-			  constraint 'a = [< exp]
-			  inherit Short_read_sample.t
-			  method experiment : 'a
-			  method genomic_reference : Genome.t
-			 end
-    val list : exp t list
-
-    val aligned_reads : 'a #t -> Sam.workflow
-    val aligned_reads_indexed_bam : 'a #t -> [ `indexed_bam ] directory workflow
-    val aligned_reads_bam : 'a #t -> Bam.workflow
-  end
-
-  module TF_chIP_seq : sig
-    class type t = object
-      inherit [[`TF_ChIP of string]] DNA_seq_with_reference.t
-      method tf : string
-    end
-
-    val list : t list
-  end
-
-  module FAIRE_seq : sig
-    type t = [`FAIRE] DNA_seq_with_reference.t
-  end
+  val faire_seq_samples : mappable_short_read_sample list
 
 end

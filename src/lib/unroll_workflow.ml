@@ -1,5 +1,6 @@
 open Core.Std
 open Bistro_workflow.Types
+open Unrolled_workflow
 
 let unsafe_file_of_url url : 'a workflow =
   let source () =
@@ -28,12 +29,6 @@ module Make(S : Settings) = struct
     | _ -> None
   )
 
-  let samples = extract_unique (
-    function
-    | Sample s -> Some s
-    | _ -> None
-  )
-
   let models =
     extract_unique (
       function
@@ -43,110 +38,122 @@ module Make(S : Settings) = struct
 
   let model id = List.find_exn models ~f:(fun m -> m.model_id = id)
 
-  module Genome = struct
-    type t = genome
-
-    let list =
-      extract_unique (
-	  function
-	  | Model m -> Some m.model_genome
-	  | _ -> None
-	)
-
-    let sequence = function
+  class genome g = object (s)
+    method repr : Experiment_description.genome = g
+    method sequence = match g with
       | `ucsc x -> Ucsc_gb.genome_sequence x
       | `fasta url -> unsafe_file_of_url url
-
-    let bowtie_index x =
-      Bowtie.bowtie_build (sequence x)
-
+    method bowtie_index =
+      Bowtie.bowtie_build s#sequence
   end
 
-  module Short_read_sample = struct
-    class type t = object
-		     method sample : sample
-		     method format : short_read_format
-		   end
-
-    let list =
-      extract (
-	  function
-	  | Sample ({ sample_type = `short_reads format } as s) ->
-	     Some (object method sample = s method format = format end)
-	  | _ -> None
-	)
-
-    let sanger_fastq_of_url format url =
-      let f x = Fastq.to_sanger x (unsafe_file_of_url url) in
-      match format with
-      | `fastq `sanger -> f Fastq.Sanger
-      | `fastq `solexa -> f Fastq.Solexa
-      | `fastq `phred64 -> f Fastq.Phred64
-      | `sra -> Sra.fastq_dump (unsafe_file_of_url url)
-
-    let sanger_fastq s =
-      List.map s#sample.sample_files ~f:(sanger_fastq_of_url s#format)
-
-    let fastQC_report x = List.map (sanger_fastq x) ~f:FastQC.run
-  end
-
-  module DNA_seq_with_reference = struct
-
-    type exp = [ `TF_ChIP of string | `FAIRE | `whole_cell_extract]
-
-    class type [+'a] t = object
-			  constraint 'a = [< `TF_ChIP of string | `FAIRE | `whole_cell_extract]
-			  inherit Short_read_sample.t
-			  method experiment : 'a
-			  method genomic_reference : Genome.t
-			end
-
-    let list = List.filter_map Short_read_sample.list ~f:(fun x ->
-      match (x # sample).sample_exp with
-      | `TF_ChIP _ | `FAIRE | `whole_cell_extract as exp ->
-	     Some (object
-		      method sample = x#sample
-		      method format = x#format
-		      method experiment = exp
-		      method genomic_reference = (model (x # sample).sample_model).model_genome
-		    end)
+  let genomes = extract_unique (
+      function
+      | Model m -> Option.map ~f:(new genome) m.model_genome
       | _ -> None
     )
 
-    let aligned_reads x =
-      Bowtie.bowtie ~v:2 ~m:1 (Genome.bowtie_index x#genomic_reference) (Short_read_sample.sanger_fastq x)
+  let genome g = List.find_exn genomes ~f:(fun x -> x # repr = g)
 
-    let aligned_reads_indexed_bam x =
-      Samtools.indexed_bam_of_sam (aligned_reads x)
-
-    let aligned_reads_bam x = Samtools.bam_of_indexed_bam (aligned_reads_indexed_bam x)
+  class sample (s : Experiment_description.sample) = object
+    method repr = s
+    method id = s.sample_id
+    method _type = s.sample_type
+    method experiment = s.sample_exp
+    method model = model s.sample_model
+    method condition = s.sample_condition
   end
 
-  module TF_chIP_seq = struct
-    class type t = object
-      inherit [[`TF_ChIP of string]] DNA_seq_with_reference.t
-      method tf : string
+  let sanger_fastq_of_url format url =
+    let f x = Fastq.to_sanger x (unsafe_file_of_url url) in
+    match format with
+    | `fastq `sanger -> f Fastq.Sanger
+    | `fastq `solexa -> f Fastq.Solexa
+    | `fastq `phred64 -> f Fastq.Phred64
+    | `sra -> Sra.fastq_dump (unsafe_file_of_url url)
+
+  class short_read_sample sample format = object (s)
+    inherit sample sample
+    method format : short_read_format = format
+    method sanger_fastq =
+      List.map sample.sample_files ~f:(sanger_fastq_of_url format)
+    method fastQC_report = List.map s#sanger_fastq ~f:FastQC.run
+  end
+
+  class short_read_sample_with_reference_genome sample format g = object
+    inherit short_read_sample sample format
+    method reference_genome = genome g
+  end
+
+  class simply_mapped_dna_seq_sample sample format genome =
+    object (s)
+      inherit short_read_sample_with_reference_genome sample format genome
+
+      method aligned_reads =
+        let index = s#reference_genome#bowtie_index in
+        let fqs = s#sanger_fastq in
+        Bowtie.bowtie ~v:2 ~m:1 index fqs
+
+      method aligned_reads_indexed_bam =
+        Samtools.indexed_bam_of_sam s#aligned_reads
+
+      method aligned_reads_bam =
+        Samtools.bam_of_indexed_bam s#aligned_reads_indexed_bam
     end
 
-    let list = List.filter_map DNA_seq_with_reference.list ~f:(fun x ->
-      match x # experiment with
-      | `TF_ChIP tf ->
-	     Some (object
-		      method sample = x#sample
-		      method format = x#format
-		      method experiment = `TF_ChIP tf
-		      method genomic_reference = (model (x # sample).sample_model).model_genome
-                      method tf = tf
-		    end)
+  class tf_chip_seq_sample sample format genome tf =
+    object (s)
+      inherit simply_mapped_dna_seq_sample sample format genome
+      method tf : string = tf
+    end
+
+  let samples =
+    extract_unique (
+      function
+      | Sample s -> Some s
       | _ -> None
     )
-  end
+    |> List.map ~f:(new sample)
 
-  module FAIRE_seq = struct
-    type t = [`FAIRE] DNA_seq_with_reference.t
+  let short_read_sample s = match s # repr with
+    | { sample_type = `short_reads format } as s ->
+      Some (new short_read_sample s format)
 
-  end
-end
+  let short_read_samples = List.filter_map samples ~f:short_read_sample
+
+  let short_read_sample_with_reference_genome x =
+    Option.map x#model.model_genome ~f:(
+      new short_read_sample_with_reference_genome x#repr x#format
+    )
+
+  let short_read_samples_with_reference_genome =
+    List.filter_map short_read_samples ~f:short_read_sample_with_reference_genome
+
+  let tf_chip_seq_sample x =
+    match x # _type, x # experiment with
+    | `short_reads format, `TF_ChIP tf ->
+      Some (new tf_chip_seq_sample x#repr format x#reference_genome#repr tf)
+    | _ -> None
+
+  let tf_chip_seq_samples =
+    List.filter_map short_read_samples_with_reference_genome ~f:tf_chip_seq_sample
+
+
+  let faire_seq_sample x =
+    match x # _type, x # experiment with
+    | `short_reads format, `FAIRE ->
+      Some (new simply_mapped_dna_seq_sample x#repr format x#reference_genome#repr)
+    | _ -> None
+
+  let faire_seq_samples =
+    List.filter_map short_read_samples_with_reference_genome ~f:faire_seq_sample
+
+  let mappable_short_read_samples =
+    let inj x = (x :> Unrolled_workflow.mappable_short_read_sample list) in
+    let ( @ ) x y = inj x @ inj y in
+    tf_chip_seq_samples @ faire_seq_samples (* FIXME @ others ! *)
+
+ end
 
 let from_description ged =
   let module X = struct let config_file = ged end in

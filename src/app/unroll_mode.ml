@@ -76,12 +76,39 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
 
   end
 
-  let keyval_table items =
+  let string_of_experiment = function
+    | `whole_cell_extract -> "WCE"
+    | `TF_ChIP tf -> Printf.sprintf "ChIP-seq (%s)" tf
+    | `FAIRE -> "FAIRE"
+    | `mRNA -> "mRNA"
+
+  let string_of_sample_type = function
+    | `short_reads _ -> sprintf "Short reads"
+
+  let string_of_genome = function
+    | `ucsc g -> Ucsc_gb.string_of_genome g
+    | `fasta _ -> "custom genome"
+
+  let string_of_model m =
+    let details =
+      Option.value_map m.model_genome ~default:"" ~f:(fun g -> sprintf " (%s)" (string_of_genome g))
+    in
+    sprintf "%s%s" m.model_id details
+
+  let keyval_table ?(style = "") items =
+    let the_style = style in
     let open Html5.M in
-    let lines = List.map items (fun (k,v) -> tr [ td [ pcdata k ] ; td [ pcdata v ] ]) in
+    let lines = List.map items (fun (k,v) -> tr [ td k ; td v]) in
     match lines with
     | [] -> assert false
-    | h :: t -> table ~a:[a_class ["table"]] h t
+    | h :: t -> table ~a:[a_class ["table"] ; a_style the_style] h t
+
+  let lsnd = List.map ~f:snd
+
+  let k = Html5.M.pcdata
+
+  let keyval_table_opt ?style items =
+    keyval_table ?style (List.filter_map items ~f:ident)
 
   let multicolumn_ul items =
     let open Html5.M in
@@ -90,10 +117,6 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
       ul ~a:[a_style "width:30em"] items ;
       br ~a:[a_style "clear:left"] () ;
     ]
-
-  let lsnd = List.map ~f:snd
-
-  let k = Html5.M.pcdata
 
   let html_page page_title contents =
     let open Html5.M in
@@ -141,9 +164,8 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
 
 
   let fastQC_reports =
-    let open W.Short_read_sample in
-    List.bind list (fun x ->
-        List.mapi (fastQC_report x) ~f:(fun i report ->
+    List.bind W.short_read_samples (fun x ->
+        List.mapi x#fastQC_report ~f:(fun i report ->
             Document.raw
               (* ["quality_control" ; "FastQC" ; x#sample.sample_id ; string_of_int i ] *)
               report
@@ -151,16 +173,25 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
       )
 
   let bam_bai_of_short_reads_samples_with_reference =
-    List.map W.DNA_seq_with_reference.list ~f:(fun x ->
+    List.map W.mappable_short_read_samples ~f:(fun x ->
       x,
      (* Document.raw
         [ "aligned_reads" ; (x # sample).sample_id ]*)
-      Document.raw (W.DNA_seq_with_reference.aligned_reads_indexed_bam x)
+      Document.raw x#aligned_reads_indexed_bam
     )
 
-  let custom_track_link_of_bam_bai ucsc_genome sample_id bam_bai =
+  let ucsc_genome s = match s # reference_genome # repr with
+    | `ucsc g -> Some g
+    | _ -> None
+
+  let item_list_ucsc_filter xs =
+    List.filter_map xs ~f:(fun (s,v) ->
+        Option.map (ucsc_genome s) ~f:(fun g -> (s,(g,v)))
+      )
+
+  let custom_track_link_of_bam_bai x genome bam_bai =
     let local_path = string_of_path (Document.web_path bam_bai) in
-    let name = sample_id ^ " aligned_reads" in
+    let name = x#repr.sample_id ^ " aligned_reads" in
     let opts = [
       `track_type "bam" ;
       `bigDataUrl (webroot ^ "/" ^ local_path ^ "/reads.bam") ;
@@ -169,9 +200,24 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
       `description name ;
     ]
     in
-    let url = Gzt.Ucsc_gb.CustomTrack.url ucsc_genome opts in
-    let link = Html5.M.(a ~a:[a_href url] [ pcdata sample_id ]) in
+    let url = Gzt.Ucsc_gb.CustomTrack.url genome opts in
+    let link = Html5.M.(a ~a:[a_href url] [ pcdata x # id ]) in
     Lwt.return link
+
+  (* let custom_track_link_of_bam_bai ucsc_genome sample_id bam_bai = *)
+  (*   let local_path = string_of_path (Document.web_path bam_bai) in *)
+  (*   let name = sample_id ^ " aligned_reads" in *)
+  (*   let opts = [ *)
+  (*     `track_type "bam" ; *)
+  (*     `bigDataUrl (webroot ^ "/" ^ local_path ^ "/reads.bam") ; *)
+  (*     `visibility `dense ; *)
+  (*     `name name ; *)
+  (*     `description name ; *)
+  (*   ] *)
+  (*   in *)
+  (*   let url = Gzt.Ucsc_gb.CustomTrack.url ucsc_genome opts in *)
+  (*   let link = Html5.M.(a ~a:[a_href url] [ pcdata sample_id ]) in *)
+  (*   Lwt.return link *)
 
   (* let custom_track_link_of_bigwig_item webroot = *)
   (*   function (sample, Guizmin_repo.Item (_,_,path)) -> *)
@@ -189,25 +235,19 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
   (*     let url = Ucsc.CustomTrack.url (model sample.sample_model).model_genome opts in *)
   (*     Html5.M.(a ~a:[a_href url] [ pcdata sample.sample_id ]) *)
 
-  let string_of_experiment = function
-    | `whole_cell_extract -> "WCE"
-    | `TF_ChIP tf -> Printf.sprintf "ChIP-seq (%s)" tf
-    | `FAIRE -> "FAIRE"
-    | `mRNA -> "mRNA"
-
   let link_table filter link_of_sample_doc collections =
     let open Html5.M in
     List.concat collections
-    |> List.filter ~f:(fun (s,_) -> filter s)
-    |> Lwt_list.map_p (fun ((s,_) as e) -> link_of_sample_doc e >>= fun link -> Lwt.return (s, link))
+    |> List.filter ~f:(fun (s,_,_) -> filter s)
+    |> Lwt_list.map_p (fun ((s,_,_) as e) -> link_of_sample_doc e >>= fun link -> Lwt.return (s, link))
 
     >>= fun links ->
     let header = thead [ tr [ td [ k "Model" ] ; td [ k "Condition" ] ; td [ k "Experiment" ] ; td [ k "Sample" ] ] ] in
     let lines = List.map links ~f:(fun (s,link) ->
       tr [
-        td [ k s.sample_model ] ;
-        td [ k s.sample_condition ] ;
-        td [ k (string_of_experiment s.sample_exp) ] ;
+        td [ k s#repr.sample_model ] ;
+        td [ k s#repr.sample_condition ] ;
+        td [ k (string_of_experiment s#repr.sample_exp) ] ;
         td [ link ] ;
       ]
     )
@@ -216,22 +256,16 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
     | [] -> assert false
     | h :: t -> Lwt.return (table ~a:[a_class ["table"]] ~thead:header h t)
 
-  let filter_ucsc_samples = List.filter_map ~f:(fun (s,item) ->
-    match (s # genomic_reference : W.Genome.t :> genome) with
-    | `ucsc genome -> Some (s#sample, (genome, (s#sample).sample_id, item))
-    | _ -> None
-   )
-
   let index_custom_tracks_section =
     let open Html5.M in
     Lwt_list.map_p
-      (fun (sample, (sample_id, genome, doc)) -> doc >>= fun d -> Lwt.return (sample, (sample_id, genome, d)))
-      (filter_ucsc_samples bam_bai_of_short_reads_samples_with_reference)
+      (fun (sample, (genome,doc)) -> doc >>= fun d -> Lwt.return (sample, genome, d))
+      (item_list_ucsc_filter bam_bai_of_short_reads_samples_with_reference)
 
     >>= fun ucsc_samples ->
     link_table
       (const true)
-      (fun (sample, (sample_id, genome, item)) -> custom_track_link_of_bam_bai sample_id genome item)
+      (fun (sample, genome, doc) -> custom_track_link_of_bam_bai sample genome doc)
       [ucsc_samples]
 
     >>= fun aligned_reads_link_table ->
@@ -274,22 +308,43 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
   (*     fastQC_reports_table ; *)
   (*   ] *)
 
+  let if_in l s f =
+    List.find l ~f:(fun x -> x#repr = s) |> Option.map ~f:(fun x -> f x)
+
+
   let sample_pages =
     let open Html5.M in
     List.map W.samples ~f:(fun s ->
-        let page = html_page (sprintf "Sample :: %s" s.sample_id) [
+        let bb x = [ b [ k x ] ] in
+        let page = html_page (sprintf "Sample :: %s" s#id) [
+            h1 [b [k "Sample " ; k s#id ]] ;
+            hr () ;
             h3 [k "Infos"] ;
-            keyval_table [ ("Type", "FIXME") ]
+            br () ;
+            keyval_table ~style:"width:50%" [
+              bb"Type", [ k (string_of_sample_type s#_type) ] ;
+              bb"Experiment", [ k (string_of_experiment s#repr.sample_exp) ] ;
+              bb"Model", [ k s#repr.sample_model ] ;
+              bb"Condition", [ k s#repr.sample_condition ] ;
+            ] ;
+
+            h3 [k "UCSC Genome browser custom tracks"] ;
+            keyval_table_opt ~style:"width:50%" [
+
+                if_in W.mappable_short_read_samples s#repr (fun x ->
+                    bb"Aligned reads", [ k "mklj" ]
+                  ) ;
+            ]
           ]
         in
-        s, Document.page [ "sample" ; s.sample_id ; "index.html" ] page
+        s, Document.page [ "sample" ; s#id ; "index.html" ] page
       )
 
   let browse_by_sample_div =
     let open Html5.M in
     let link_of_sample (s,page_s) =
       page_s >>= fun page_s ->
-      Lwt.return (Document.a page_s [ k s.sample_id ])
+      Lwt.return (Document.a page_s [ k s#id ])
     in
     Lwt_list.map_p link_of_sample sample_pages >>= fun items ->
     Lwt.return (multicolumn_ul items)
