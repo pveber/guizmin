@@ -21,3 +21,9 @@ let to_sanger (type s) (format : s format) (fq : s workflow) : [`sanger] workflo
   | Sanger -> fq
   | Solexa -> sanger_of_solexa fq
   | Phred64 -> sanger_of_phred64 fq
+
+let concat fqs = Bistro_workflow.make <:script<
+
+cat #! fq <- fqs #[#w:fq#][ ] > #DEST
+
+>>

@@ -77,7 +77,7 @@ module Make(S : Settings) = struct
     method format : short_read_format = format
     method sanger_fastq =
       List.map sample.sample_files ~f:(sanger_fastq_of_url format)
-    method fastQC_report = List.map s#sanger_fastq ~f:FastQC.run
+    method fastQC_report = FastQC.run (Fastq.concat s#sanger_fastq)
   end
 
   class short_read_sample_with_reference_genome sample format g = object
@@ -113,45 +113,68 @@ module Make(S : Settings) = struct
       | Sample s -> Some s
       | _ -> None
     )
-    |> List.map ~f:(new sample)
 
-  let short_read_sample s = match s # repr with
-    | { sample_type = `short_reads format } as s ->
-      Some (new short_read_sample s format)
 
-  let short_read_samples = List.filter_map samples ~f:short_read_sample
+  let short_read_sample sobj format =
+    let s = sobj # repr in
+    match sobj # model . model_genome with
+    | Some g -> (
+        match s.sample_exp with
+        | `TF_ChIP tf ->
+          `TF_ChIP_seq (new tf_chip_seq_sample s format g tf)
+        | `FAIRE ->
+          `FAIRE_seq (new simply_mapped_dna_seq_sample s format g)
+        | `mRNA -> `mRNA_seq (new short_read_sample s format)
+        | `whole_cell_extract -> `WCE_seq (new simply_mapped_dna_seq_sample s format g)
+      )
+    | None ->
+      `Short_read_sample (new short_read_sample s format)
 
-  let short_read_sample_with_reference_genome x =
-    Option.map x#model.model_genome ~f:(
-      new short_read_sample_with_reference_genome x#repr x#format
+  let any_sample s : any_sample = match s # _type with
+    | `short_reads format -> short_read_sample s format
+
+  let any_samples = List.map samples ~f:(fun s -> any_sample (new sample s))
+
+  let tf_chip_seq_samples = List.filter_map any_samples ~f:(function
+      | `TF_ChIP_seq s -> Some s
+      | `FAIRE_seq _
+      | `mRNA_seq _
+      | `WCE_seq _
+      | `Short_read_sample _ -> None
     )
 
-  let short_read_samples_with_reference_genome =
-    List.filter_map short_read_samples ~f:short_read_sample_with_reference_genome
+  let faire_seq_samples = List.filter_map any_samples ~f:(function
+      | `FAIRE_seq s -> Some s
+      | `TF_ChIP_seq _
+      | `mRNA_seq _
+      | `WCE_seq _
+      | `Short_read_sample _ -> None
+    )
 
-  let tf_chip_seq_sample x =
-    match x # _type, x # experiment with
-    | `short_reads format, `TF_ChIP tf ->
-      Some (new tf_chip_seq_sample x#repr format x#reference_genome#repr tf)
-    | _ -> None
+  let mappable_short_read_samples = List.filter_map any_samples ~f:(function
+      | `TF_ChIP_seq s -> Some (s :> mappable_short_read_sample)
+      | `FAIRE_seq s -> Some (s :> mappable_short_read_sample)
+      | `mRNA_seq s -> None
+      | `WCE_seq s -> Some (s :> mappable_short_read_sample)
+      | `Short_read_sample s -> None
+    )
 
-  let tf_chip_seq_samples =
-    List.filter_map short_read_samples_with_reference_genome ~f:tf_chip_seq_sample
+  let short_read_samples = List.filter_map any_samples ~f:(function
+      | `TF_ChIP_seq s -> Some (s :> short_read_sample)
+      | `FAIRE_seq s -> Some (s :> short_read_sample)
+      | `mRNA_seq s -> Some (s :> short_read_sample)
+      | `WCE_seq s -> Some (s :> short_read_sample)
+      | `Short_read_sample s -> Some (s :> short_read_sample)
+    )
 
+  let sample_of_any = function
+      `TF_ChIP_seq s -> (s :> sample)
+    | `FAIRE_seq s -> (s :> sample)
+    | `WCE_seq s -> (s :> sample)
+    | `mRNA_seq s -> (s :> sample)
+    | `Short_read_sample s -> (s :> sample)
 
-  let faire_seq_sample x =
-    match x # _type, x # experiment with
-    | `short_reads format, `FAIRE ->
-      Some (new simply_mapped_dna_seq_sample x#repr format x#reference_genome#repr)
-    | _ -> None
-
-  let faire_seq_samples =
-    List.filter_map short_read_samples_with_reference_genome ~f:faire_seq_sample
-
-  let mappable_short_read_samples =
-    let inj x = (x :> Unrolled_workflow.mappable_short_read_sample list) in
-    let ( @ ) x y = inj x @ inj y in
-    tf_chip_seq_samples @ faire_seq_samples (* FIXME @ others ! *)
+  let samples = List.map any_samples ~f:sample_of_any
 
  end
 

@@ -20,7 +20,7 @@ class type short_read_sample = object
   inherit sample
   method format : short_read_format
   method sanger_fastq : [`sanger] Fastq.workflow list
-  method fastQC_report : FastQC.workflow list
+  method fastQC_report : FastQC.workflow
 end
 
 class type mappable_short_read_sample = object
@@ -36,10 +36,24 @@ class type tf_chip_seq_sample = object
   method tf : string
 end
 
+type any_sample = [
+    `TF_ChIP_seq of tf_chip_seq_sample
+  | `FAIRE_seq of mappable_short_read_sample
+  | `WCE_seq of mappable_short_read_sample
+  | `mRNA_seq of short_read_sample
+  | `Short_read_sample of short_read_sample
+]
+
 module type S = sig
 
   val conditions : condition list
   val genomes : genome list
+
+
+  val sample_of_any : any_sample -> sample
+  val any_sample : sample -> any_sample
+
+  val any_samples : any_sample list
 
   val samples : sample list
 

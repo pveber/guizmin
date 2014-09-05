@@ -15,4 +15,5 @@ val sanger_of_solexa : [`solexa] workflow -> [`sanger] workflow
 val sanger_of_solexa : [`phred64] workflow -> [`sanger] workflow
 val to_sanger : 'a format -> 'a workflow -> [`sanger] workflow
 
+val concat : 'a workflow list -> 'a workflow
 (* val nbreads : 'a workflow -> int workflow *)
