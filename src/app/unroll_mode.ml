@@ -163,21 +163,6 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
     let url = Gzt.Ucsc_gb.CustomTrack.url genome opts in
     [ Html5.M.(a ~a:[a_href url] elt) ]
 
-  (* let custom_track_link_of_bam_bai ucsc_genome sample_id bam_bai = *)
-  (*   let local_path = string_of_path (Document.web_path bam_bai) in *)
-  (*   let name = sample_id ^ " aligned_reads" in *)
-  (*   let opts = [ *)
-  (*     `track_type "bam" ; *)
-  (*     `bigDataUrl (webroot ^ "/" ^ local_path ^ "/reads.bam") ; *)
-  (*     `visibility `dense ; *)
-  (*     `name name ; *)
-  (*     `description name ; *)
-  (*   ] *)
-  (*   in *)
-  (*   let url = Gzt.Ucsc_gb.CustomTrack.url ucsc_genome opts in *)
-  (*   let link = Html5.M.(a ~a:[a_href url] [ pcdata sample_id ]) in *)
-  (*   Lwt.return link *)
-
   (* let custom_track_link_of_bigwig_item webroot = *)
   (*   function (sample, Guizmin_repo.Item (_,_,path)) -> *)
   (*     let local_path = String.concat ~sep:"/" path in *)
@@ -396,7 +381,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
         (* index_custom_tracks_section ; *)
       ]
     in
-    WWW.html_page ["index.html"] ~f:(fun () -> Lwt.return (contents ()))
+    WWW.html_page ["index.html"] ~f:(fun () -> Lwt.return (contents ())) ()
 end
 
 let make_website (module W : Guizmin.Unrolled_workflow.S) workflow_output ~output_dir ~webroot =

@@ -5,6 +5,7 @@ and statement =
 | Condition of condition
 | Sample of sample
 | Model of model
+| Project of string
 and condition = string
 and sample = {
   sample_id : string ;
