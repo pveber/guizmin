@@ -67,6 +67,10 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
       br ~a:[a_style "clear:left"] () ;
     ]
 
+  let html_base =
+    if String.is_suffix webroot ~suffix:"/" then webroot
+    else webroot ^ "/"
+
   let html_page page_title contents =
     let open Html5.M in
     let head =
@@ -75,7 +79,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
         link ~rel:[`Stylesheet] ~href:"http://netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap-theme.min.css" () ;
         script ~a:[a_src "https://code.jquery.com/jquery.js"] (pcdata "") ;
         script ~a:[a_src "http://netdna.bootstrapcdn.com/bootstrap/3.0.2/js/bootstrap.min.js"] (pcdata "") ;
-        base ~a:[a_href (webroot ^ "/")] () ;
+        base ~a:[a_href html_base] () ;
       ] in
     html head (body [ div ~a:[a_class ["container"]]  contents ])
 
