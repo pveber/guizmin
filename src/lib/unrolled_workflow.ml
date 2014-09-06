@@ -46,6 +46,8 @@ type any_sample = [
 
 module type S = sig
 
+  val project_name : string
+
   val conditions : condition list
   val genomes : genome list
 

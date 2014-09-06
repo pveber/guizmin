@@ -23,6 +23,14 @@ module Make(S : Settings) = struct
   let extract f = List.filter_map S.config_file ~f
   let extract_unique f = List.dedup (extract f)
 
+  let project_name =
+    List.find_map S.config_file ~f:(function
+        | Project name -> Some name
+        | _ -> None
+      )
+    |>
+    Option.value ~default:"X"
+
   let conditions = extract_unique (
     function
     | Condition c -> Some c

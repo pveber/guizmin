@@ -273,7 +273,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
       method overview : fragment Lwt.t = Lwt.return [
           h1 [b [k "Sample " ; k s#id ]] ;
           hr () ;
-          h3 [k "Overview"] ;
+          h2 [k "Overview"] ;
           br () ;
           keyval_table ~style:"width:50%" [
             bb"Type", [ k (string_of_sample_type s#_type) ] ;
@@ -282,19 +282,20 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
             bb"Condition", [ k s#repr.sample_condition ] ;
           ] ;
         ]
-      method paragraphs : fragment Lwt.t =
-        self # overview >>= fun o -> Lwt.return o
+      method paragraphs : fragment list Lwt.t =
+        self # overview >|= fun o -> [ o ]
 
       method make () : Website.html_elt Lwt.t =
         self#paragraphs >>= fun pgs ->
-        Lwt.return (html_page (sprintf "Sample :: %s" s#id) pgs)
+        let pgs = List.intersperse pgs [ br () ; br () ] in
+        Lwt.return (html_page (sprintf "Sample :: %s" s#id) (List.concat pgs))
     end
     let base s = new base s
 
     class short_read s = object (self)
       inherit base s as super
       method quality_check : fragment Lwt.t = Lwt.return [
-          h3 [k "Quality check"] ;
+          h2 [k "Quality check"] ;
           ul [
             li [ WWW.a (fastQC_reports $ s) [k "Full FastQC report"] ] ;
           ]
@@ -302,7 +303,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
       method paragraphs =
         super # paragraphs >>= fun pgs ->
         self # quality_check >>= fun qc ->
-        Lwt.return (pgs @ qc)
+        Lwt.return (pgs @ [ qc ])
     end
     let short_read s =
       (new short_read s :> base)
@@ -323,13 +324,20 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
       ]
 
       method custom_tracks : fragment = [
-        h3 [k "UCSC Genome browser custom tracks"] ;
-        ul (List.map self#custom_track_links ~f:li)
+        h2 ~a:[a_id "custom-tracks"] [k "UCSC Genome Browser custom tracks"] ;
+        p [k "The datasets can be visualized on the " ;
+           a ~a:[a_href "http://genome.ucsc.edu/cgi-bin/hgTracks"] [k"UCSC Genome Browser"] ;
+           k ". To achieve this, simply click on the link corresponding to the sample you want to visualize." ;
+           k " In order to keep a particular combination of custom tracks on the browser, consider using " ;
+           a ~a:[a_href "http://genome.ucsc.edu/goldenPath/help/hgSessionHelp.html"] [k"sessions"] ;
+           k"."
+          ] ;
+        ul (List.map self#custom_track_links ~f:li) ;
       ]
 
       method! paragraphs =
         super#paragraphs >>= fun pgs ->
-        Lwt.return (pgs @  self # custom_tracks )
+        Lwt.return (pgs @  [ self # custom_tracks ] )
     end
 
     let mappable_short_read s =
