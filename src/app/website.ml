@@ -127,7 +127,7 @@ module Make(X : sig end) = struct
   let alias fspath p1 p2 =
     let p2_to_p1 = List.map (fun _ -> "..") (List.tl p2) @ p1 in
     let dst = fspath p2 in
-    ignore (Sys.command (sprintf "rm -f %s && ln -s %s %s" dst (string_of_path p2_to_p1) dst))
+    ignore (Sys.command (sprintf "rm -rf %s && ln -s %s %s" dst (string_of_path p2_to_p1) dst))
 
   let generate_raw_page fspath workflow_output page u extract =
     if extract then (
