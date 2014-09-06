@@ -16,7 +16,7 @@ module type S = sig
     ?f:(unit -> html_elt Lwt.t) ->
     unit -> html_elt page
 
-  val raw : ?path:path -> 'a Bistro_workflow.t -> filename page
+  val raw : ?path:path -> ?extract:bool -> 'a Bistro_workflow.t -> filename page
 
   val register : html_elt page -> (unit -> html_elt Lwt.t) -> unit
 

@@ -37,3 +37,10 @@ rmdir #DEST/*_fastqc
 
 let html_report dir =
   Bistro_workflow.select dir "fastqc_report.html"
+
+let per_base_quality dir =
+  Bistro_workflow.select dir "Images/per_base_quality.png"
+
+let per_base_sequence_content dir =
+  Bistro_workflow.select dir "Images/per_base_sequence_content.png"
+

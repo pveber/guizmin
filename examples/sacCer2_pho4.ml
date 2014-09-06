@@ -24,6 +24,7 @@ let sacCer = {
 }
 
 let config = [
+  Project "sacCer2_pho4" ;
   Condition noPi ;
   Model sacCer ;
   Sample chIP_pho4_noPi ;

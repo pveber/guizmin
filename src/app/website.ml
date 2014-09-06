@@ -19,7 +19,7 @@ module type S = sig
     ?f:(unit -> html_elt Lwt.t) ->
     unit -> html_elt page
 
-  val raw : ?path:path -> 'a Bistro_workflow.t -> filename page
+  val raw : ?path:path -> ?extract:bool -> 'a Bistro_workflow.t -> filename page
 
   val register : html_elt page -> (unit -> html_elt Lwt.t) -> unit
 
@@ -36,7 +36,7 @@ module Make(X : sig end) = struct
   }
   and kind =
     | Html_page
-    | Raw of Bistro_workflow.u
+    | Raw of Bistro_workflow.u * [`extracted | `not_extracted]
 
 
   let pages = Hashtbl.create 253
@@ -54,8 +54,28 @@ module Make(X : sig end) = struct
 
   let path p = p.path
 
+  let files_path u =
+    [ "files" ; Bistro_workflow.digest u ]
+
+  let rec unselect = function
+    | Bistro_workflow.Input _ | Bistro_workflow.Rule _ as u -> u, []
+    | Bistro_workflow.Select (u, q) ->
+      let r, p = unselect u in
+      r, p @ [ q ]
+
   let a d elts =
-    Html5.M.(a ~a:[a_href (string_of_path (path d))] elts)
+    let href = match d with
+      | { kind = Html_page }
+      | { kind = Raw (_, `extracted) }
+      | { kind = Raw (Bistro_workflow.Rule _, `not_extracted) }
+      | { kind = Raw (Bistro_workflow.Input _, `not_extracted) } ->
+        string_of_path (path d)
+      | { kind = Raw (Bistro_workflow.Select (_,_) as u, `not_extracted) } ->
+        let u', paths = unselect u in
+        let path_in_u' = Core_kernel.Core_list.reduce_exn paths ~f:Filename.concat in (* paths cannot be empty since u is a select *)
+        Filename.concat (string_of_path (path d)) path_in_u'
+    in
+    Html5.M.(a ~a:[a_href href] elts)
 
   let add_page page path =
     if Hashtbl.mem pages path then (
@@ -76,12 +96,12 @@ module Make(X : sig end) = struct
      | None -> ()) ;
     page
 
-  let raw ?path w =
+  let raw ?path ?(extract = false) w =
     let u = Bistro_workflow.u w in
     let path = match path with
       | Some p -> p
-      | None -> [ "files" ; Bistro_workflow.digest u ] in
-    let page = { path ; kind = Raw u } in
+      | None -> files_path u in
+    let page = { path ; kind = Raw (u, if extract then `extracted else `not_extracted) } in
     add_page page path ;
     page
 
@@ -92,37 +112,53 @@ module Make(X : sig end) = struct
       failwith msg
     | None -> ()
 
-  let fs_path output_dir x =
-    Filename.concat output_dir (string_of_path (path x))
+  let fspath output_dir x =
+    Filename.concat output_dir (string_of_path x)
 
-  let generate_html_page fs_path page f =
+  let generate_html_page fspath page f =
     f () >>= fun html ->
-    let fs_path = fs_path page in
-    mkdir_p (Filename.dirname fs_path) ;
-    Core.Out_channel.with_file fs_path ~f:(fun oc ->
+    let fspath = fspath (path page) in
+    mkdir_p (Filename.dirname fspath) ;
+    Core.Out_channel.with_file fspath ~f:(fun oc ->
         Html5.P.print ~output:(output_string oc) html
       ) ;
     Lwt.return ()
 
-  let generate_raw_page fs_path workflow_output page u =
-    let fs_path = fs_path page in
-    mkdir_p (Filename.dirname fs_path) ;
-    workflow_output u >>= fun cache_path ->
-    symlink cache_path fs_path ;
-    Lwt.return ()
+  let alias fspath p1 p2 =
+    let p2_to_p1 = List.map (fun _ -> "..") (List.tl p2) @ p1 in
+    let dst = fspath p2 in
+    ignore (Sys.command (sprintf "rm -f %s && ln -s %s %s" dst (string_of_path p2_to_p1) dst))
+
+  let generate_raw_page fspath workflow_output page u extract =
+    if extract then (
+      let fspath = fspath page.path in
+      mkdir_p (Filename.dirname fspath) ;
+      workflow_output u >>= fun cache_fspath ->
+      symlink cache_fspath fspath ;
+      Lwt.return ()
+    )
+    else (
+      let u', path_in_u' = unselect u in
+      let files_fspath = fspath (files_path u') in
+      mkdir_p (Filename.dirname files_fspath) ;
+      workflow_output u' >>= fun cache_fspath ->
+      symlink cache_fspath files_fspath ;
+      alias fspath (files_path u') page.path ;
+      Lwt.return ()
+    )
 
   let generate_page fs_path workflow_output page = match page.kind with
     | Html_page ->
       let f = Hashtbl.find generators page.path in
       generate_html_page fs_path page f
-    | Raw u ->
-      generate_raw_page fs_path workflow_output page u
+    | Raw (u, extract) ->
+      generate_raw_page fs_path workflow_output page u (extract = `extracted)
 
   let generate ~workflow_output ~output_dir =
-    let fs_path = fs_path output_dir in
+    let fspath = fspath output_dir in
     check_missing_generator () ;
     Hashtbl.fold
-      (fun _ page accu -> generate_page fs_path workflow_output page :: accu)
+      (fun _ page accu -> generate_page fspath workflow_output page :: accu)
       pages []
     |> Lwt.join
 

@@ -142,7 +142,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
         x,
         WWW.raw
           ~path:[ "quality_control" ; "FastQC" ; x#id ]
-          x#fastQC_report
+          (FastQC.html_report x#fastQC_report)
       )
 
 
@@ -273,6 +273,8 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
       method overview : fragment Lwt.t = Lwt.return [
           h1 [b [k "Sample " ; k s#id ]] ;
           hr () ;
+          br () ;
+          br () ;
           h2 [k "Overview"] ;
           br () ;
           keyval_table ~style:"width:50%" [
@@ -295,7 +297,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
     class short_read s = object (self)
       inherit base s as super
       method quality_check : fragment Lwt.t = Lwt.return [
-          h2 [k "Quality check"] ;
+          h2 [k "Sequencing quality check"] ;
           ul [
             li [ WWW.a (fastQC_reports $ s) [k "Full FastQC report"] ] ;
           ]
@@ -382,8 +384,10 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
     let open Html5.M in
     let contents () =
       html_page "Guizmin workflow" [
-        h1 [b [k"Guizmin_workflow"]] ;
+        h1 [b [k"Project " ; i [k W.project_name]]] ;
         hr () ;
+        br () ;
+        br () ;
         browse_by_div ;
         (* index_quality_control_section () ; *)
         (* index_custom_tracks_section ; *)
