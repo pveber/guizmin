@@ -152,6 +152,13 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
           (FastQC.per_base_sequence_content x#fastQC_report)
       )
 
+  let fastQC_per_base_quality =
+    List.map W.short_read_samples ~f:(fun x ->
+        x,
+        WWW.raw
+          (FastQC.per_base_quality x#fastQC_report)
+      )
+
 
   let custom_track_link_of_bam_bai x genome bam_bai elt =
     let local_path = string_of_path (WWW.path bam_bai) in
@@ -302,11 +309,19 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
       inherit base s as super
       method quality_check : fragment Lwt.t = Lwt.return [
           h2 [k "Sequencing quality check"] ;
-          img ~src:(WWW.href (fastQC_per_base_sequence_content $ s)) ~alt:"" () ;
+          h3 [k "FastqQC report"] ;
           ul [
-            li [ WWW.a (fastQC_reports $ s) [k "Full FastQC report"] ] ;
-          ]
-        ]
+            li [
+              k "Snapshot:" ;
+              br () ;
+              img ~a:[a_style "width:40% ; margin: 0 10%"] ~src:(WWW.href (fastQC_per_base_quality $ s)) ~alt:"" () ;
+              img ~a:[a_style "width:40%"] ~src:(WWW.href (fastQC_per_base_sequence_content $ s)) ~alt:"" () ;
+              br () ;
+            ] ;
+            li [ WWW.a (fastQC_reports $ s) [k "Access to the full report"] ] ;
+            (* FIXME li [ link to FASTQC website ] *)
+          ] ;
+             ]
       method paragraphs =
         super # paragraphs >>= fun pgs ->
         self # quality_check >>= fun qc ->
