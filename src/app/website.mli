@@ -9,6 +9,8 @@ module type S = sig
 
   val path : _ page -> path
 
+  val href : _ page -> string
+
   val a : _ page -> 'a Html5.M.elt list -> [`A of 'a] Html5.M.elt
 
   val html_page :

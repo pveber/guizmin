@@ -145,8 +145,12 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
           (FastQC.html_report x#fastQC_report)
       )
 
-
-
+  let fastQC_per_base_sequence_content =
+    List.map W.short_read_samples ~f:(fun x ->
+        x,
+        WWW.raw
+          (FastQC.per_base_sequence_content x#fastQC_report)
+      )
 
 
   let custom_track_link_of_bam_bai x genome bam_bai elt =
@@ -298,6 +302,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
       inherit base s as super
       method quality_check : fragment Lwt.t = Lwt.return [
           h2 [k "Sequencing quality check"] ;
+          img ~src:(WWW.href (fastQC_per_base_sequence_content $ s)) ~alt:"" () ;
           ul [
             li [ WWW.a (fastQC_reports $ s) [k "Full FastQC report"] ] ;
           ]
