@@ -138,7 +138,6 @@ module Make(X : sig end) = struct
     Lwt.return ()
 
   let alias fspath p1 p2 =
-    printf "alias %s %s\n" (string_of_path p1) (string_of_path p2) ;
     let p2_to_p1 = List.map (fun _ -> "..") (List.tl p2) @ p1 in
     let dst = fspath p2 in
     mkdir_p (Filename.dirname dst) ;
@@ -167,7 +166,6 @@ module Make(X : sig end) = struct
     | Raw u ->
       generate_raw_page fs_path workflow_output page.path u
     | Embedded_raw (u, e) -> (* FIXME: there is a race condition here if the container is generated several times !!! *)
-      print_endline (string_of_path page.path) ;
       generate_raw_page fs_path workflow_output e.container_path e.container
 
   let generate ~workflow_output ~output_dir =
