@@ -1,4 +1,4 @@
-open Sexplib.Std
+open Core.Std
 
 type t = statement list
 and statement =
@@ -44,42 +44,76 @@ let load path =
 let save cfg path =
   Sexplib.Sexp.save_hum path (sexp_of_t cfg)
 
+type error = [
+  | `multiple_declaration of [`condition | `model | `sample] * string
+  | `missing_project_description
+  | `more_than_one_project_description of string list
+]
+with sexp
 
-(* FIXME: REPLUG THESE CONSISTENCY CHECKS !!! (probably in some other module) *)
+module Check(X : sig
+               val config : t
+             end) = struct
+  open X
 
-(* FIXME : test no more than one project tag *)
+  let extract f = List.filter_map config ~f
+  let extract_unique f = List.dedup (extract f)
+  let find_dups l =
+    let rec aux seen dups = function
+      | [] -> dups
+      | h :: t ->
+        if List.mem seen h then
+          aux seen (h :: dups) t
+        else
+          aux (h :: seen) dups t
+    in
+    aux [] [] l
 
-(* type error = [ *)
-(*   | `duplicate_condition_id of string *)
-(*   | `duplicate_sample_id of string *)
-(* ] *)
-(* with sexp *)
 
-(* module Check : sig *)
-(*   val errors : t -> error list *)
-(*   val error_msg : error -> string *)
-(* end *)
-(* = struct *)
-(*   let find_dups l = *)
-(*     let rec aux seen dups = function *)
-(*       | [] -> dups *)
-(*       | h :: t -> *)
-(*         if List.mem seen h then *)
-(*           aux seen (h :: dups) t *)
-(*         else *)
-(*           aux (h :: seen) dups t *)
-(*     in *)
-(*     aux [] [] l *)
+  let projects =
+    extract (function
+        | Project name -> Some name
+        | _ -> None
+      )
 
-(*   let dup_conditions = find_dups conditions *)
-(*   let dup_sample_ids = List.(map samples ~f:(fun s -> s.sample_id) |! find_dups) *)
+  let conditions = extract (
+    function
+    | Condition c -> Some c
+    | _ -> None
+  )
 
-(*   let errors = *)
-(*     List.(concat [ *)
-(*         map dup_conditions ~f:(fun x -> `duplicate_condition_id x) ; *)
-(*         map dup_sample_ids ~f:(fun x -> `duplicate_sample_id x) ; *)
-(*       ]) *)
+  let models =
+    extract (
+      function
+      | Model m -> Some m
+      | _ -> None
+    )
 
-(*   let error_msg = *)
-(*     List.map errors ~f:(fun e -> Sexp.to_string_hum (sexp_of_error e)) *)
-(* end *)
+  let samples =
+    extract (
+      function
+      | Sample s -> Some s
+      | _ -> None
+    )
+
+  let multiply_declared_conditions = find_dups conditions
+  let multiply_declared_samples = List.(map samples ~f:(fun s -> s.sample_id) |! find_dups)
+  let multiply_declared_models = List.(map models ~f:(fun s -> s.model_id) |! find_dups)
+  let project_declaration_error = match projects with
+    | [] -> [ `missing_project_description ]
+    | [ _ ] -> []
+    | ids -> [ `more_than_one_project_description ids ]
+
+end
+
+let check desc =
+  let module E = Check(struct let config = desc end) in
+  List.(concat [
+      map E.multiply_declared_conditions ~f:(fun x -> `multiple_declaration (`condition, x)) ;
+      map E.multiply_declared_models ~f:(fun x -> `multiple_declaration (`model, x)) ;
+      map E.multiply_declared_samples ~f:(fun x -> `multiple_declaration (`sample, x)) ;
+      E.project_declaration_error ;
+    ])
+
+let error_msg e =
+  Sexp.to_string_hum (sexp_of_error e)
