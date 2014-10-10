@@ -1,0 +1,23 @@
+(
+  (Project mESC_demo)
+
+  (Condition wt)
+
+  (
+    Model (
+      (model_id mESC)
+      (model_genome ((ucsc mm10)))
+    )
+  )
+
+  (
+    Sample (
+      (sample_id sox2_wt_1)
+      (sample_type (short_reads sra))
+      (sample_exp (TF_ChIP Sox2))
+      (sample_files (ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX214%2FSRX214070/SRR643821/SRR643821.sra))
+      (sample_model mESC)
+      (sample_condition wt)
+    )
+  )
+)

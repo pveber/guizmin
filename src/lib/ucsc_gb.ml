@@ -1,6 +1,6 @@
 open Bistro_workflow.Types
 
-type genome = [ `dm3 | `hg18 | `hg19 | `mm8 | `mm9 | `sacCer2 ] with sexp
+type genome = [ `dm3 | `hg18 | `hg19 | `mm8 | `mm9 | `mm10 | `sacCer2 ] with sexp
 
 let string_of_genome = function
 | `dm3 -> "dm3"
@@ -8,6 +8,7 @@ let string_of_genome = function
 | `hg19 -> "hg19"
 | `mm8 -> "mm8"
 | `mm9 -> "mm9"
+| `mm10 -> "mm10"
 | `sacCer2 -> "sacCer2"
 
 

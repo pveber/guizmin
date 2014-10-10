@@ -427,8 +427,17 @@ let make_website (module W : Guizmin.Unrolled_workflow.S) workflow_output ~outpu
   WWW.WWW.generate ~workflow_output ~output_dir
 
 
+let check_errors descr =
+  match Guizmin.Experiment_description.check descr with
+  | [] -> ()
+  | xs ->
+    List.map xs ~f:Guizmin.Experiment_description.error_msg
+    |> String.concat ~sep:", "
+    |> failwith
+
 let main opts ged_file output_dir webroot = Guizmin.(
   let description = Experiment_description.load ged_file in
+  check_errors description ;
   let module W = (val Unroll_workflow.from_description description) in
   let log_event, send_to_log_event = React.E.create () in
   let db = Bistro_db.init "_guizmin" in
