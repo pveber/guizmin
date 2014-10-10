@@ -40,6 +40,7 @@ val load : string -> t
 val save : t -> string -> unit
 
 type error = [
+  | `undeclared of [`condition | `model | `sample] * string
   | `multiple_declaration of [`condition | `model | `sample] * string
   | `missing_project_description
   | `more_than_one_project_description of string list

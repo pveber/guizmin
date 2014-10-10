@@ -45,6 +45,7 @@ let save cfg path =
   Sexplib.Sexp.save_hum path (sexp_of_t cfg)
 
 type error = [
+  | `undeclared of [`condition | `model | `sample] * string
   | `multiple_declaration of [`condition | `model | `sample] * string
   | `missing_project_description
   | `more_than_one_project_description of string list
@@ -89,6 +90,8 @@ module Check(X : sig
       | _ -> None
     )
 
+  let model_ids = List.map models ~f:(fun m -> m.model_id)
+
   let samples =
     extract (
       function
@@ -96,8 +99,18 @@ module Check(X : sig
       | _ -> None
     )
 
+  let sample_ids = List.map samples ~f:(fun s -> s.sample_id)
+
+  let undeclared item xs x = if List.mem xs x then None else (Some (`undeclared (item, x)))
+
+  let undeclared_conditions =
+    List.filter_map samples ~f:(fun s -> undeclared `condition conditions s.sample_condition)
+
+  let undeclared_models =
+    List.filter_map samples ~f:(fun s -> undeclared `model model_ids s.sample_model)
+
   let multiply_declared_conditions = find_dups conditions
-  let multiply_declared_samples = List.(map samples ~f:(fun s -> s.sample_id) |! find_dups)
+  let multiply_declared_samples = find_dups sample_ids
   let multiply_declared_models = List.(map models ~f:(fun s -> s.model_id) |! find_dups)
   let project_declaration_error = match projects with
     | [] -> [ `missing_project_description ]
@@ -113,6 +126,8 @@ let check desc =
       map E.multiply_declared_models ~f:(fun x -> `multiple_declaration (`model, x)) ;
       map E.multiply_declared_samples ~f:(fun x -> `multiple_declaration (`sample, x)) ;
       E.project_declaration_error ;
+      E.undeclared_conditions ;
+      E.undeclared_models ;
     ])
 
 let error_msg e =
