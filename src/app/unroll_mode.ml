@@ -23,7 +23,8 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
 
   let string_of_experiment = function
     | `whole_cell_extract -> "WCE"
-    | `TF_ChIP tf -> Printf.sprintf "ChIP-seq (%s)" tf
+    | `TF_ChIP tf -> Printf.sprintf "ChIP (%s)" tf
+    | `EM_ChIP mark -> Printf.sprintf "ChIP (%s)" mark
     | `FAIRE -> "FAIRE"
     | `mRNA -> "mRNA"
 
@@ -369,6 +370,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
 
     let contents = function
       | `TF_ChIP_seq s -> mappable_short_read s
+      | `EM_ChIP_seq s -> mappable_short_read s
       | `FAIRE_seq s -> mappable_short_read s
       | `WCE_seq s -> mappable_short_read s
       | `mRNA_seq s -> short_read s
@@ -435,14 +437,21 @@ let check_errors descr =
     |> String.concat ~sep:", "
     |> failwith
 
-let main opts ged_file output_dir webroot = Guizmin.(
+let backend dopts blog =
+  match dopts.backend with
+  | Local ->
+    Bistro_engine_lwt.local_worker ~np:dopts.np ~mem:(dopts.mem * 1024) blog
+  | Pbs ->
+    Bistro_pbs.worker blog
+
+let main opts dopts ged_file output_dir webroot = Guizmin.(
   let description = Experiment_description.load ged_file in
   check_errors description ;
   let module W = (val Unroll_workflow.from_description description) in
   let log_event, send_to_log_event = React.E.create () in
   let db = Bistro_db.init "_guizmin" in
   let blog = Bistro_log.make ~hook:send_to_log_event ~db () in
-  let backend = Bistro_engine_lwt.local_worker ~np:6 ~mem:(6 * 1024) blog in
+  let backend = backend dopts blog in
   let daemon = Bistro_engine_lwt.Daemon.make db blog backend in
   let () = if opts.verbosity = Verbose then (
       Lwt_stream.iter_s

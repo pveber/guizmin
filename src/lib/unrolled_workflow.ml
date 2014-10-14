@@ -37,7 +37,8 @@ class type tf_chip_seq_sample = object
 end
 
 type any_sample = [
-    `TF_ChIP_seq of tf_chip_seq_sample
+  | `TF_ChIP_seq of tf_chip_seq_sample
+  | `EM_ChIP_seq of mappable_short_read_sample
   | `FAIRE_seq of mappable_short_read_sample
   | `WCE_seq of mappable_short_read_sample
   | `mRNA_seq of short_read_sample

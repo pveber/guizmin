@@ -132,6 +132,8 @@ module Make(S : Settings) = struct
           `TF_ChIP_seq (new tf_chip_seq_sample s format g tf)
         | `FAIRE ->
           `FAIRE_seq (new simply_mapped_dna_seq_sample s format g)
+        | `EM_ChIP _ ->
+          `EM_ChIP_seq (new simply_mapped_dna_seq_sample s format g)
         | `mRNA -> `mRNA_seq (new short_read_sample s format)
         | `whole_cell_extract -> `WCE_seq (new simply_mapped_dna_seq_sample s format g)
       )
@@ -145,6 +147,7 @@ module Make(S : Settings) = struct
 
   let tf_chip_seq_samples = List.filter_map any_samples ~f:(function
       | `TF_ChIP_seq s -> Some s
+      | `EM_ChIP_seq _
       | `FAIRE_seq _
       | `mRNA_seq _
       | `WCE_seq _
@@ -154,6 +157,7 @@ module Make(S : Settings) = struct
   let faire_seq_samples = List.filter_map any_samples ~f:(function
       | `FAIRE_seq s -> Some s
       | `TF_ChIP_seq _
+      | `EM_ChIP_seq _
       | `mRNA_seq _
       | `WCE_seq _
       | `Short_read_sample _ -> None
@@ -161,6 +165,7 @@ module Make(S : Settings) = struct
 
   let mappable_short_read_samples = List.filter_map any_samples ~f:(function
       | `TF_ChIP_seq s -> Some (s :> mappable_short_read_sample)
+      | `EM_ChIP_seq s -> Some (s :> mappable_short_read_sample)
       | `FAIRE_seq s -> Some (s :> mappable_short_read_sample)
       | `mRNA_seq s -> None
       | `WCE_seq s -> Some (s :> mappable_short_read_sample)
@@ -169,6 +174,7 @@ module Make(S : Settings) = struct
 
   let short_read_samples = List.filter_map any_samples ~f:(function
       | `TF_ChIP_seq s -> Some (s :> short_read_sample)
+      | `EM_ChIP_seq s -> Some (s :> short_read_sample)
       | `FAIRE_seq s -> Some (s :> short_read_sample)
       | `mRNA_seq s -> Some (s :> short_read_sample)
       | `WCE_seq s -> Some (s :> short_read_sample)
@@ -176,7 +182,8 @@ module Make(S : Settings) = struct
     )
 
   let sample_of_any = function
-      `TF_ChIP_seq s -> (s :> sample)
+    | `TF_ChIP_seq s -> (s :> sample)
+    | `EM_ChIP_seq s -> (s :> sample)
     | `FAIRE_seq s -> (s :> sample)
     | `WCE_seq s -> (s :> sample)
     | `mRNA_seq s -> (s :> sample)

@@ -10,12 +10,12 @@ let help copts man_format cmds topic = match topic with
      | `Error e -> `Error (false, e)
      | `Ok t when t = "topics" -> (List.iter ~f:print_endline topics; `Ok ())
      | `Ok t when t = "ged" ->
-	let contents = [
-	  `S "GUIZMIN EXPERIMENT DESCRIPTION FORMAT" ;
-	  `P "It's a file format"
-	] in
-	let page = ("ged", 7, "Guizmin manual", "", "Guizmin manual"), contents in
-        `Ok (Cmdliner.Manpage.print man_format Format.std_formatter page)
+       let contents = [
+         `S "GUIZMIN EXPERIMENT DESCRIPTION FORMAT" ;
+         `P "It's a file format"
+       ] in
+       let page = ("ged", 7, "Guizmin manual", "", "Guizmin manual"), contents in
+       `Ok (Cmdliner.Manpage.print man_format Format.std_formatter page)
      | `Ok t when List.mem cmds t -> `Help (man_format, Some t)
      | `Ok _ -> assert false
 
@@ -46,6 +46,35 @@ let copts_t =
     Arg.(last & vflag_all [Normal] [quiet; verbose])
   in
   Term.(pure copts $ debug $ verbosity)
+
+(* Distribution options *)
+let dopts_sect = "DISTRIBUTION OPTIONS"
+let dopts backend np max_np_per_job mem =
+  { backend ; np ; max_np_per_job = min np max_np_per_job ; mem }
+
+let dopts_t =
+  let docs = dopts_sect in
+  let backend =
+    let doc = "Backend for execution." in
+    let docv = "BACKEND" in
+    Arg.(value & opt (enum ["local", Local ; "pbs", Pbs]) Local & info ["backend"] ~docs ~doc ~docv)
+  in
+  let np =
+    let doc = "Number of available processors in local mode." in
+    let docv = "NP" in
+    Arg.(value & opt int 1 & info ["np"] ~docs ~doc ~docv)
+  in
+  let max_np_per_job =
+    let doc = "Maximum number of processors given to a job." in
+    let docv = "MNP" in
+    Arg.(value & opt int 1 & info ["mnp"] ~docs ~doc ~docv)
+  in
+  let mem =
+    let doc = "Amount of available memory in local mode." in
+    let docv = "MEM" in
+    Arg.(value & opt int 4 & info ["mem"] ~docs ~doc ~docv)
+  in
+  Term.(pure dopts $ backend $ np $ max_np_per_job $ mem)
 
 let help_cmd =
   let topic =
@@ -81,7 +110,7 @@ let unroll_cmd =
     `S "DESCRIPTION";
     `P "Given a .ged file (read `$(mname) help ged'), guizmin-unroll will compute a suitable analysis pipeline and run it, producing its output in $(i,OUTPUT). The execution will also produce a _guizmin directory, which contains cached intermediate results." ;
   ] @ help_secs in
-  Term.(pure Unroll_mode.main $ copts_t $ data_description_file $ output $ webroot),
+  Term.(pure Unroll_mode.main $ copts_t $ dopts_t $ data_description_file $ output $ webroot),
   Term.info "unroll" ~version:"0.1" ~doc ~sdocs:copts_sect ~man
 
 let quickstart_cmd =

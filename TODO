@@ -2,3 +2,7 @@
 * unrolled website generation
 ** check that no two documents have the same path
 ** optimize space by cherry picking the target of a select if the dir is not directly used (beware of nested selects)
+* define Factors in experimental description
+** should be qualified as technical (shouldn't have any influence but check) or biological
+** Remove condition declaration
+** a condition is now a value for all factors

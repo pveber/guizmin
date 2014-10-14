@@ -23,7 +23,7 @@ Library guizmin
 Executable guizmin_app
   Path:             src/app
   MainIs:           guizmin_app.ml
-  BuildDepends:     bistro.lwt, cmdliner, core,
+  BuildDepends:     bistro.pbs, cmdliner, core,
                     guizmin, gzt, lambda-term,
                     lwt.syntax,
                     react,

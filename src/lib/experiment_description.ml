@@ -21,6 +21,7 @@ and sample_type = [
 and experiment = [
 | `whole_cell_extract
 | `TF_ChIP of string
+| `EM_ChIP of string
 | `FAIRE
 | `mRNA
 ]

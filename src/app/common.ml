@@ -7,6 +7,14 @@ type copts = {
   verbosity : verbosity
 }
 
+type dopts = {
+  backend : backend ;
+  np : int ;
+  max_np_per_job : int ;
+  mem : int
+}
+and backend = Local | Pbs
+
 let mkdir_p path =
   Sys.command_exn ("mkdir -p " ^ path)
 
