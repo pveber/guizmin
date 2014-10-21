@@ -1,3 +1,25 @@
+module Future = struct
+
+  module Unrolled_workflow = Unrolled_workflow.Future
+  module Utils = Utils.Future
+
+open Core.Std
+open Workflow.Types
+open Unrolled_workflow
+
+let unsafe_file_of_url url : 'a workflow =
+  let source () =
+    if String.is_prefix ~prefix:"http://" url || String.is_prefix ~prefix:"ftp://" url
+    then Utils.wget url
+    else Workflow.input [ url ]
+  in
+  if Filename.check_suffix url ".gz"
+  then Utils.gunzip (source ())
+  else source ()
+
+end
+
+
 open Core.Std
 open Bistro_workflow.Types
 open Unrolled_workflow

@@ -91,10 +91,12 @@ let input target =
 
 let ( >:: ) target u = { u with target }
 
-module Sh = struct
+module API = struct
   type expr = token list
 
-  let program ?path p ?stdout ?stderr args =
+  let workflow = make
+
+  let program ?path p ?stdin ?stdout ?stderr args =
     List.concat (
       (
         match path with
@@ -110,6 +112,10 @@ module Sh = struct
         | None -> []
         | Some e -> [ S " > " :: e ])
       @ (
+        match stdin with
+        | None -> []
+        | Some e -> [ S " < " :: e ])
+      @ (
         match stderr with
         | None -> []
         | Some e -> [S " 2> " :: e])
@@ -117,7 +123,7 @@ module Sh = struct
     |> List.intersperse ~sep:(S " ")
 
 
-  let target = [ T ]
+  let target () = [ T ]
   let string s = [ S s ]
   let int i = [ S (string_of_int i) ]
   let float f = [ S (Float.to_string f) ]
@@ -135,5 +141,9 @@ module Sh = struct
 
   let enum dic x = [ S (List.Assoc.find_exn dic x) ]
 
-  let opt f o x = S o :: S " " :: f x
+  let opt o f x = S o :: S " " :: f x
+
+  let mkdir d = program "mkdir" [ d ]
+
+  let mkdir_p d = program "mkdir" [ string "-p" ; d ]
 end

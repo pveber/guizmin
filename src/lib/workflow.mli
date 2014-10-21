@@ -51,15 +51,16 @@ val input : path -> 'a t
 
 val ( >:: ) : path -> 'a t -> 'a t
 
-module Sh : sig
+module API : sig
   type expr
+  val workflow : ?target:path -> cmd list -> 'a t
   val program :
     ?path:package workflow list ->
     string ->
-    ?stdout:expr -> ?stderr:expr ->
+    ?stdin:expr -> ?stdout:expr -> ?stderr:expr ->
     expr list -> cmd
 
-  val target : expr
+  val target : unit -> expr
   val string : string -> expr
   val int : int -> expr
   val float : float -> expr
@@ -68,7 +69,10 @@ module Sh : sig
   val option : ('a -> expr) -> 'a option -> expr
   val list : ('a -> expr) -> ?sep:string -> 'a list -> expr
   val enum : ('a * string) list -> 'a -> expr
-  val opt : ('a -> expr) -> string -> 'a -> expr
+  val opt : string -> ('a -> expr) -> 'a -> expr
+
+  val mkdir : expr -> cmd
+  val mkdir_p : expr -> cmd
 end
 
 (* let body = program "bowtie" [ *)
