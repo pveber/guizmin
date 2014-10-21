@@ -17,6 +17,35 @@ and token =
   | D : _ t -> token
   | T : token
 
+module Types = struct
+  type 'a workflow = 'a t
+
+  class type ['a,'b] file = object
+    method format : 'a
+    method encoding : [< `text | `binary] as 'b
+  end
+
+  type 'a directory = [`directory of 'a]
+  type package = [`package] directory
+
+  type 'a zip = ([`zip of 'a], [`binary]) file
+  type 'a gz = ([`gz of 'a], [`binary]) file constraint 'a = (_,_) file
+  type 'a tgz = ([`tgz of 'a],[`binary]) file
+  type pdf = ([`pdf],[`text]) file
+  type html = ([`html], [`text]) file
+
+  class type ['a, 'b, 'c, 'd] tabular = object
+    inherit [[`tabular], [`text]] file
+    method columns : 'a
+    method header : [< `yes | `no] as 'b
+    method sep : 'c
+    method comment : 'd
+  end
+
+  type ('a, 'b, 'c) tsv = ('a, 'b, [`tab], 'c) tabular
+
+end
+
 let deps_of_cmd l =
   List.filter_map l ~f:(function
       | D r -> Some (r :> u)
@@ -60,11 +89,20 @@ let in_target rule path =
 let input target =
   { target ; script = [] ; deps = [] }
 
+let ( >:: ) target u = { u with target }
+
 module Sh = struct
   type expr = token list
 
-  let program p ?stdout ?stderr args =
+  let program ?path p ?stdout ?stderr args =
     List.concat (
+      (
+        match path with
+        | None | Some [] -> []
+        | Some pkgs ->
+          [ S ("PATH=" ^ String.concat ~sep:":" (List.map pkgs ~f:(fun p -> string_of_path (p.target @ [ "bin" ])))) ]
+      )
+      ::
       [ S p ]
       :: args
       @ (
