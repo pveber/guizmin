@@ -12,7 +12,8 @@ Library guizmin
   Pack:             true
   Modules:          Bed, Bedtools, Bowtie,
                     Experiment_description,
-                    Fasta, Fastq, FastQC, Jaspar,
+                    Fasta,
+                    Fastq, FastQC, Jaspar,
                     Macs, Makefile,
                     Sam, Samtools, Sra, Ucsc_gb, Unroll_workflow,
                     Unrolled_workflow, Utils, Workflow
@@ -29,18 +30,12 @@ Executable guizmin_app
                     react,
                     sexplib.syntax, threads, tyxml
   CompiledObject:   native
-
-Executable sacCer2_pho4
-  Path:             examples
-  MainIs:           sacCer2_pho4.ml
-  BuildDepends:     bistro.lwt, cmdliner, guizmin
-  CompiledObject:   byte
   
 Document guizmin_doc
   Title:                API reference for Guizmin
   Type:                 OCamlbuild (0.4)
   InstallDir:           $docdir/api
-  BuildTools:	        ocamldoc, ocamlbuild
+  BuildTools:           ocamldoc, ocamlbuild
   XOCamlbuildPath:      .
   XOCamlbuildLibraries: guizmin
   

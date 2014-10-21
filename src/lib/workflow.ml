@@ -87,7 +87,7 @@ let in_target rule path =
   { target ; deps ; script }
 
 let input target =
-  { target ; script = [] ; deps = [] }
+  { target = [target] ; script = [] ; deps = [] }
 
 let ( >:: ) target u = { u with target }
 

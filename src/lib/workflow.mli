@@ -47,7 +47,7 @@ val string_of_cmd : path -> cmd -> string
 
 val make : ?target:path -> cmd list -> 'a t
 val in_target : _ directory t -> path -> 'a t
-val input : path -> 'a t
+val input : string -> 'a t
 
 val ( >:: ) : path -> 'a t -> 'a t
 
