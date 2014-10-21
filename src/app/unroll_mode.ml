@@ -49,9 +49,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
     let the_style = style in
     let open Html5.M in
     let lines = List.map items (fun (k,v) -> tr [ td k ; td v]) in
-    match lines with
-    | [] -> assert false
-    | h :: t -> table ~a:[a_class ["table"] ; a_style the_style] h t
+    table ~a:[a_class ["table"] ; a_style the_style] lines
 
   let lsnd = List.map ~f:snd
 
@@ -208,9 +206,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
       ]
     )
     in
-    match lines with
-    | [] -> assert false
-    | h :: t -> table ~a:[a_class ["table"]] ~thead:header h t
+    table ~a:[a_class ["table"]] ~thead:header lines
 
   (* let index_custom_tracks_section = *)
   (*   let open Html5.M in *)
