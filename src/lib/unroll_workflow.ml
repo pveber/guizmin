@@ -13,70 +13,56 @@ let unsafe_file_of_url url : 'a workflow =
   else source ()
 
 
-(* open Core.Std *)
-(* open Bistro_workflow.Types *)
-(* open Unrolled_workflow *)
+module type Settings =
+  sig
+    val config_file : Experiment_description.t
+  end
 
-(* let unsafe_file_of_url url : 'a workflow = *)
-(*   let source () = *)
-(*     if String.is_prefix ~prefix:"http://" url || String.is_prefix ~prefix:"ftp://" url *)
-(*     then Utils.wget url *)
-(*     else Bistro_workflow.input url *)
-(*   in *)
-(*   if Filename.check_suffix url ".gz" *)
-(*   then Utils.gunzip (source ()) *)
-(*   else source () *)
+module Make(S : Settings) = struct
+  open Experiment_description
 
-(* module type Settings = *)
-(*   sig *)
-(*     val config_file : Experiment_description.t *)
-(*   end *)
+  let extract f = List.filter_map S.config_file ~f
+  let extract_unique f = List.dedup (extract f)
 
-(* module Make(S : Settings) = struct *)
-(*   open Experiment_description *)
+  let project_name =
+    List.find_map S.config_file ~f:(function
+        | Project name -> Some name
+        | _ -> None
+      )
+    |>
+    Option.value ~default:"X"
 
-(*   let extract f = List.filter_map S.config_file ~f *)
-(*   let extract_unique f = List.dedup (extract f) *)
+  let conditions = extract_unique (
+    function
+    | Condition c -> Some c
+    | _ -> None
+  )
 
-(*   let project_name = *)
-(*     List.find_map S.config_file ~f:(function *)
-(*         | Project name -> Some name *)
-(*         | _ -> None *)
-(*       ) *)
-(*     |> *)
-(*     Option.value ~default:"X" *)
+  let models =
+    extract_unique (
+      function
+      | Model m -> Some m
+      | _ -> None
+    )
 
-(*   let conditions = extract_unique ( *)
-(*     function *)
-(*     | Condition c -> Some c *)
-(*     | _ -> None *)
-(*   ) *)
+  let model id = List.find_exn models ~f:(fun m -> m.model_id = id)
 
-(*   let models = *)
-(*     extract_unique ( *)
-(*       function *)
-(*       | Model m -> Some m *)
-(*       | _ -> None *)
-(*     ) *)
+  class genome g = object (s)
+    method repr : Experiment_description.genome = g
+    method sequence = match g with
+      | `ucsc x -> Ucsc_gb.genome_sequence x
+      | `fasta url -> unsafe_file_of_url url
+    method bowtie_index =
+      Bowtie.bowtie_build s#sequence
+  end
 
-(*   let model id = List.find_exn models ~f:(fun m -> m.model_id = id) *)
+  let genomes = extract_unique (
+      function
+      | Model m -> Option.map ~f:(new genome) m.model_genome
+      | _ -> None
+    )
 
-(*   class genome g = object (s) *)
-(*     method repr : Experiment_description.genome = g *)
-(*     method sequence = match g with *)
-(*       | `ucsc x -> Ucsc_gb.genome_sequence x *)
-(*       | `fasta url -> unsafe_file_of_url url *)
-(*     method bowtie_index = *)
-(*       Bowtie.bowtie_build s#sequence *)
-(*   end *)
-
-(*   let genomes = extract_unique ( *)
-(*       function *)
-(*       | Model m -> Option.map ~f:(new genome) m.model_genome *)
-(*       | _ -> None *)
-(*     ) *)
-
-(*   let genome g = List.find_exn genomes ~f:(fun x -> x # repr = g) *)
+  let genome g = List.find_exn genomes ~f:(fun x -> x # repr = g)
 
 (*   class sample (s : Experiment_description.sample) = object *)
 (*     method repr = s *)
@@ -206,9 +192,9 @@ let unsafe_file_of_url url : 'a workflow =
 
 (*   let samples = List.map any_samples ~f:sample_of_any *)
 
-(*  end *)
+end
 
-(* let from_description ged = *)
-(*   let module X = struct let config_file = ged end in *)
-(*   let module W = Make(X) in *)
-(*   (module W : Unrolled_workflow.S) *)
+let from_description ged =
+  let module X = struct let config_file = ged end in
+  let module W = Make(X) in
+  (module W : Unrolled_workflow.S)

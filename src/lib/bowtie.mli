@@ -9,8 +9,8 @@ val bowtie_build :
   ?color:bool  ->
   Fasta.workflow -> index workflow
 
-(* val bowtie : *)
-(*   ?l:int -> ?e:int -> ?m:int -> *)
-(*   ?fastq_format:'a Fastq.format -> *)
-(*   ?n:int -> ?v:int -> ?p:int -> *)
-(*   index workflow -> 'a Fastq.workflow list -> Sam.workflow *)
+val bowtie :
+  ?l:int -> ?e:int -> ?m:int ->
+  ?fastq_format:'a Fastq.format ->
+  ?n:int -> ?v:int -> ?p:int ->
+  index workflow -> 'a Fastq.workflow list -> Sam.workflow

@@ -12,3 +12,4 @@ let path_of_string s = String.split ~on:'/' s
 let digest x =
   Digest.to_hex (Digest.string (Marshal.to_string x []))
 
+let ( % ) f g x = g (f x)
