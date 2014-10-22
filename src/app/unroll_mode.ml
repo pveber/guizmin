@@ -4,20 +4,20 @@ open Common
 let string_of_path l = String.concat ~sep:"/" l
 
 
-(* module type Params = sig *)
+module type Params = sig
 (*   val workflow_output : Bistro_workflow.u -> string Lwt.t *)
-(*   val output_dir : string *)
-(*   val webroot : string *)
-(* end *)
+  val output_dir : string
+  val webroot : string
+end
 
 
-(* module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct *)
-(*   open P *)
-(*   open Guizmin *)
-(*   open Experiment_description *)
+module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
+  open P
+  open Guizmin
+  open Experiment_description
 
-(*   (\* WEBSITE GENERATION *\) *)
-(*   module WWW = Website.Make(struct end) *)
+  (* WEBSITE GENERATION *)
+  module WWW = Website.Make(struct end)
 
 (*   (\* let workflow_output' w = workflow_output (Bistro_workflow.u w) *\) *)
 
@@ -44,44 +44,44 @@ let string_of_path l = String.concat ~sep:"/" l
 
 
 
-(*   (\* === HTML HELPERS ===*\) *)
+  (* === HTML HELPERS ===*)
 
-(*   let keyval_table ?(style = "") items = *)
-(*     let the_style = style in *)
-(*     let open Html5.M in *)
-(*     let lines = List.map items (fun (k,v) -> tr [ td k ; td v]) in *)
-(*     table ~a:[a_class ["table"] ; a_style the_style] lines *)
+  let keyval_table ?(style = "") items =
+    let the_style = style in
+    let open Html5.M in
+    let lines = List.map items (fun (k,v) -> tr [ td k ; td v]) in
+    table ~a:[a_class ["table"] ; a_style the_style] lines
 
-(*   let lsnd = List.map ~f:snd *)
+  let lsnd = List.map ~f:snd
 
-(*   let k = Html5.M.pcdata *)
+  let k = Html5.M.pcdata
 
-(*   let keyval_table_opt ?style items = *)
-(*     keyval_table ?style (List.filter_map items ~f:ident) *)
+  let keyval_table_opt ?style items =
+    keyval_table ?style (List.filter_map items ~f:ident)
 
-(*   let multicolumn_ul items = *)
-(*     let open Html5.M in *)
-(*     let items = List.map items ~f:(fun item -> li ~a:[a_style "float:left;width:10em"] [item]) in *)
-(*     div ~a:[a_style "margin-bottom:1em"] [ *)
-(*       ul ~a:[a_style "width:30em"] items ; *)
-(*       br ~a:[a_style "clear:left"] () ; *)
-(*     ] *)
+  let multicolumn_ul items =
+    let open Html5.M in
+    let items = List.map items ~f:(fun item -> li ~a:[a_style "float:left;width:10em"] [item]) in
+    div ~a:[a_style "margin-bottom:1em"] [
+      ul ~a:[a_style "width:30em"] items ;
+      br ~a:[a_style "clear:left"] () ;
+    ]
 
-(*   let html_base = *)
-(*     if String.is_suffix webroot ~suffix:"/" then webroot *)
-(*     else webroot ^ "/" *)
+  let html_base =
+    if String.is_suffix webroot ~suffix:"/" then webroot
+    else webroot ^ "/"
 
-(*   let html_page page_title contents = *)
-(*     let open Html5.M in *)
-(*     let head = *)
-(*       head (title (pcdata page_title)) [ *)
-(*         link ~rel:[`Stylesheet] ~href:"http://netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css" () ; *)
-(*         link ~rel:[`Stylesheet] ~href:"http://netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap-theme.min.css" () ; *)
-(*         script ~a:[a_src "https://code.jquery.com/jquery.js"] (pcdata "") ; *)
-(*         script ~a:[a_src "http://netdna.bootstrapcdn.com/bootstrap/3.0.2/js/bootstrap.min.js"] (pcdata "") ; *)
-(*         base ~a:[a_href html_base] () ; *)
-(*       ] in *)
-(*     html head (body [ div ~a:[a_class ["container"]]  contents ]) *)
+  let html_page page_title contents =
+    let open Html5.M in
+    let head =
+      head (title (pcdata page_title)) [
+        link ~rel:[`Stylesheet] ~href:"http://netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css" () ;
+        link ~rel:[`Stylesheet] ~href:"http://netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap-theme.min.css" () ;
+        script ~a:[a_src "https://code.jquery.com/jquery.js"] (pcdata "") ;
+        script ~a:[a_src "http://netdna.bootstrapcdn.com/bootstrap/3.0.2/js/bootstrap.min.js"] (pcdata "") ;
+        base ~a:[a_href html_base] () ;
+      ] in
+    html head (body [ div ~a:[a_class ["container"]]  contents ])
 
 (*   let link_of_path text path = *)
 (*     Html5.M.(a ~a:[a_href (String.concat ~sep:"/" path) ] [ pcdata text ]) *)
@@ -399,40 +399,40 @@ let string_of_path l = String.concat ~sep:"/" l
 (*     in *)
 (*     div ((k "Browse by...") :: tabs) *)
 
-(*   let index = *)
-(*     let open Html5.M in *)
-(*     let contents () = *)
-(*       html_page "Guizmin workflow" [ *)
-(*         h1 [b [k"Project " ; i [k W.project_name]]] ; *)
-(*         hr () ; *)
-(*         br () ; *)
-(*         br () ; *)
-(*         browse_by_div ; *)
-(*         (\* index_quality_control_section () ; *\) *)
-(*         (\* index_custom_tracks_section ; *\) *)
-(*       ] *)
-(*     in *)
-(*     WWW.html_page ["index.html"] ~f:(fun () -> Lwt.return (contents ())) () *)
-(* end *)
+  let index =
+    let open Html5.M in
+    let contents () =
+      html_page "Guizmin workflow" [
+        h1 [b [k"Project " ; i [k W.project_name]]] ;
+        hr () ;
+        br () ;
+        br () ;
+        (* browse_by_div ; *)
+        (* index_quality_control_section () ; *)
+        (* index_custom_tracks_section ; *)
+      ]
+    in
+    WWW.html_page ["index.html"] ~f:(fun () -> Lwt.return (contents ())) ()
+end
 
-(* let make_website (module W : Guizmin.Unrolled_workflow.S) workflow_output ~output_dir ~webroot = *)
-(*   let module P = struct *)
-(*     let workflow_output = workflow_output *)
-(*     let output_dir = output_dir *)
-(*     let webroot = webroot *)
-(*   end in *)
-(*   let module WWW = Make_website(W)(P) in *)
-(*   mkdir_p output_dir ; *)
-(*   WWW.WWW.generate ~workflow_output ~output_dir *)
+let make_website (module W : Guizmin.Unrolled_workflow.S) workflow_output ~output_dir ~webroot =
+  let module P = struct
+    let workflow_output = workflow_output
+    let output_dir = output_dir
+    let webroot = webroot
+  end in
+  let module WWW = Make_website(W)(P) in
+  mkdir_p output_dir ;
+  WWW.WWW.generate ~workflow_output ~output_dir
 
 
-(* let check_errors descr = *)
-(*   match Guizmin.Experiment_description.check descr with *)
-(*   | [] -> () *)
-(*   | xs -> *)
-(*     List.map xs ~f:Guizmin.Experiment_description.error_msg *)
-(*     |> String.concat ~sep:", " *)
-(*     |> failwith *)
+let check_errors descr =
+  match Guizmin.Experiment_description.check descr with
+  | [] -> ()
+  | xs ->
+    List.map xs ~f:Guizmin.Experiment_description.error_msg
+    |> String.concat ~sep:", "
+    |> failwith
 
 (* let backend dopts blog = *)
 (*   match dopts.backend with *)
@@ -442,9 +442,9 @@ let string_of_path l = String.concat ~sep:"/" l
 (*     Bistro_pbs.worker blog *)
 
 let main opts dopts ged_file output_dir webroot = Guizmin.(
-  (* let description = Experiment_description.load ged_file in *)
-  (* check_errors description ; *)
-  (* let module W = (val Unroll_workflow.from_description description) in *)
+  let description = Experiment_description.load ged_file in
+  check_errors description ;
+  let module W = (val Unroll_workflow.from_description description) in
   (* let log_event, send_to_log_event = React.E.create () in *)
   (* let db = Bistro_db.init "_guizmin" in *)
   (* let blog = Bistro_log.make ~hook:send_to_log_event ~db () in *)
@@ -457,14 +457,13 @@ let main opts dopts ged_file output_dir webroot = Guizmin.(
   (*     |> ignore *)
   (*   ) *)
   (* in *)
-  (* let workflow_output u = *)
+  let workflow_output u = assert false in
   (*   let open Option in *)
   (*   Lwt.bind *)
   (*     (Option.value_exn (Bistro_engine_lwt.Daemon.send' daemon u)) *)
   (*     (fun () -> Lwt.return (Bistro_db.path db u)) *)
   (* in *)
-  (* let t = make_website (module W) workflow_output ~output_dir ~webroot in *)
+  let t = make_website (module W) workflow_output ~output_dir ~webroot in
   (* let finish_pending_jobs = Bistro_engine_lwt.Daemon.shutdown daemon in *)
-  (* Lwt_unix.run (Lwt.join [ t ; finish_pending_jobs ]) *)
-    ()
+  Lwt_unix.run (Lwt.join [ t (* ; finish_pending_jobs *) ])
 )

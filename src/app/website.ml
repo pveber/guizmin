@@ -21,12 +21,12 @@ module type S = sig
     ?f:(unit -> html_elt Lwt.t) ->
     unit -> html_elt page
 
-  val raw : ?path:path -> ?extract:bool -> 'a Bistro_workflow.t -> filename page
+  val file_page : ?path:path -> _ Workflow.t -> Workflow.u page
 
   val register : html_elt page -> (unit -> html_elt Lwt.t) -> unit
 
   val generate :
-    workflow_output:(Bistro_workflow.u -> string Lwt.t) ->
+    workflow_output:(Workflow.u -> filename Lwt.t) ->
     output_dir:string ->
     unit Lwt.t
 end
@@ -38,16 +38,54 @@ module Make(X : sig end) = struct
   }
   and kind =
     | Html_page
-    | Raw of Bistro_workflow.u
-    | Embedded_raw of Bistro_workflow.u * raw_embedding
-  and raw_embedding = {
-    container : Bistro_workflow.u ;
-    container_path : path
-  }
+    | File_page of Workflow.u
 
   let pages = Hashtbl.create 253
 
+  let add_page page path =
+    if Hashtbl.mem pages path then (
+      let path = string_of_path path in
+      let msg = sprintf "Guizmin.Website: attempt to create page %s twice" path in
+      failwith msg
+    ) ;
+    Hashtbl.add pages path page
+
+  let rec prefix_diff ~prefix p = match prefix, p with
+    | [], p -> Some p
+    | _, [] -> None
+    | h :: t, h' :: t' ->
+      if h = h' then prefix_diff ~prefix:t t' else None
+
+  (* Find file pages whose workflow contains the workflow Extract (u, p) *)
+  let find_strict_containers u p =
+    if p = [] then []
+    else (
+      Hashtbl.fold
+        (fun _ page accu ->
+           match page.kind with
+           | File_page (Workflow.Extract (v, q)) when u = v ->
+             (
+               match prefix_diff ~prefix:q p with
+               | None -> accu
+               | Some r -> (page, r) :: accu
+             )
+           | File_page v ->
+             if u = v then (page, []) :: accu
+             else accu
+           | _ -> accu)
+        pages []
+    )
+
+  let find_largest_strict_container u p =
+    Core.Core_list.reduce
+      (find_strict_containers u p)
+      ~f:(fun ((_,p) as x) ((_,q) as y) ->
+          if List.length p < List.length q then x else y)
+
   let generators = Hashtbl.create 253
+
+  let register page f =
+    Hashtbl.add generators page.path f
 
   let missing_generator () =
     let module M = struct exception Found of path end in
@@ -58,32 +96,6 @@ module Make(X : sig end) = struct
     try Hashtbl.fold aux pages () ; None
     with M.Found p -> Some p
 
-  let path p = p.path
-
-  let files_path u =
-    [ "files" ; Bistro_workflow.digest u ]
-
-  let rec unselect = function
-    | Bistro_workflow.Input _ | Bistro_workflow.Rule _ as u -> u, []
-    | Bistro_workflow.Select (u, q) ->
-      let r, p = unselect u in
-      r, p @ [ q ]
-
-  let href d = string_of_path (path d)
-
-  let a d elts =
-    Html5.M.(a ~a:[a_href (href d)] elts)
-
-  let add_page page path =
-    if Hashtbl.mem pages path then (
-      let path = string_of_path path in
-      let msg = sprintf "Guizmin.Website: attempt to create page %s twice" path in
-      failwith msg
-    ) ;
-    Hashtbl.add pages path page
-
-  let register page f =
-    Hashtbl.add generators page.path f
 
   let html_page p ?f () =
     let page = { path = p ; kind = Html_page } in
@@ -93,30 +105,30 @@ module Make(X : sig end) = struct
      | None -> ()) ;
     page
 
-  let raw ?path ?(extract = false) w =
-    let u = Bistro_workflow.u w in
-    let path, kind = match path, u, extract with
-      | Some p, Bistro_workflow.Select _, true
-      | Some p, Bistro_workflow.Input _, _
-      | Some p, Bistro_workflow.Rule _, _ ->
-        p, Raw u
-      | None, Bistro_workflow.Select _, true
-      | None, Bistro_workflow.Input _, _
-      | None, Bistro_workflow.Rule _, _ ->
-        files_path u, Raw u
-      | Some p, Bistro_workflow.Select _, false ->
-        let u', paths_in_u' = unselect u in
-        let path_in_u' = Core_kernel.Core_list.reduce_exn paths_in_u' ~f:Filename.concat in (* paths cannot be empty since u is a select *)
-        p @ [ path_in_u' ], Embedded_raw (u, { container = u' ; container_path = p })
-      | None, Bistro_workflow.Select _, false ->
-        let u', paths_in_u' = unselect u in
-        let path_in_u' = Core_kernel.Core_list.reduce_exn paths_in_u' ~f:Filename.concat in (* paths cannot be empty since u is a select *)
-        let p = files_path u' in
-        p @ [ path_in_u' ], Embedded_raw (u, { container = u' ; container_path = p })
+  let file_path u =
+    [ "file" ; Guizmin.Defs.digest u ]
+
+  let file_page ?path w =
+    let u = Workflow.(w : _ t :> u) in
+    let path = match path with
+      | Some p -> p
+      | None -> file_path u
     in
-    let page = { path ; kind } in
+    let page = {
+      path ; kind = File_page u
+    } in
     add_page page path ;
     page
+
+  let path p = p.path
+
+
+  let href d = string_of_path (path d)
+
+  let a d elts =
+    Html5.M.(a ~a:[a_href (href d)] elts)
+
+
 
   let check_missing_generator () =
     match missing_generator () with
@@ -143,36 +155,41 @@ module Make(X : sig end) = struct
     mkdir_p (Filename.dirname dst) ;
     ignore (Sys.command (sprintf "rm -rf %s && ln -s %s %s" dst (string_of_path p2_to_p1) dst))
 
-(*  let generate_raw_page fspath workflow_output path u =
-    let files_fspath = fspath (files_path u) in
-    mkdir_p (Filename.dirname fspath) ;
+  let generate_file_page fspath workflow_output path u =
+    let file_fspath = fspath (file_path u) in
+    mkdir_p (Filename.dirname file_fspath) ;
     workflow_output u >>= fun cache_fspath ->
-    symlink cache_fspath fspath ;
-    Lwt.return ()
-*)
-  let generate_raw_page fspath workflow_output path u =
-    let u', path_in_u' = unselect u in
-    let files_fspath = fspath (files_path u') in
-    mkdir_p (Filename.dirname files_fspath) ;
-    workflow_output u' >>= fun cache_fspath ->
-    symlink cache_fspath files_fspath ;
-    if path <> files_path u' then alias fspath (files_path u') path ;
+    symlink cache_fspath file_fspath ;
+    if path <> file_path u then alias fspath (file_path u) path ;
     Lwt.return ()
 
-  let generate_page fs_path workflow_output page = match page.kind with
-    | Html_page ->
-      let f = Hashtbl.find generators page.path in
-      generate_html_page fs_path page f
-    | Raw u ->
-      generate_raw_page fs_path workflow_output page.path u
-    | Embedded_raw (u, e) -> (* FIXME: there is a race condition here if the container is generated several times !!! *)
-      generate_raw_page fs_path workflow_output e.container_path e.container
+  let classify_page page = match page.kind with
+    | Html_page -> `Html_page
+    | File_page (Workflow.Extract (v, p) as u) -> (
+        match find_largest_strict_container v p with
+        | None -> `Root_file u
+        | Some (root, q) -> `Leaf_file (root, q)
+      )
+    | File_page u -> `Root_file u
+
 
   let generate ~workflow_output ~output_dir =
     let fspath = fspath output_dir in
     check_missing_generator () ;
     Hashtbl.fold
-      (fun _ page accu -> generate_page fspath workflow_output page :: accu)
+      (fun _ page accu ->
+         let t =
+           match classify_page page with
+           | `Html_page ->
+             let f = Hashtbl.find generators page.path in
+             generate_html_page fspath page f
+           | `Root_file u ->
+             generate_file_page fspath workflow_output page.path u
+           | `Leaf_file (root, inside_path) ->
+             alias fspath (root.path @ inside_path) page.path ;
+             Lwt.return ()
+         in
+         t :: accu)
       pages []
     |> Lwt.join
 
