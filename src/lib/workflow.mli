@@ -79,8 +79,10 @@ module API : sig
   val dep : _ t -> shell_expr
   val option : ('a -> shell_expr) -> 'a option -> shell_expr
   val list : ('a -> shell_expr) -> ?sep:string -> 'a list -> shell_expr
+  val seq : shell_expr list -> shell_expr
   val enum : ('a * string) list -> 'a -> shell_expr
   val opt : string -> ('a -> shell_expr) -> 'a -> shell_expr
+  val flag : ('a -> shell_expr) -> 'a -> bool -> shell_expr
 
   val mkdir : shell_expr -> cmd
   val mkdir_p : shell_expr -> cmd

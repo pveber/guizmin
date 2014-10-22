@@ -136,9 +136,13 @@ module API = struct
     |> List.intersperse ~sep:[ S "," ]
     |> List.concat
 
+  let seq xs = List.concat xs
+
   let enum dic x = [ S (List.Assoc.find_exn dic x) ]
 
   let opt o f x = S o :: S " " :: f x
+
+  let flag f x b = if b then f x else []
 
   let mkdir d = program "mkdir" [ d ]
 

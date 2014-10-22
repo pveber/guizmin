@@ -9,20 +9,17 @@ let package = workflow [
     bash package_script [ target () ]
   ]
 
-(* (\* memory bound correspond to storing a human index in memory, following bowtie manual *\) *)
-(* let bowtie_build ?packed ?color fa = *)
-(*   Bistro_workflow.make ~mem:(3 * 1024) ~timeout:`day <:script< *)
-
-(*   export PATH=#w:package#/bin:$PATH *)
-(*   mkdir #DEST *)
-(*   bowtie-build \ *)
-(*     #? p <- packed #[#s:if p then "-a -p" else ""#] \ *)
-(*     #? c <- color #[#s:if c then "--color" else ""#] \ *)
-(*     -f #w:fa# #DEST/index *)
-(*   FASTA=`readlink -f #w:fa#` *)
-(*   (cd #DEST && cp $FASTA index.fa) *)
-
-(* >> *)
+(* memory bound correspond to storing a human index in memory, following bowtie manual *)
+let bowtie_build ?packed ?color fa =
+  workflow ~mem:(3 * 1024) [
+    mkdir_p (target ()) ;
+    program "bowtie-build" ~path:[package] [
+      option (flag string "-a -p") packed ;
+      option (flag string "--color") color ;
+      opt "-f" dep fa ;
+      seq [ target () ; string "/index" ]
+    ]
+  ]
 
 (* let qual_option (type s) x = match (x : s Fastq.format) with *)
 (*   | Fastq.Solexa  -> "--solexa-quals" *)
