@@ -31,19 +31,19 @@ class type mappable_short_read_sample = object
   method aligned_reads_bam : Bam.workflow
 end
 
-(* class type tf_chip_seq_sample = object *)
-(*   inherit mappable_short_read_sample *)
-(*   method tf : string *)
-(* end *)
+class type tf_chip_seq_sample = object
+  inherit mappable_short_read_sample
+  method tf : string
+end
 
-(* type any_sample = [ *)
-(*   | `TF_ChIP_seq of tf_chip_seq_sample *)
-(*   | `EM_ChIP_seq of mappable_short_read_sample *)
-(*   | `FAIRE_seq of mappable_short_read_sample *)
-(*   | `WCE_seq of mappable_short_read_sample *)
-(*   | `mRNA_seq of short_read_sample *)
-(*   | `Short_read_sample of short_read_sample *)
-(* ] *)
+type any_sample = [
+  | `TF_ChIP_seq of tf_chip_seq_sample
+  | `EM_ChIP_seq of mappable_short_read_sample
+  | `FAIRE_seq of mappable_short_read_sample
+  | `WCE_seq of mappable_short_read_sample
+  | `mRNA_seq of short_read_sample
+  | `Short_read_sample of short_read_sample
+]
 
 module type S = sig
 
@@ -53,20 +53,20 @@ module type S = sig
   val genomes : genome list
 
 
-(*   val sample_of_any : any_sample -> sample *)
-(*   val any_sample : sample -> any_sample *)
+  val sample_of_any : any_sample -> sample
+  val any_sample : sample -> any_sample
 
-(*   val any_samples : any_sample list *)
+  val any_samples : any_sample list
 
-(*   val samples : sample list *)
+  val samples : sample list
 
-(*   val short_read_samples : short_read_sample list *)
+  val short_read_samples : short_read_sample list
 
-(*   val mappable_short_read_samples : mappable_short_read_sample list *)
+  val mappable_short_read_samples : mappable_short_read_sample list
 
-(*   val tf_chip_seq_samples : tf_chip_seq_sample list *)
+  val tf_chip_seq_samples : tf_chip_seq_sample list
 
-(*   val faire_seq_samples : mappable_short_read_sample list *)
+  val faire_seq_samples : mappable_short_read_sample list
 
 end
 

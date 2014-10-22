@@ -67,7 +67,7 @@ module Make(S : Settings) = struct
   class sample (s : Experiment_description.sample) = object
     method repr = s
     method id = s.sample_id
-    method _type = s.sample_type
+    method type_ = s.sample_type
     method experiment = s.sample_exp
     method model = model s.sample_model
     method condition = s.sample_condition
@@ -110,87 +110,87 @@ module Make(S : Settings) = struct
         Samtools.bam_of_indexed_bam s#aligned_reads_indexed_bam
     end
 
-(*   class tf_chip_seq_sample sample format genome tf = *)
-(*     object (s) *)
-(*       inherit simply_mapped_dna_seq_sample sample format genome *)
-(*       method tf : string = tf *)
-(*     end *)
+  class tf_chip_seq_sample sample format genome tf =
+    object (s)
+      inherit simply_mapped_dna_seq_sample sample format genome
+      method tf : string = tf
+    end
 
-(*   let samples = *)
-(*     extract_unique ( *)
-(*       function *)
-(*       | Sample s -> Some s *)
-(*       | _ -> None *)
-(*     ) *)
+  let samples =
+    extract_unique (
+      function
+      | Sample s -> Some s
+      | _ -> None
+    )
 
 
-(*   let short_read_sample sobj format = *)
-(*     let s = sobj # repr in *)
-(*     match sobj # model . model_genome with *)
-(*     | Some g -> ( *)
-(*         match s.sample_exp with *)
-(*         | `TF_ChIP tf -> *)
-(*           `TF_ChIP_seq (new tf_chip_seq_sample s format g tf) *)
-(*         | `FAIRE -> *)
-(*           `FAIRE_seq (new simply_mapped_dna_seq_sample s format g) *)
-(*         | `EM_ChIP _ -> *)
-(*           `EM_ChIP_seq (new simply_mapped_dna_seq_sample s format g) *)
-(*         | `mRNA -> `mRNA_seq (new short_read_sample s format) *)
-(*         | `whole_cell_extract -> `WCE_seq (new simply_mapped_dna_seq_sample s format g) *)
-(*       ) *)
-(*     | None -> *)
-(*       `Short_read_sample (new short_read_sample s format) *)
+  let short_read_sample sobj format =
+    let s = sobj # repr in
+    match sobj # model . model_genome with
+    | Some g -> (
+        match s.sample_exp with
+        | `TF_ChIP tf ->
+          `TF_ChIP_seq (new tf_chip_seq_sample s format g tf)
+        | `FAIRE ->
+          `FAIRE_seq (new simply_mapped_dna_seq_sample s format g)
+        | `EM_ChIP _ ->
+          `EM_ChIP_seq (new simply_mapped_dna_seq_sample s format g)
+        | `mRNA -> `mRNA_seq (new short_read_sample s format)
+        | `whole_cell_extract -> `WCE_seq (new simply_mapped_dna_seq_sample s format g)
+      )
+    | None ->
+      `Short_read_sample (new short_read_sample s format)
 
-(*   let any_sample s : any_sample = match s # _type with *)
-(*     | `short_reads format -> short_read_sample s format *)
+  let any_sample s : any_sample = match s # type_ with
+    | `short_reads format -> short_read_sample s format
 
-(*   let any_samples = List.map samples ~f:(fun s -> any_sample (new sample s)) *)
+  let any_samples = List.map samples ~f:(fun s -> any_sample (new sample s))
 
-(*   let tf_chip_seq_samples = List.filter_map any_samples ~f:(function *)
-(*       | `TF_ChIP_seq s -> Some s *)
-(*       | `EM_ChIP_seq _ *)
-(*       | `FAIRE_seq _ *)
-(*       | `mRNA_seq _ *)
-(*       | `WCE_seq _ *)
-(*       | `Short_read_sample _ -> None *)
-(*     ) *)
+  let tf_chip_seq_samples = List.filter_map any_samples ~f:(function
+      | `TF_ChIP_seq s -> Some s
+      | `EM_ChIP_seq _
+      | `FAIRE_seq _
+      | `mRNA_seq _
+      | `WCE_seq _
+      | `Short_read_sample _ -> None
+    )
 
-(*   let faire_seq_samples = List.filter_map any_samples ~f:(function *)
-(*       | `FAIRE_seq s -> Some s *)
-(*       | `TF_ChIP_seq _ *)
-(*       | `EM_ChIP_seq _ *)
-(*       | `mRNA_seq _ *)
-(*       | `WCE_seq _ *)
-(*       | `Short_read_sample _ -> None *)
-(*     ) *)
+  let faire_seq_samples = List.filter_map any_samples ~f:(function
+      | `FAIRE_seq s -> Some s
+      | `TF_ChIP_seq _
+      | `EM_ChIP_seq _
+      | `mRNA_seq _
+      | `WCE_seq _
+      | `Short_read_sample _ -> None
+    )
 
-(*   let mappable_short_read_samples = List.filter_map any_samples ~f:(function *)
-(*       | `TF_ChIP_seq s -> Some (s :> mappable_short_read_sample) *)
-(*       | `EM_ChIP_seq s -> Some (s :> mappable_short_read_sample) *)
-(*       | `FAIRE_seq s -> Some (s :> mappable_short_read_sample) *)
-(*       | `mRNA_seq s -> None *)
-(*       | `WCE_seq s -> Some (s :> mappable_short_read_sample) *)
-(*       | `Short_read_sample s -> None *)
-(*     ) *)
+  let mappable_short_read_samples = List.filter_map any_samples ~f:(function
+      | `TF_ChIP_seq s -> Some (s :> mappable_short_read_sample)
+      | `EM_ChIP_seq s -> Some (s :> mappable_short_read_sample)
+      | `FAIRE_seq s -> Some (s :> mappable_short_read_sample)
+      | `mRNA_seq s -> None
+      | `WCE_seq s -> Some (s :> mappable_short_read_sample)
+      | `Short_read_sample s -> None
+    )
 
-(*   let short_read_samples = List.filter_map any_samples ~f:(function *)
-(*       | `TF_ChIP_seq s -> Some (s :> short_read_sample) *)
-(*       | `EM_ChIP_seq s -> Some (s :> short_read_sample) *)
-(*       | `FAIRE_seq s -> Some (s :> short_read_sample) *)
-(*       | `mRNA_seq s -> Some (s :> short_read_sample) *)
-(*       | `WCE_seq s -> Some (s :> short_read_sample) *)
-(*       | `Short_read_sample s -> Some (s :> short_read_sample) *)
-(*     ) *)
+  let short_read_samples = List.filter_map any_samples ~f:(function
+      | `TF_ChIP_seq s -> Some (s :> short_read_sample)
+      | `EM_ChIP_seq s -> Some (s :> short_read_sample)
+      | `FAIRE_seq s -> Some (s :> short_read_sample)
+      | `mRNA_seq s -> Some (s :> short_read_sample)
+      | `WCE_seq s -> Some (s :> short_read_sample)
+      | `Short_read_sample s -> Some (s :> short_read_sample)
+    )
 
-(*   let sample_of_any = function *)
-(*     | `TF_ChIP_seq s -> (s :> sample) *)
-(*     | `EM_ChIP_seq s -> (s :> sample) *)
-(*     | `FAIRE_seq s -> (s :> sample) *)
-(*     | `WCE_seq s -> (s :> sample) *)
-(*     | `mRNA_seq s -> (s :> sample) *)
-(*     | `Short_read_sample s -> (s :> sample) *)
+  let sample_of_any = function
+    | `TF_ChIP_seq s -> (s :> sample)
+    | `EM_ChIP_seq s -> (s :> sample)
+    | `FAIRE_seq s -> (s :> sample)
+    | `WCE_seq s -> (s :> sample)
+    | `mRNA_seq s -> (s :> sample)
+    | `Short_read_sample s -> (s :> sample)
 
-(*   let samples = List.map any_samples ~f:sample_of_any *)
+  let samples = List.map any_samples ~f:sample_of_any
 
 end
 
