@@ -1,13 +1,12 @@
 open Core.Std
-
-let digest x =
-  Digest.to_hex (Digest.string (Marshal.to_string x []))
-
-type path = string list
+open Defs
 
 type 'a t = u
-and u = {
-  target : path ;
+and u =
+  | Input of path
+  | Extract of u * path
+  | Step of step
+and step = {
   deps : u list ;
   script : cmd list ;
 }
@@ -33,6 +32,7 @@ module Types = struct
   type 'a tgz = ([`tgz of 'a],[`binary]) file
   type pdf = ([`pdf],[`text]) file
   type html = ([`html], [`text]) file
+  type bash_script = ([`bash_script], [`text]) file
 
   class type ['a, 'b, 'c, 'd] tabular = object
     inherit [[`tabular], [`text]] file
@@ -58,43 +58,32 @@ let deps_of_cmds l =
       List.dedup (deps_of_cmd cmd @ accu)
     )
 
-let string_of_path p =
-  List.fold_left p ~init:"" ~f:Filename.concat
-
-let string_of_token target = function
+let string_of_token target build_target = function
   | S s -> s
-  | D r -> string_of_path r.target
-  | T -> string_of_path target
+  | D w -> string_of_path (target (w :> u))
+  | T -> build_target
 
-let string_of_cmd target tokens =
-  List.map tokens ~f:(string_of_token target)
+let string_of_cmd target build_target tokens =
+  List.map tokens ~f:(string_of_token target build_target)
   |> String.concat
 
-let make ?target script =
-  let target = match target with
-    | Some p -> p
-    | None ->
-      let id = digest script in
-      [ ".guizmin" ; id ]
-  in
+let shell_script target build_target r =
+  List.map r.script ~f:(string_of_cmd target (string_of_path build_target))
+
+let step script =
   let deps = deps_of_cmds script in
-  { target ; deps ; script }
+  Step { deps ; script }
 
-let in_target rule path =
-  let deps = [ rule ] in
-  let script = [] in
-  let target = rule.target @ path in
-  { target ; deps ; script }
+let extract u path =
+  Extract (u, path)
 
-let input target =
-  { target = [target] ; script = [] ; deps = [] }
+let input target = Input (path_of_string target)
 
-let ( >:: ) target u = { u with target }
 
 module API = struct
-  type expr = token list
+  type shell_expr = token list
 
-  let workflow = make
+  let workflow = step
 
   let program ?path p ?stdin ?stdout ?stderr args =
     List.concat (
@@ -102,7 +91,13 @@ module API = struct
         match path with
         | None | Some [] -> []
         | Some pkgs ->
-          [ S ("PATH=" ^ String.concat ~sep:":" (List.map pkgs ~f:(fun p -> string_of_path (p.target @ [ "bin" ])))) ]
+          S "PATH=" ::
+          (
+            List.map pkgs ~f:(fun p -> [ D p ; S "/bin" ])
+            |> List.intersperse ~sep:[S ":"]
+            |> List.concat
+          )
+          @ [ S ":$PATH" ]
       )
       ::
       [ S p ]
@@ -121,7 +116,6 @@ module API = struct
         | Some e -> [S " 2> " :: e])
     )
     |> List.intersperse ~sep:(S " ")
-
 
   let target () = [ T ]
   let string s = [ S s ]
@@ -146,4 +140,17 @@ module API = struct
   let mkdir d = program "mkdir" [ d ]
 
   let mkdir_p d = program "mkdir" [ string "-p" ; d ]
+
+  let cd p = program "cd" [ p ]
+
+  let wget url = program "wget" [ string url ]
+
+  let bash ?path script ?stdin ?stdout ?stderr args =
+    program "bash" ?path ?stdin ?stdout ?stderr (dep script :: args)
+
 end
+
+let deps = function
+  | Input _ -> []
+  | Step s -> s.deps
+  | Extract (u,_) -> [ u ]

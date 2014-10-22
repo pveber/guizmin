@@ -11,12 +11,14 @@ Library guizmin
   Path:             src/lib
   Pack:             true
   Modules:          Bed, Bedtools, Bowtie,
+                    Defs,
                     Experiment_description,
                     Fasta,
                     Fastq, FastQC, Jaspar,
                     Macs, Makefile,
                     Sam, Samtools, Sra, Ucsc_gb, Unroll_workflow,
-                    Unrolled_workflow, Utils, Workflow
+                    Unrolled_workflow, Utils,
+                    Workflow
   FindlibName:      guizmin
   BuildDepends:     bistro, bistro.syntax, core, sexplib.syntax, threads
   XMETARequires:    bistro, core, threads

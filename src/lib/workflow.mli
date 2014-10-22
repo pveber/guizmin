@@ -1,16 +1,15 @@
-type path = string list
+open Defs
 
 type 'a t = private u
-and u = {
-  target : path ;
+and u =
+  | Input of path
+  | Extract of u * path
+  | Step of step
+and step = {
   deps : u list ;
   script : cmd list ;
 }
-and cmd = token list
-and token =
-  | S : string -> token
-  | D : _ t -> token
-  | T : token
+and cmd
 
 module Types : sig
   type 'a workflow = 'a t
@@ -28,6 +27,7 @@ module Types : sig
   type 'a tgz = ([`tgz of 'a],[`binary]) file
   type pdf = ([`pdf],[`text]) file
   type html = ([`html], [`text]) file
+  type bash_script = ([`bash_script], [`text]) file
 
   class type ['a, 'b, 'c, 'd] tabular = object
     inherit [[`tabular], [`text]] file
@@ -43,37 +43,48 @@ end
 
 open Types
 
-val string_of_cmd : path -> cmd -> string
-
-val make : ?target:path -> cmd list -> 'a t
-val in_target : _ directory t -> path -> 'a t
+val step : cmd list -> 'a t
+val extract : _ directory t -> path -> 'a t
 val input : string -> 'a t
 
-val ( >:: ) : path -> 'a t -> 'a t
 
 module API : sig
-  type expr
-  val workflow : ?target:path -> cmd list -> 'a t
+  type shell_expr
+  val workflow : cmd list -> 'a t
+
   val program :
     ?path:package workflow list ->
     string ->
-    ?stdin:expr -> ?stdout:expr -> ?stderr:expr ->
-    expr list -> cmd
+    ?stdin:shell_expr -> ?stdout:shell_expr -> ?stderr:shell_expr ->
+    shell_expr list -> cmd
 
-  val target : unit -> expr
-  val string : string -> expr
-  val int : int -> expr
-  val float : float -> expr
-  val path : path -> expr
-  val dep : _ t -> expr
-  val option : ('a -> expr) -> 'a option -> expr
-  val list : ('a -> expr) -> ?sep:string -> 'a list -> expr
-  val enum : ('a * string) list -> 'a -> expr
-  val opt : string -> ('a -> expr) -> 'a -> expr
+  val bash :
+    ?path:package workflow list ->
+    bash_script workflow ->
+    ?stdin:shell_expr -> ?stdout:shell_expr -> ?stderr:shell_expr ->
+    shell_expr list -> cmd
 
-  val mkdir : expr -> cmd
-  val mkdir_p : expr -> cmd
+  val target : unit -> shell_expr
+  val string : string -> shell_expr
+  val int : int -> shell_expr
+  val float : float -> shell_expr
+  val path : path -> shell_expr
+  val dep : _ t -> shell_expr
+  val option : ('a -> shell_expr) -> 'a option -> shell_expr
+  val list : ('a -> shell_expr) -> ?sep:string -> 'a list -> shell_expr
+  val enum : ('a * string) list -> 'a -> shell_expr
+  val opt : string -> ('a -> shell_expr) -> 'a -> shell_expr
+
+  val mkdir : shell_expr -> cmd
+  val mkdir_p : shell_expr -> cmd
+  val wget : string -> cmd
+  val cd : shell_expr -> cmd
+
 end
+
+val deps : u -> u list
+val shell_script : (u -> path) -> path -> step -> string list
+
 
 (* let body = program "bowtie" [ *)
 (*     opt int "-v" 1 ; *)

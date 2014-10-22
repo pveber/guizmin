@@ -1,4 +1,4 @@
-open Bistro_workflow.Types
+open Workflow.Types
 
 type genome = [ `dm3 | `hg18 | `hg19 | `mm8 | `mm9 | `mm10 | `sacCer2 ] with sexp
 val string_of_genome : [< genome] -> string
@@ -6,9 +6,9 @@ val string_of_genome : [< genome] -> string
 type twobit = ([`twobit], [`binary]) file
 
 (** {5 Download of genome sequences} *)
-val chromosome_sequences : [< genome] -> [`ucsc_chromosome_sequences] directory workflow
+(* val chromosome_sequences : [< genome] -> [`ucsc_chromosome_sequences] directory workflow *)
 val genome_sequence : [< genome] -> Fasta.workflow
-val genome_2bit_sequence : [< genome] -> twobit workflow
+(* val genome_2bit_sequence : [< genome] -> twobit workflow *)
 
 (* type bigWig *)
 (* type wig *)
@@ -21,8 +21,8 @@ val genome_2bit_sequence : [< genome] -> twobit workflow
 (* val wg_encode_crg_mappability_75  : [`mm9 | `hg18 | `hg19] -> bigWig file *)
 (* val wg_encode_crg_mappability_100 : [`mm9 | `hg18 | `hg19] -> bigWig file *)
 
-val twoBitToFa : 'a Bed.bed4_like workflow -> twobit workflow -> Fasta.workflow
-val fasta_of_bed : [< genome] -> 'a Bed.bed4_like workflow -> Fasta.workflow
+(* val twoBitToFa : 'a Bed.bed4_like workflow -> twobit workflow -> Fasta.workflow *)
+(* val fasta_of_bed : [< genome] -> 'a Bed.bed4_like workflow -> Fasta.workflow *)
 (* val fetch_sequences : [`ucsc_2bit] file_path -> Fungen.Location.t list -> string list *)
 
 (* module Chrom_info : sig *)

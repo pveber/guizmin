@@ -1,3 +1,3 @@
-open Bistro_workflow.Types
+open Workflow.Types
 
-type workflow = ([`fasta],[`text]) file Bistro_workflow.t
+type workflow = ([`fasta],[`text]) file Workflow.t

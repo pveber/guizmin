@@ -1,4 +1,4 @@
-type path = string list
+open Defs
 
 type rule = {
   target : path ;
@@ -8,8 +8,11 @@ type rule = {
   desc : string option ;
 }
 
-type t = rule list
+type t = private rule list
 
 val empty : t
-val add_rule : ?first:bool -> t -> rule -> t
-val add_workflow : ?first:bool -> t -> _ Workflow.t -> t
+val add_rule : t -> rule -> t
+val add_workflow : t -> _ Workflow.t -> t
+val ( ++ ) : t -> _ Workflow.t -> t
+
+val to_channel : t -> out_channel -> unit
