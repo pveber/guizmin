@@ -152,11 +152,16 @@ module API = struct
 
   let cd p = program "cd" [ p ]
 
+  let rm_rf x = program "rm" [ string "-rf" ; x ]
+
+  let mv x y = program "mv" [ x ; y ]
+
   let wget url = program "wget" [ string url ]
 
   let bash ?path script ?stdin ?stdout ?stderr args =
     program "bash" ?path ?stdin ?stdout ?stderr (dep script :: args)
 
+  let ( // ) x y = x @ [ S "/" ; S y ]
 end
 
 let deps = function

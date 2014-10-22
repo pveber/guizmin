@@ -7,14 +7,14 @@ class type genome = object
   method bowtie_index : Bowtie.index workflow
 end
 
-(* class type sample = object *)
-(*   method repr : Experiment_description.sample *)
-(*   method id : string *)
-(*   method _type : sample_type *)
-(*   method experiment : experiment *)
-(*   method model : model *)
-(*   method condition : string *)
-(* end *)
+class type sample = object
+  method repr : Experiment_description.sample
+  method id : string
+  method _type : sample_type
+  method experiment : experiment
+  method model : model
+  method condition : string
+end
 
 (* class type short_read_sample = object *)
 (*   inherit sample *)

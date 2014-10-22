@@ -1,50 +1,34 @@
 open Workflow.Types
-
 open Workflow.API
 
-let package_install_script = Utils.wget "fixme"
+let package_script = Utils.wget "https://raw.githubusercontent.com/pveber/compbio-scripts/master/fastqc-install/0.10.1/fastqc-install.sh"
 
-(* let package = Bistro_workflow.make <:script< *)
+let package =
+  workflow [
+    bash package_script [ target () ]
+  ]
 
-(* URL=http://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.10.1.zip *)
-(* ARCHIVE=`basename ${URL}` *)
+type report
+type workflow = report directory Workflow.t
 
-(* mkdir -p #TMP *)
-(* cd #TMP *)
-(* wget -O ${ARCHIVE} ${URL} *)
-(* unzip ${ARCHIVE} *)
-(* cd FastQC *)
-
-(* mkdir -p #DEST/local/fastqc *)
-(* cp -r * #DEST/local/fastqc *)
-(* chmod 755 #DEST/local/fastqc/fastqc *)
-
-(* cd #DEST/bin *)
-(* ln -s ../local/fastqc/fastqc . *)
-
-(* >> *)
-
-(* type report *)
-(* type workflow = report directory Bistro_workflow.t *)
-
-(* let run fq = Bistro_workflow.make <:script< *)
-
-(* export PATH=$w:package$/bin:$PATH *)
-(* mkdir -p #DEST *)
-(* fastqc --outdir=#DEST #w:fq# *)
-(* rm #DEST/*.zip *)
-(* mv #DEST/*_fastqc/* #DEST *)
-(* rmdir #DEST/*_fastqc *)
-
-(* >> *)
+let run fq = workflow [
+    mkdir_p (target ()) ;
+    program "fastqc" ~path:[package] [
+      seq [string "--outdir=" ; target ()] ;
+      dep fq ;
+    ] ;
+    rm_rf (target () // "*.zip") ;
+    mv (target () // "*_fastqc/*") (target ()) ;
+    rm_rf (target () // "*_fastqc") ;
+  ]
 
 
-(* let html_report dir = *)
-(*   Bistro_workflow.select dir "fastqc_report.html" *)
+let html_report dir =
+  Workflow.extract dir ["fastqc_report.html"]
 
-(* let per_base_quality dir = *)
-(*   Bistro_workflow.select dir "Images/per_base_quality.png" *)
+let per_base_quality dir =
+  Workflow.extract dir ["Images" ; "per_base_quality.png"]
 
-(* let per_base_sequence_content dir = *)
-(*   Bistro_workflow.select dir "Images/per_base_sequence_content.png" *)
+let per_base_sequence_content dir =
+  Workflow.extract dir ["Images" ; "per_base_sequence_content.png"]
 

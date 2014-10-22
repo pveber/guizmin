@@ -84,11 +84,14 @@ module API : sig
   val opt : string -> ('a -> shell_expr) -> 'a -> shell_expr
   val flag : ('a -> shell_expr) -> 'a -> bool -> shell_expr
 
+  val ( // ) : shell_expr -> string -> shell_expr
+
   val mkdir : shell_expr -> cmd
   val mkdir_p : shell_expr -> cmd
   val wget : string -> cmd
   val cd : shell_expr -> cmd
-
+  val rm_rf : shell_expr -> cmd
+  val mv : shell_expr -> shell_expr -> cmd
 end
 
 val deps : u -> u list

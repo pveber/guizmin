@@ -64,30 +64,30 @@ module Make(S : Settings) = struct
 
   let genome g = List.find_exn genomes ~f:(fun x -> x # repr = g)
 
-(*   class sample (s : Experiment_description.sample) = object *)
-(*     method repr = s *)
-(*     method id = s.sample_id *)
-(*     method _type = s.sample_type *)
-(*     method experiment = s.sample_exp *)
-(*     method model = model s.sample_model *)
-(*     method condition = s.sample_condition *)
-(*   end *)
+  class sample (s : Experiment_description.sample) = object
+    method repr = s
+    method id = s.sample_id
+    method _type = s.sample_type
+    method experiment = s.sample_exp
+    method model = model s.sample_model
+    method condition = s.sample_condition
+  end
 
-(*   let sanger_fastq_of_url format url = *)
-(*     let f x = Fastq.to_sanger x (unsafe_file_of_url url) in *)
-(*     match format with *)
-(*     | `fastq `sanger -> f Fastq.Sanger *)
-(*     | `fastq `solexa -> f Fastq.Solexa *)
-(*     | `fastq `phred64 -> f Fastq.Phred64 *)
-(*     | `sra -> Sra.fastq_dump (unsafe_file_of_url url) *)
+  let sanger_fastq_of_url format url =
+    let f x = Fastq.to_sanger x (unsafe_file_of_url url) in
+    match format with
+    | `fastq `sanger -> f Fastq.Sanger
+    | `fastq `solexa -> f Fastq.Solexa
+    | `fastq `phred64 -> f Fastq.Phred64
+    | `sra -> Sra.fastq_dump (unsafe_file_of_url url)
 
-(*   class short_read_sample sample format = object (s) *)
-(*     inherit sample sample *)
-(*     method format : short_read_format = format *)
-(*     method sanger_fastq = *)
-(*       List.map sample.sample_files ~f:(sanger_fastq_of_url format) *)
-(*     method fastQC_report = FastQC.run (Fastq.concat s#sanger_fastq) *)
-(*   end *)
+  class short_read_sample sample format = object (s)
+    inherit sample sample
+    method format : short_read_format = format
+    method sanger_fastq =
+      List.map sample.sample_files ~f:(sanger_fastq_of_url format)
+    method fastQC_report = FastQC.run (Fastq.concat s#sanger_fastq)
+  end
 
 (*   class short_read_sample_with_reference_genome sample format g = object *)
 (*     inherit short_read_sample sample format *)
