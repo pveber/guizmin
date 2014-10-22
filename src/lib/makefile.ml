@@ -66,11 +66,16 @@ let body_of_workflow u = match u with
   | Workflow.Extract _ ->
     [ sprintf "test -e %s" (string_of_path (target_of_workflow u)) ]
   | Workflow.Step r ->
-    let script_cmds = Workflow.shell_script target_of_workflow (build_target_of_workflow r) r in
+    let script_cmd =
+      Workflow.shell_script target_of_workflow (build_target_of_workflow r) r
+      |> String.concat ~sep:" && \\\n\t"
+    in
     let mv_cmd =
-      sprintf "mv %s %s" (string_of_path (build_target_of_workflow r)) (string_of_path (target_of_workflow u)) in
-    let cmds = script_cmds @ [ mv_cmd ] in
-    [ String.concat ~sep:" && \\\n\t" cmds ]
+      sprintf "mv %s %s"
+        (string_of_path (build_target_of_workflow r))
+        (string_of_path (target_of_workflow u))
+    in
+    [ sprintf "(%s) && \\\n\t %s" script_cmd mv_cmd ]
 
 let rule_of_workflow u =
   {
