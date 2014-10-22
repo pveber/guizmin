@@ -62,7 +62,7 @@ let genome_sequence org =
   let open Workflow in
   workflow [
     program "bash" [
-      opt "-c" string "shopt -s nullglob ; cat $1/{chr?.fa,chr??.fa,chr???.fa,chr????.fa} > $2" ;
+      opt "-c" string "\"shopt -s nullglob ; cat $1/{chr?.fa,chr??.fa,chr???.fa,chr????.fa} > $2\"" ;
       dep chr_seqs ;
       target ()
     ]
