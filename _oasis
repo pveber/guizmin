@@ -10,7 +10,8 @@ BuildTools:  ocamlbuild
 Library guizmin
   Path:             src/lib
   Pack:             true
-  Modules:          Bed, Bedtools, Bowtie,
+  Modules:          Bam,
+                    Bed, Bedtools, Bowtie,
                     Defs,
                     Experiment_description,
                     Fasta,

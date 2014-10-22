@@ -1,3 +1,3 @@
-open Bistro_workflow.Types
+open Workflow.Types
 
-type workflow = ([`bam],[`binary]) file Bistro_workflow.t
+type workflow = ([`bam],[`binary]) file Workflow.t

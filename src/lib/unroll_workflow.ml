@@ -89,26 +89,26 @@ module Make(S : Settings) = struct
     method fastQC_report = FastQC.run (Fastq.concat s#sanger_fastq)
   end
 
-(*   class short_read_sample_with_reference_genome sample format g = object *)
-(*     inherit short_read_sample sample format *)
-(*     method reference_genome = genome g *)
-(*   end *)
+  class short_read_sample_with_reference_genome sample format g = object
+    inherit short_read_sample sample format
+    method reference_genome = genome g
+  end
 
-(*   class simply_mapped_dna_seq_sample sample format genome = *)
-(*     object (s) *)
-(*       inherit short_read_sample_with_reference_genome sample format genome *)
+  class simply_mapped_dna_seq_sample sample format genome =
+    object (s)
+      inherit short_read_sample_with_reference_genome sample format genome
 
-(*       method aligned_reads = *)
-(*         let index = s#reference_genome#bowtie_index in *)
-(*         let fqs = s#sanger_fastq in *)
-(*         Bowtie.bowtie ~v:2 ~m:1 index fqs *)
+      method aligned_reads =
+        let index = s#reference_genome#bowtie_index in
+        let fqs = s#sanger_fastq in
+        Bowtie.bowtie ~v:2 ~m:1 index fqs
 
-(*       method aligned_reads_indexed_bam = *)
-(*         Samtools.indexed_bam_of_sam s#aligned_reads *)
+      method aligned_reads_indexed_bam =
+        Samtools.indexed_bam_of_sam s#aligned_reads
 
-(*       method aligned_reads_bam = *)
-(*         Samtools.bam_of_indexed_bam s#aligned_reads_indexed_bam *)
-(*     end *)
+      method aligned_reads_bam =
+        Samtools.bam_of_indexed_bam s#aligned_reads_indexed_bam
+    end
 
 (*   class tf_chip_seq_sample sample format genome tf = *)
 (*     object (s) *)

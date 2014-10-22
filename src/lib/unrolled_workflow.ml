@@ -10,26 +10,26 @@ end
 class type sample = object
   method repr : Experiment_description.sample
   method id : string
-  method _type : sample_type
+  method type_ : sample_type
   method experiment : experiment
   method model : model
   method condition : string
 end
 
-(* class type short_read_sample = object *)
-(*   inherit sample *)
-(*   method format : short_read_format *)
-(*   method sanger_fastq : [`sanger] Fastq.workflow list *)
-(*   method fastQC_report : FastQC.workflow *)
-(* end *)
+class type short_read_sample = object
+  inherit sample
+  method format : short_read_format
+  method sanger_fastq : [`sanger] Fastq.workflow list
+  method fastQC_report : FastQC.workflow
+end
 
-(* class type mappable_short_read_sample = object *)
-(*   inherit short_read_sample *)
-(*   method reference_genome : genome *)
-(*   method aligned_reads : Sam.workflow *)
-(*   method aligned_reads_indexed_bam : [ `indexed_bam ] directory workflow *)
-(*   method aligned_reads_bam : Bam.workflow *)
-(* end *)
+class type mappable_short_read_sample = object
+  inherit short_read_sample
+  method reference_genome : genome
+  method aligned_reads : Sam.workflow
+  method aligned_reads_indexed_bam : [ `indexed_bam ] directory workflow
+  method aligned_reads_bam : Bam.workflow
+end
 
 (* class type tf_chip_seq_sample = object *)
 (*   inherit mappable_short_read_sample *)
