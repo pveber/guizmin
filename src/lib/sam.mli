@@ -1,3 +1,3 @@
 type format
 
-type workflow = format Bistro_workflow.t
+type workflow = format Workflow.t

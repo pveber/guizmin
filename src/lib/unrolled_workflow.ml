@@ -1,11 +1,11 @@
-(* open Bistro_workflow.Types *)
-(* open Experiment_description *)
+open Workflow.Types
+open Experiment_description
 
-(* class type genome = object *)
-(*   method repr : Experiment_description.genome *)
-(*   method sequence : Fasta.workflow *)
-(*   method bowtie_index : Bowtie.index workflow *)
-(* end *)
+class type genome = object
+  method repr : Experiment_description.genome
+  method sequence : Fasta.workflow
+  (* method bowtie_index : Bowtie.index workflow *)
+end
 
 (* class type sample = object *)
 (*   method repr : Experiment_description.sample *)

@@ -1,37 +1,13 @@
-(* open Bistro_workflow.Types *)
+open Workflow.Types
+open Workflow.API
 
-(* type index = [`bowtie_index] directory *)
+type index = [`bowtie_index] directory
 
-(* let package = Bistro_workflow.make <:script< *)
+let package_script = Utils.wget "https://raw.githubusercontent.com/pveber/compbio-scripts/master/bowtie-install/1.0.1/bowtie-install.sh"
 
-(* URL=http://sourceforge.net/projects/bowtie-bio/files/bowtie/1.0.0/bowtie-1.0.0-src.zip/download *)
-(* ARCHIVE=`basename ${URL%\/download}` *)
-
-(* PREFIX=`readlink -f #DEST` *)
-(* mkdir -p #TMP *)
-(* cd #TMP *)
-(* wget -O ${ARCHIVE} ${URL} *)
-(* unzip ${ARCHIVE} *)
-(* cd ${ARCHIVE%\-src.zip} *)
-(* make *)
-(* mkdir -p $PREFIX/bin *)
-(* cp bowtie bowtie-build bowtie-inspect $PREFIX/bin *)
-
-(* >> *)
-
-(* let package = Bistro_workflow.make <:script< *)
-
-(* PREFIX=`readlink -f #DEST` *)
-(* mkdir -p #TMP *)
-(* cd #TMP *)
-(* wget -O bowtie.zip "http://downloads.sourceforge.net/project/bowtie-bio/bowtie/1.0.1/bowtie-1.0.1-linux-x86_64.zip?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fbowtie-bio%2Ffiles%2Fbowtie%2F1.0.1%2F&ts=1396093686&use_mirror=freefr" *)
-(* unzip bowtie.zip *)
-(* cd bowtie-1.0.1 *)
-(* mkdir -p $PREFIX/bin *)
-(* cp bowtie bowtie-build bowtie-inspect $PREFIX/bin *)
-
-
-(* >> *)
+let package = workflow [
+    bash package_script [ target () ]
+  ]
 
 (* (\* memory bound correspond to storing a human index in memory, following bowtie manual *\) *)
 (* let bowtie_build ?packed ?color fa = *)

@@ -1,8 +1,8 @@
-(* open Bistro_workflow.Types *)
+open Workflow.Types
 
-(* type index = [`bowtie_index] directory *)
+type index = [`bowtie_index] directory
 
-(* val package : package workflow *)
+val package : package workflow
 
 (* val bowtie_build : *)
 (*   ?packed:bool -> *)
