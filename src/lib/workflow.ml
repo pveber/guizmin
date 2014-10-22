@@ -9,6 +9,9 @@ and u =
 and step = {
   deps : u list ;
   script : cmd list ;
+  np : int ; (** Required number of processors *)
+  mem : int ; (** Required memory in MB *)
+  timeout : int ; (** Maximum allowed running time in hours *)
 }
 and cmd = token list
 and token =
@@ -70,9 +73,9 @@ let string_of_cmd target build_target tokens =
 let shell_script target build_target r =
   List.map r.script ~f:(string_of_cmd target (string_of_path build_target))
 
-let step script =
+let step ?(np = 1) ?(mem = 100) ?(timeout = 24) script =
   let deps = deps_of_cmds script in
-  Step { deps ; script }
+  Step { deps ; script ; np ; mem ; timeout }
 
 let extract u path =
   Extract (u, path)

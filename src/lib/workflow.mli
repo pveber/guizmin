@@ -8,6 +8,9 @@ and u =
 and step = {
   deps : u list ;
   script : cmd list ;
+  np : int ; (** Required number of processors *)
+  mem : int ; (** Required memory in MB *)
+  timeout : int ; (** Maximum allowed running time in hours *)
 }
 and cmd
 
@@ -43,14 +46,18 @@ end
 
 open Types
 
-val step : cmd list -> 'a t
+val step :
+  ?np:int -> ?mem:int -> ?timeout:int ->
+  cmd list -> 'a t
 val extract : _ directory t -> path -> 'a t
 val input : string -> 'a t
 
 
 module API : sig
   type shell_expr
-  val workflow : cmd list -> 'a t
+  val workflow :
+    ?np:int -> ?mem:int -> ?timeout:int ->
+    cmd list -> 'a t
 
   val program :
     ?path:package workflow list ->
