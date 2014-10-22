@@ -61,6 +61,8 @@ let rec target_of_workflow =
 let build_target_of_workflow r =
   [ "_guizmin" ; "build" ; digest r ]
 
+let double_dollars = String.substr_replace_all ~pattern:"$" ~with_:"$$"
+
 let body_of_workflow u = match u with
   | Workflow.Input _
   | Workflow.Extract _ ->
@@ -68,6 +70,7 @@ let body_of_workflow u = match u with
   | Workflow.Step r ->
     let script_cmd =
       Workflow.shell_script target_of_workflow (build_target_of_workflow r) r
+      |> List.map ~f:double_dollars
       |> String.concat ~sep:" && \\\n\t"
     in
     let mv_cmd =
