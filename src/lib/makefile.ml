@@ -78,7 +78,7 @@ let body_of_workflow u = match u with
         (string_of_path (build_target_of_workflow r))
         (string_of_path (target_of_workflow u))
     in
-    [ sprintf "(%s) && \\\n\t %s" script_cmd mv_cmd ]
+    [ sprintf "(%s) && \\\n\t%s" script_cmd mv_cmd ]
 
 let rule_of_workflow u =
   {

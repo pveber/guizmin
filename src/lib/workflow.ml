@@ -89,36 +89,38 @@ module API = struct
   let workflow = step
 
   let program ?path p ?stdin ?stdout ?stderr args =
-    List.concat (
-      (
-        match path with
-        | None | Some [] -> []
-        | Some pkgs ->
-          S "PATH=" ::
-          (
-            List.map pkgs ~f:(fun p -> [ D p ; S "/bin" ])
-            |> List.intersperse ~sep:[S ":"]
-            |> List.concat
-          )
-          @ [ S ":$PATH" ]
-      )
-      ::
-      [ S p ]
-      :: args
-      @ (
-        match stdout with
-        | None -> []
-        | Some e -> [ S " > " :: e ])
-      @ (
-        match stdin with
-        | None -> []
-        | Some e -> [ S " < " :: e ])
-      @ (
-        match stderr with
-        | None -> []
-        | Some e -> [S " 2> " :: e])
-    )
-    |> List.intersperse ~sep:(S " ")
+    let path_expr =
+      match path with
+      | None | Some [] -> []
+      | Some pkgs ->
+        S "PATH=" ::
+        (
+          List.map pkgs ~f:(fun p -> [ D p ; S "/bin" ])
+          |> List.intersperse ~sep:[S ":"]
+          |> List.concat
+        )
+        @ [ S ":$PATH" ]
+    in
+    let prog_expr = [ S p ] in
+    let stdout_expr =
+      match stdout with
+      | None -> []
+      | Some e -> S " > " :: e
+    in
+    let stdin_expr =
+      match stdin with
+      | None -> []
+      | Some e -> S " < " :: e
+    in
+    let stderr_expr =
+      match stderr with
+      | None -> []
+      | Some e -> S " 2> " :: e
+    in
+    [ path_expr ; prog_expr ] @ args @ [ stdin_expr ; stdout_expr ; stderr_expr ]
+    |> List.filter ~f:(( <> ) [])
+    |> List.intersperse ~sep:[S " "]
+    |> List.concat
 
   let target () = [ T ]
   let string s = [ S s ]
