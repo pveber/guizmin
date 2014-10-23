@@ -24,11 +24,31 @@ Library guizmin
   BuildDepends:     bistro, bistro.syntax, core, sexplib.syntax, threads
   XMETARequires:    bistro, core, threads
 
+Library guizmin_backend
+  Path:             src/backend
+  Modules:          Guizmin_backend, Guizmin_db, Guizmin_log
+  FindlibName:      backend
+  FindlibParent:    guizmin
+  BuildDepends:     core, guizmin, threads
+  XMETARequires:    core, guizmin, threads
+
+
+Library guizmin_lwt_backend
+  Path:             src/lwt_backend
+  Modules:          Guizmin_lwt_backend, Guizmin_lwt_engine, Guizmin_pool
+  FindlibName:      lwt
+  FindlibParent:    guizmin_backend
+  BuildDepends:     core, guizmin.backend, lwt.unix, threads
+  XMETARequires:    core, guizmin.backend, lwt.unix, threads
+
+
 Executable guizmin_app
   Path:             src/app
   MainIs:           guizmin_app.ml
-  BuildDepends:     bistro.pbs, cmdliner, core,
-                    guizmin, gzt, lambda-term,
+  BuildDepends:     cmdliner, core,
+                    guizmin,
+                    guizmin.backend.lwt,
+                    gzt, lambda-term,
                     lwt.syntax,
                     react,
                     sexplib.syntax, threads, tyxml

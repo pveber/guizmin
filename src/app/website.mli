@@ -17,12 +17,12 @@ module type S = sig
     ?f:(unit -> html_elt Lwt.t) ->
     unit -> html_elt page
 
-  val file_page : ?path:path -> _ Workflow.t -> Workflow.u page
+  val file_page : ?path:path -> _ Guizmin.Workflow.t -> Guizmin.Workflow.u page
 
   val register : html_elt page -> (unit -> html_elt Lwt.t) -> unit
 
   val generate :
-    workflow_output:(Workflow.u -> string Lwt.t) ->
+    workflow_output:(Guizmin.Workflow.u -> string Lwt.t) ->
     output_dir:string ->
     unit Lwt.t
 end

@@ -70,8 +70,8 @@ let string_of_cmd target build_target tokens =
   List.map tokens ~f:(string_of_token target build_target)
   |> String.concat
 
-let shell_script target build_target r =
-  List.map r.script ~f:(string_of_cmd target (string_of_path build_target))
+let shell_script target build_target script =
+  List.map script ~f:(string_of_cmd target (string_of_path build_target))
 
 let step ?(np = 1) ?(mem = 100) ?(timeout = 24) script =
   let deps = deps_of_cmds script in
@@ -82,7 +82,6 @@ let extract u path = match u with
   | Input _ | Step _ -> Extract (u, path)
 
 let input target = Input (path_of_string target)
-
 
 module API = struct
   type shell_expr = token list
@@ -136,7 +135,7 @@ module API = struct
 
   let list f ?(sep = ",") l =
     List.map l ~f
-    |> List.intersperse ~sep:[ S "," ]
+    |> List.intersperse ~sep:[ S sep ]
     |> List.concat
 
   let seq xs = List.concat xs

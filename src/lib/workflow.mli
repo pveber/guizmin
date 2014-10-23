@@ -95,7 +95,7 @@ module API : sig
 end
 
 val deps : u -> u list
-val shell_script : (u -> path) -> path -> step -> string list
+val shell_script : (u -> path) -> path -> cmd list -> string list
 
 
 (* let body = program "bowtie" [ *)

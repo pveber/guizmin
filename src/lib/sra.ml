@@ -6,11 +6,11 @@ type format
 
 type workflow = ([`sra], [`binary]) file Workflow.t
 
-let package_install_script = Utils.wget "http://somewhere"
+let package_install_script = Utils.wget "https://raw.githubusercontent.com/pveber/compbio-scripts/master/sra-toolkit-install/2.4.2-1/sra-toolkit-install.sh"
 
 let package =
   workflow [
-    program "bash" [ dep package_install_script ; target () ]
+    bash package_install_script [ target () ]
   ]
 
 let input x = Workflow.input x

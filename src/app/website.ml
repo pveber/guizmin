@@ -21,12 +21,12 @@ module type S = sig
     ?f:(unit -> html_elt Lwt.t) ->
     unit -> html_elt page
 
-  val file_page : ?path:path -> _ Workflow.t -> Workflow.u page
+  val file_page : ?path:path -> _ Guizmin.Workflow.t -> Guizmin.Workflow.u page
 
   val register : html_elt page -> (unit -> html_elt Lwt.t) -> unit
 
   val generate :
-    workflow_output:(Workflow.u -> filename Lwt.t) ->
+    workflow_output:(Guizmin.Workflow.u -> filename Lwt.t) ->
     output_dir:string ->
     unit Lwt.t
 end
@@ -38,7 +38,7 @@ module Make(X : sig end) = struct
   }
   and kind =
     | Html_page
-    | File_page of Workflow.u
+    | File_page of Guizmin.Workflow.u
 
   let pages = Hashtbl.create 253
 
@@ -63,10 +63,11 @@ module Make(X : sig end) = struct
       Hashtbl.fold
         (fun _ page accu ->
            match page.kind with
-           | File_page (Workflow.Extract (v, q)) when u = v ->
+           | File_page (Guizmin.Workflow.Extract (v, q)) when u = v ->
              (
                match prefix_diff ~prefix:q p with
-               | None -> accu
+               | None
+               | Some [] -> accu
                | Some r -> (page, r) :: accu
              )
            | File_page v ->
@@ -109,7 +110,7 @@ module Make(X : sig end) = struct
     [ "file" ; Guizmin.Defs.digest u ]
 
   let file_page ?path w =
-    let u = Workflow.(w : _ t :> u) in
+    let u = Guizmin.Workflow.(w : _ t :> u) in
     let path = match path with
       | Some p -> p
       | None -> file_path u
@@ -165,7 +166,7 @@ module Make(X : sig end) = struct
 
   let classify_page page = match page.kind with
     | Html_page -> `Html_page
-    | File_page (Workflow.Extract (v, p) as u) -> (
+    | File_page (Guizmin.Workflow.Extract (v, p) as u) -> (
         match find_largest_strict_container v p with
         | None -> `Root_file u
         | Some (root, q) -> `Leaf_file (root, q)

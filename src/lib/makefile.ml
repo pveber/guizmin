@@ -69,7 +69,7 @@ let body_of_workflow u = match u with
     [ sprintf "test -e %s" (string_of_path (target_of_workflow u)) ]
   | Workflow.Step r ->
     let script_cmd =
-      Workflow.shell_script target_of_workflow (build_target_of_workflow r) r
+      Workflow.shell_script target_of_workflow (build_target_of_workflow r) r.Workflow.script
       |> List.map ~f:double_dollars
       |> String.concat ~sep:" && \\\n\t"
     in
