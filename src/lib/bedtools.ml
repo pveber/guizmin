@@ -1,20 +1,10 @@
-open Bistro_workflow.Types
+open Workflow.Types
+open Workflow.API
 
-let package = Bistro_workflow.make <:script<
+let package_script = Utils.wget "https://raw.githubusercontent.com/pveber/compbio-scripts/master/bedtools-install/2.11.2/bedtools-install.sh"
 
-set -e
-URL=http://bedtools.googlecode.com/files/BEDTools.v2.11.2.tar.gz
-ARCHIVE=`basename ${URL}`
-
-mkdir -p #TMP
-(
-  cd #TMP
-  wget -O ${ARCHIVE} ${URL}
-  tar xvfz ${ARCHIVE} --strip-components=1
-  make
-)
-mkdir -p #DEST/bin
-cp #TMP/bin/* #DEST/bin
-
->>
+let package =
+  workflow [
+    bash package_script [ target () ]
+  ]
 

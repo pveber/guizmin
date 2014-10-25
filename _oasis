@@ -21,8 +21,8 @@ Library guizmin
                     Unrolled_workflow, Utils,
                     Workflow
   FindlibName:      guizmin
-  BuildDepends:     bistro, bistro.syntax, core, sexplib.syntax, threads
-  XMETARequires:    bistro, core, threads
+  BuildDepends:     core, sexplib.syntax, threads
+  XMETARequires:    core, threads
 
 Library guizmin_backend
   Path:             src/backend

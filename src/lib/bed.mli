@@ -1,4 +1,4 @@
-open Bistro_workflow.Types
+open Workflow.Types
 
 type 'a bed3_like = (string * (int * (int * 'a)), [`no], [`sharp]) tsv
 
