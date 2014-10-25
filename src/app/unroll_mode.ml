@@ -414,7 +414,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
         hr () ;
         br () ;
         br () ;
-        (* browse_by_div ; *)
+        browse_by_div ;
         (* index_quality_control_section () ; *)
         (* index_custom_tracks_section ; *)
       ]

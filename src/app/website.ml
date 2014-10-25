@@ -5,7 +5,7 @@ type path = string list
 type filename = string
 type html_elt = [`Html] Html5.M.elt
 
-let string_of_path l = String.concat "/" l
+let string_of_path = Guizmin.Defs.string_of_path
 
 module type S = sig
   type 'a page
@@ -21,7 +21,7 @@ module type S = sig
     ?f:(unit -> html_elt Lwt.t) ->
     unit -> html_elt page
 
-  val file_page : ?path:path -> _ Guizmin.Workflow.t -> Guizmin.Workflow.u page
+  val file_page : ?path:path -> ?in_situ:bool -> _ Guizmin.Workflow.t -> Guizmin.Workflow.u page
 
   val register : html_elt page -> (unit -> html_elt Lwt.t) -> unit
 
@@ -39,6 +39,7 @@ module Make(X : sig end) = struct
   and kind =
     | Html_page
     | File_page of Guizmin.Workflow.u
+    | In_situ_file_page
 
   let pages = Hashtbl.create 253
 
@@ -109,15 +110,41 @@ module Make(X : sig end) = struct
   let file_path u =
     [ "file" ; Guizmin.Defs.digest u ]
 
-  let file_page ?path w =
+  let file_page ?path ?(in_situ = true) w =
     let u = Guizmin.Workflow.(w : _ t :> u) in
     let path = match path with
       | Some p -> p
       | None -> file_path u
     in
-    let page = {
-      path ; kind = File_page u
-    } in
+    let page, path =
+      match u, in_situ with
+      | Guizmin.Workflow.Extract (v, p), true ->
+        let occupied =
+          match Hashtbl.find pages path with
+          | { kind = File_page w } -> v <> w
+          | _ -> true
+          | exception Not_found ->
+            let page = { path ; kind = File_page v } in
+            add_page page path ;
+            false
+        in
+        if occupied then (
+          let msg =
+            sprintf
+              "Cannot create page %s because %s is already occupied"
+              (string_of_path (path @ p))
+              (string_of_path path)
+          in
+          failwith msg
+        )
+        else (
+          let path = path @ p in
+          let page = { path ; kind = In_situ_file_page } in
+          page, path
+        )
+      | _ ->
+        { path ; kind = File_page u }, path
+    in
     add_page page path ;
     page
 
@@ -172,6 +199,7 @@ module Make(X : sig end) = struct
         | Some (root, q) -> `Leaf_file (root, q)
       )
     | File_page u -> `Root_file u
+    | In_situ_file_page -> `In_situ_file_page
 
 
   let generate ~workflow_output ~output_dir =
@@ -188,6 +216,8 @@ module Make(X : sig end) = struct
              generate_file_page fspath workflow_output page.path u
            | `Leaf_file (root, inside_path) ->
              alias fspath (root.path @ inside_path) page.path ;
+             Lwt.return ()
+           | `In_situ_file_page ->
              Lwt.return ()
          in
          t :: accu)

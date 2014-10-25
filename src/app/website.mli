@@ -17,7 +17,11 @@ module type S = sig
     ?f:(unit -> html_elt Lwt.t) ->
     unit -> html_elt page
 
-  val file_page : ?path:path -> _ Guizmin.Workflow.t -> Guizmin.Workflow.u page
+  val file_page : ?path:path -> ?in_situ:bool -> _ Guizmin.Workflow.t -> Guizmin.Workflow.u page
+  (** If [u] is of the form [Extract (v,p)], the call [file_page ~path
+      ~in_situ:true u] creates two urls, one at [path] that
+      corresponds to v (if it does not exist already) and one at [path
+      @ p] that corresponds to [u]. *)
 
   val register : html_elt page -> (unit -> html_elt Lwt.t) -> unit
 
