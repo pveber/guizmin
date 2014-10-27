@@ -10,7 +10,7 @@ module type S = sig
 
   val href : _ page -> string
 
-  val a : _ page -> 'a Html5.M.elt list -> [`A of 'a] Html5.M.elt
+  val a : _ page -> 'a Html5.M.elt list -> [> `A of 'a] Html5.M.elt
 
   val html_page :
     path ->

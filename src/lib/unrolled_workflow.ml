@@ -10,7 +10,7 @@ end
 class type sample = object
   method repr : Experiment_description.sample
   method id : string
-  method type_ : sample_type
+  method data : sample_data
   method experiment : experiment
   method model : model
   method condition : string
@@ -18,9 +18,9 @@ end
 
 class type short_read_sample = object
   inherit sample
-  method format : short_read_format
-  method sanger_fastq : [`sanger] Fastq.workflow list
-  method fastQC_report : FastQC.workflow
+  method short_read_data : short_read_data
+  method sanger_fastq  : [`sanger] Fastq.workflow list se_or_pe
+  method fastQC_report : FastQC.workflow se_or_pe
 end
 
 class type mappable_short_read_sample = object

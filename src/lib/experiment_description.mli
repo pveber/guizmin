@@ -7,14 +7,13 @@ and statement =
 and condition = string
 and sample = {
   sample_id : string ;
-  sample_type : sample_type ;
+  sample_data : sample_data ;
   sample_exp : experiment ;
-  sample_files : string list ;
   sample_model : string ;
   sample_condition : string ;
 }
-and sample_type = [
-| `short_reads of short_read_format
+and sample_data = [
+| `short_read_data of short_read_data
 ]
 and experiment = [
 | `whole_cell_extract
@@ -23,9 +22,13 @@ and experiment = [
 | `FAIRE
 | `mRNA
 ]
-and short_read_format = [
-| `fastq of [ `sanger | `solexa | `phred64 ]
-| `sra
+and short_read_data = [
+| `fastq of
+    [ `sanger | `solexa | `phred64 ] *
+    string list se_or_pe
+| `sra of
+    [`single_end | `paired_end] *
+    [ `SRR of string | `file of string ]
 ]
 and model = {
   model_id : string ;
@@ -35,10 +38,16 @@ and genome = [
 | `ucsc of Ucsc_gb.genome
 | `fasta of string
 ]
+and 'a se_or_pe = [
+  | `single_end of 'a
+  | `paired_end of 'a * 'a
+]
 with sexp
 
 val load : string -> t
 val save : t -> string -> unit
+
+val se_or_pe_map : 'a se_or_pe -> f:('a -> 'b) -> 'b se_or_pe
 
 type error = [
   | `undeclared of [`condition | `model | `sample] * string
