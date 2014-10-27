@@ -32,11 +32,13 @@ module Make(S : Settings) = struct
     |>
     Option.value ~default:"X"
 
-  let conditions = extract_unique (
+  let factors = extract_unique (
     function
-    | Condition c -> Some c
+    | Factor f -> Some f
     | _ -> None
   )
+
+  let factor name = List.find_exn factors ~f:(fun f -> f.factor_name = name)
 
   let models =
     extract_unique (
@@ -70,7 +72,8 @@ module Make(S : Settings) = struct
     method data = s.sample_data
     method experiment = s.sample_exp
     method model = model s.sample_model
-    method condition = s.sample_condition
+    method condition =
+      List.map s.sample_condition ~f:(fun (fn,fv) -> factor fn, fv)
   end
 
   let sanger_fastq_of_short_read_data = function
@@ -207,6 +210,9 @@ module Make(S : Settings) = struct
 
   let samples = List.map any_samples ~f:sample_of_any
 
+  let conditions =
+    List.map samples ~f:(fun s -> s#condition)
+    |> List.dedup
 end
 
 let from_description ged =

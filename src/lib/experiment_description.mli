@@ -1,16 +1,18 @@
 type t = statement list
 and statement =
-| Condition of condition
+| Factor of factor
 | Sample of sample
 | Model of model
 | Project of string
-and condition = string
+and factor = {
+  factor_name : string
+}
 and sample = {
   sample_id : string ;
   sample_data : sample_data ;
   sample_exp : experiment ;
   sample_model : string ;
-  sample_condition : string ;
+  sample_condition : (string * string) list ;
 }
 and sample_data = [
 | `short_read_data of short_read_data
@@ -50,10 +52,12 @@ val save : t -> string -> unit
 val se_or_pe_map : 'a se_or_pe -> f:('a -> 'b) -> 'b se_or_pe
 
 type error = [
-  | `undeclared of [`condition | `model | `sample] * string
-  | `multiple_declaration of [`condition | `model | `sample] * string
+  | `undeclared of [`factor | `model | `sample] * string
+  | `multiple_declaration of [`factor | `model | `sample] * string
   | `missing_project_description
   | `more_than_one_project_description of string list
+  | `missing_factor_in_sample of string * string
+  | `repeated_factor_in_sample of string * string
 ]
 with sexp
 

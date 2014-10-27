@@ -1,6 +1,8 @@
 open Workflow.Types
 open Experiment_description
 
+type condition = (factor * string) list
+
 class type genome = object
   method repr : Experiment_description.genome
   method sequence : Fasta.workflow
@@ -13,7 +15,7 @@ class type sample = object
   method data : sample_data
   method experiment : experiment
   method model : model
-  method condition : string
+  method condition : condition
 end
 
 class type short_read_sample = object

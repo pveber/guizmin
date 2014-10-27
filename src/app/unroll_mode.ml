@@ -39,6 +39,11 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
     in
     sprintf "%s%s" m.model_id details
 
+  let string_of_condition c =
+    List.map c ~f:(fun (fn, fv) -> sprintf "%s=%s" fn.factor_name fv)
+    |> String.concat ~sep:","
+    |> sprintf "(%s)"
+
 
 
   (* === HTML HELPERS ===*)
@@ -284,7 +289,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
             bb"Type", [ k (string_of_sample_data s#data) ] ;
             bb"Experiment", [ k (string_of_experiment s#repr.sample_exp) ] ;
             bb"Model", [ k s#repr.sample_model ] ;
-            bb"Condition", [ k s#repr.sample_condition ] ;
+            bb"Condition", [ k (string_of_condition s#condition) ] ;
           ] ;
         ]
       method paragraphs : fragment list Lwt.t =

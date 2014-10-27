@@ -1,6 +1,7 @@
 (
   (Project "sacCer2_pho4")
-  (Condition noPi)
+  (Factor (
+    (factor_name treatment)))
   (Model (
     (model_id sacCer)
     (model_genome ((ucsc sacCer2)))))
@@ -9,5 +10,5 @@
     (sample_data (short_read_data (sra (single_end (SRR (SRR217304))))))
     (sample_exp (TF_ChIP Pho4))
     (sample_model sacCer)
-    (sample_condition noPi)))
+    (sample_condition ((treatment noPi)))))
 )
