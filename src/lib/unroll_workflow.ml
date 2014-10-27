@@ -85,12 +85,12 @@ module Make(S : Settings) = struct
       se_or_pe_map se_or_pe ~f
 
     | `sra (se_or_pe, sra) ->
-      let sra = match sra with
-        | `SRR id -> Sra.fetch_srr id
-        | `file url -> unsafe_file_of_url url
+      let sras = match sra with
+        | `SRR ids -> List.map ids ~f:Sra.fetch_srr
+        | `file urls -> List.map urls ~f:unsafe_file_of_url
       in
       match se_or_pe with
-      | `single_end -> `single_end [ Sra.fastq_dump sra ]
+      | `single_end -> `single_end (List.map sras ~f:Sra.fastq_dump)
       | `paired_end -> assert false
 
   class short_read_sample sample data : Unrolled_workflow.short_read_sample = object (s)

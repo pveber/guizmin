@@ -13,9 +13,8 @@
   (
     Sample (
       (sample_id pou5f1_Chen)
-      (sample_type (short_reads sra))
+      (sample_data (short_read_data (sra (single_end (SRR (SRR002012 SRR002013 SRR002014 SRR002015))))))
       (sample_exp (TF_ChIP Pou5f1))
-      (sample_files (ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX000%2FSRX000546/SRR002012/SRR002012.sra ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX000%2FSRX000546/SRR002013/SRR002013.sra ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX000%2FSRX000546/SRR002014/SRR002014.sra ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX000%2FSRX000546/SRR002015/SRR002015.sra))
       (sample_model mESC)
       (sample_condition wt)
     )
@@ -24,9 +23,8 @@
   (
     Sample (
       (sample_id sox2_Chen)
-      (sample_type (short_reads sra))
+      (sample_data (short_read_data (sra (single_end (SRR (SRR002023 SRR002024 SRR002025 SRR002026))))))
       (sample_exp (TF_ChIP Sox2))
-      (sample_files (ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX000%2FSRX000549/SRR002023/SRR002023.sra ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX000%2FSRX000549/SRR002024/SRR002024.sra ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX000%2FSRX000549/SRR002025/SRR002025.sra ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX000%2FSRX000549/SRR002026/SRR002026.sra))
       (sample_model mESC)
       (sample_condition wt)
     )
@@ -35,9 +33,8 @@
   (
     Sample (
       (sample_id esrrb_Chen)
-      (sample_type (short_reads sra))
+      (sample_data (short_read_data (sra (single_end (SRR (SRR001992 SRR001993 SRR001994 SRR001995))))))
       (sample_exp (TF_ChIP Esrrb))
-      (sample_files (ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX000%2FSRX000542/SRR001992/SRR001992.sra ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX000%2FSRX000542/SRR001993/SRR001993.sra ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX000%2FSRX000542/SRR001994/SRR001994.sra ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX000%2FSRX000542/SRR001995/SRR001995.sra))
       (sample_model mESC)
       (sample_condition wt)
     )
@@ -46,9 +43,8 @@
   (
     Sample (
       (sample_id p300_Chen)
-      (sample_type (short_reads sra))
+      (sample_data (short_read_data (sra (single_end (SRR (SRR023866 SRR023867 SRR023868 SRR023869))))))
       (sample_exp (TF_ChIP p300))
-      (sample_files (ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX000%2FSRX000555/SRR023866/SRR023866.sra ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX000%2FSRX000555/SRR023867/SRR023867.sra ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX000%2FSRX000555/SRR023868/SRR023868.sra ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX000%2FSRX000555/SRR023869/SRR023869.sra))
       (sample_model mESC)
       (sample_condition wt)
     )
@@ -57,9 +53,8 @@
   (
     Sample (
       (sample_id sox2_Adachi)
-      (sample_type (short_reads sra))
+      (sample_data (short_read_data (sra (single_end (SRR (SRR185892))))))
       (sample_exp (TF_ChIP Sox2))
-      (sample_files (ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX057%2FSRX057755/SRR185892/SRR185892.sra))
       (sample_model mESC)
       (sample_condition wt)
     )
@@ -68,9 +63,8 @@
   (
     Sample (
       (sample_id esrrb_Adachi)
-      (sample_type (short_reads sra))
+      (sample_data (short_read_data (sra (single_end (SRR (SRR1201335))))))
       (sample_exp (TF_ChIP Esrrb))
-      (sample_files (ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX498%2FSRX498206/SRR1201335/SRR1201335.sra))
       (sample_model mESC)
       (sample_condition wt)
     )
@@ -79,9 +73,8 @@
   (
     Sample (
       (sample_id pou5f1_Buecker_1)
-      (sample_type (short_reads sra))
+      (sample_data (short_read_data (sra (single_end (SRR (SRR1202455))))))
       (sample_exp (TF_ChIP Pou5f1))
-      (sample_files (ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX499%2FSRX499114/SRR1202455/SRR1202455.sra))
       (sample_model mESC)
       (sample_condition wt)
     )
@@ -90,9 +83,8 @@
   (
     Sample (
       (sample_id pou5f1_Buecker_2)
-      (sample_type (short_reads sra))
+      (sample_data (short_read_data (sra (single_end (SRR (SRR1202456))))))
       (sample_exp (TF_ChIP Pou5f1))
-      (sample_files (ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX499%2FSRX499115/SRR1202456/SRR1202456.sra))
       (sample_model mESC)
       (sample_condition wt)
     )
@@ -101,9 +93,8 @@
   (
     Sample (
       (sample_id otx2_Buecker_1)
-      (sample_type (short_reads sra))
+      (sample_data (short_read_data (sra (single_end (SRR (SRR1202457))))))
       (sample_exp (TF_ChIP Otx2))
-      (sample_files (ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX499%2FSRX499116/SRR1202457/SRR1202457.sra))
       (sample_model mESC)
       (sample_condition wt)
     )
@@ -112,9 +103,8 @@
   (
     Sample (
       (sample_id otx2_Buecker_2)
-      (sample_type (short_reads sra))
+      (sample_data (short_read_data (sra (single_end (SRR (SRR1202458))))))
       (sample_exp (TF_ChIP Otx2))
-      (sample_files (ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX499%2FSRX499117/SRR1202458/SRR1202458.sra))
       (sample_model mESC)
       (sample_condition wt)
     )
@@ -123,9 +113,8 @@
   (
     Sample (
       (sample_id p300_Buecker_1)
-      (sample_type (short_reads sra))
+      (sample_data (short_read_data (sra (single_end (SRR (SRR1202453))))))
       (sample_exp (TF_ChIP p300))
-      (sample_files (ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX499%2FSRX499112/SRR1202453/SRR1202453.sra))
       (sample_model mESC)
       (sample_condition wt)
     )
@@ -134,9 +123,8 @@
   (
     Sample (
       (sample_id p300_Buecker_2)
-      (sample_type (short_reads sra))
+      (sample_data (short_read_data (sra (single_end (SRR (SRR1202454))))))
       (sample_exp (TF_ChIP p300))
-      (sample_files (ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX499%2FSRX499113/SRR1202454/SRR1202454.sra))
       (sample_model mESC)
       (sample_condition wt)
     )
@@ -145,9 +133,8 @@
   (
     Sample (
       (sample_id FAIRE_Buecker)
-      (sample_type (short_reads sra))
+      (sample_data (short_read_data (sra (single_end (SRR (SRR1202463))))))
       (sample_exp FAIRE)
-      (sample_files (ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX499%2FSRX499122/SRR1202463/SRR1202463.sra))
       (sample_model mESC)
       (sample_condition wt)
     )
@@ -156,9 +143,8 @@
   (
     Sample (
       (sample_id chIP_H3K27ac_Buecker_1)
-      (sample_type (short_reads sra))
+      (sample_data (short_read_data (sra (single_end (SRR (SRR1202459))))))
       (sample_exp (EM_ChIP H3K27ac))
-      (sample_files (ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX499%2FSRX499118/SRR1202459/SRR1202459.sra))
       (sample_model mESC)
       (sample_condition wt)
     )
@@ -167,9 +153,8 @@
   (
     Sample (
       (sample_id chIP_H3K27ac_Buecker_2)
-      (sample_type (short_reads sra))
+      (sample_data (short_read_data (sra (single_end (SRR (SRR1202460))))))
       (sample_exp (EM_ChIP H3K27ac))
-      (sample_files (ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX499%2FSRX499119/SRR1202460/SRR1202460.sra))
       (sample_model mESC)
       (sample_condition wt)
     )
@@ -178,9 +163,8 @@
   (
     Sample (
       (sample_id chIP_H3K4me1_Buecker_1)
-      (sample_type (short_reads sra))
+      (sample_data (short_read_data (sra (single_end (SRR (SRR1202461))))))
       (sample_exp (EM_ChIP H3K4me1))
-      (sample_files (ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX499%2FSRX499120/SRR1202461/SRR1202461.sra))
       (sample_model mESC)
       (sample_condition wt)
     )
@@ -189,9 +173,8 @@
   (
     Sample (
       (sample_id chIP_H3K4me1_Buecker_2)
-      (sample_type (short_reads sra))
+      (sample_data (short_read_data (sra (single_end (SRR (SRR1202462))))))
       (sample_exp (EM_ChIP H3K4me1))
-      (sample_files (ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX499%2FSRX499121/SRR1202462/SRR1202462.sra))
       (sample_model mESC)
       (sample_condition wt)
     )
@@ -200,9 +183,8 @@
   (
     Sample (
       (sample_id WCE_Buecker_1)
-      (sample_type (short_reads sra))
+      (sample_data (short_read_data (sra (single_end (SRR (SRR1202464))))))
       (sample_exp whole_cell_extract)
-      (sample_files (ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX499%2FSRX499123/SRR1202464/SRR1202464.sra))
       (sample_model mESC)
       (sample_condition wt)
     )
@@ -211,9 +193,8 @@
   (
     Sample (
       (sample_id WCE_Buecker_2)
-      (sample_type (short_reads sra))
+      (sample_data (short_read_data (sra (single_end (SRR (SRR1202465))))))
       (sample_exp whole_cell_extract)
-      (sample_files (ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX499%2FSRX499124/SRR1202465/SRR1202465.sra))
       (sample_model mESC)
       (sample_condition wt)
     )
@@ -222,9 +203,8 @@
   (
     Sample (
       (sample_id rar_Mahony)
-      (sample_type (short_reads sra))
+      (sample_data (short_read_data (sra (single_end (SRR (SRR039160))))))
       (sample_exp (TF_ChIP Rar))
-      (sample_files (ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX018%2FSRX018669/SRR039155/SRR039155.sra ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX018%2FSRX018669/SRR039156/SRR039156.sra ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX018%2FSRX018669/SRR039157/SRR039157.sra ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX018%2FSRX018669/SRR039158/SRR039158.sra ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX018%2FSRX018669/SRR039159/SRR039159.sra ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX018%2FSRX018669/SRR039160/SRR039160.sra))
       (sample_model mESC)
       (sample_condition wt)
     )
@@ -233,9 +213,8 @@
   (
     Sample (
       (sample_id rnaseq_Burdet_1)
-      (sample_type (short_reads sra))
+      (sample_data (short_read_data (sra (single_end (SRR (SRR1536357))))))
       (sample_exp mRNA)
-      (sample_files (ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX669%2FSRX669461/SRR1536357/SRR1536357.sra))
       (sample_model mESC)
       (sample_condition wt)
     )
@@ -244,9 +223,8 @@
   (
     Sample (
       (sample_id rnaseq_Burdet_2)
-      (sample_type (short_reads sra))
+      (sample_data (short_read_data (sra (single_end (SRR (SRR1536358))))))
       (sample_exp mRNA)
-      (sample_files (ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX669%2FSRX669462/SRR1536358/SRR1536358.sra))
       (sample_model mESC)
       (sample_condition wt)
     )
@@ -255,9 +233,8 @@
   (
     Sample (
       (sample_id rnaseq_Burdet_3)
-      (sample_type (short_reads sra))
+      (sample_data (short_read_data (sra (single_end (SRR (SRR1536359))))))
       (sample_exp mRNA)
-      (sample_files (ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByExp/sra/SRX%2FSRX669%2FSRX669463/SRR1536359/SRR1536359.sra))
       (sample_model mESC)
       (sample_condition wt)
     )

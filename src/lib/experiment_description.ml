@@ -30,7 +30,7 @@ and short_read_data = [
     string list se_or_pe
 | `sra of
     [`single_end | `paired_end] *
-    [ `SRR of string | `file of string ]
+    [ `SRR of string list | `file of string list ]
 ]
 and model = {
   model_id : string ;
