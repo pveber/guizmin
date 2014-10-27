@@ -88,7 +88,7 @@ module API = struct
 
   let workflow = step
 
-  let program ?path p ?stdin ?stdout ?stderr args =
+  let program ?path ?pythonpath p ?stdin ?stdout ?stderr args =
     let path_expr =
       match path with
       | None | Some [] -> []
@@ -100,6 +100,21 @@ module API = struct
           |> List.concat
         )
         @ [ S ":$PATH" ]
+    in
+    let pythonpath_expr = match pythonpath with
+      | None | Some [] -> []
+      | Some pkgs ->
+        S "PYTHONPATH=" ::
+          (
+            List.map pkgs ~f:(fun p -> [ D p ; S "/lib/python2.7/site-packages" ])
+            (* FIXME: this won't work with other versions of python
+               than 2.7 ; we should introduce execution-time variables
+               -- here PYTHON_VERSION -- and the corresponding
+               constructor in the API *)
+            |> List.intersperse ~sep:[S ":"]
+            |> List.concat
+          )
+        @ [ S ":$PYTHONPATH" ]
     in
     let prog_expr = [ S p ] in
     let stdout_expr =
@@ -117,7 +132,7 @@ module API = struct
       | None -> []
       | Some e -> S " 2> " :: e
     in
-    [ path_expr ; prog_expr ] @ args @ [ stdin_expr ; stdout_expr ; stderr_expr ]
+    [ path_expr ; pythonpath_expr ; prog_expr ] @ args @ [ stdin_expr ; stdout_expr ; stderr_expr ]
     |> List.filter ~f:(( <> ) [])
     |> List.intersperse ~sep:[S " "]
     |> List.concat

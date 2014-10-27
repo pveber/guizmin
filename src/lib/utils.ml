@@ -1,3 +1,4 @@
+open Core.Std
 open Workflow.API
 
 let wget url =

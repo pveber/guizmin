@@ -13,3 +13,13 @@ let digest x =
   Digest.to_hex (Digest.string (Marshal.to_string x []))
 
 let ( % ) f g x = g (f x)
+
+
+let python_version fmt =
+  let regexp = match fmt with
+    | `M_m -> "[0-9]\\.[0-9]"
+  in
+  let ic = Unix.open_process_in (sprintf "python --version 2>&1 | grep -o '%s'" regexp) in
+  let r = In_channel.input_line ic in
+  In_channel.close ic ;
+  r

@@ -11,12 +11,13 @@ Library guizmin
   Path:             src/lib
   Pack:             true
   Modules:          Bam,
-                    Bed, Bedtools, Bowtie,
+                    Bed,
+                    Bedgraph, Bedtools, Bowtie,
                     Defs,
                     Experiment_description,
                     Fasta,
                     Fastq, FastQC, Jaspar,
-                    Macs, Makefile,
+                    Macs, Macs2, Makefile,
                     Sam, Samtools, Sra, Ucsc_gb, Unroll_workflow,
                     Unrolled_workflow, Utils,
                     Workflow

@@ -61,6 +61,7 @@ module API : sig
 
   val program :
     ?path:package workflow list ->
+    ?pythonpath:package workflow list ->
     string ->
     ?stdin:shell_expr -> ?stdout:shell_expr -> ?stderr:shell_expr ->
     shell_expr list -> cmd
