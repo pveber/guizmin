@@ -40,8 +40,10 @@ let thread_of_rule blog (backend : Guizmin_lwt_backend.t) db r dep_threads =
     let stderr = Guizmin_db.stderr_path db x in
     let dest = Guizmin_db.build_path db x in
     let tmp = Guizmin_db.tmp_path db x in
+    let build_target = path_of_string dest in
+    let tmp_target = path_of_string tmp in
     let script =
-      shell_script (Guizmin_db.path db % path_of_string) (path_of_string dest) script
+      shell_script (Guizmin_db.path db % path_of_string) ~build_target ~tmp_target script
       |> String.concat ~sep:" && "
     in
     remove_if_exists stdout >>= fun () ->

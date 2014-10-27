@@ -18,6 +18,7 @@ and token =
   | S : string -> token
   | D : _ t -> token
   | T : token
+  | TMP : token
 
 module Types = struct
   type 'a workflow = 'a t
@@ -52,7 +53,7 @@ end
 let deps_of_cmd l =
   List.filter_map l ~f:(function
       | D r -> Some (r :> u)
-      | S _ | T -> None
+      | S _ | T | TMP -> None
     )
   |> List.dedup
 
@@ -61,17 +62,23 @@ let deps_of_cmds l =
       List.dedup (deps_of_cmd cmd @ accu)
     )
 
-let string_of_token target build_target = function
+let string_of_token target ~tmp_target ~build_target = function
   | S s -> s
   | D w -> string_of_path (target (w :> u))
   | T -> build_target
+  | TMP -> tmp_target
 
-let string_of_cmd target build_target tokens =
-  List.map tokens ~f:(string_of_token target build_target)
+let string_of_cmd target ~build_target ~tmp_target tokens =
+  List.map tokens ~f:(string_of_token target ~tmp_target ~build_target)
   |> String.concat
 
-let shell_script target build_target script =
-  List.map script ~f:(string_of_cmd target (string_of_path build_target))
+let shell_script target ~build_target ~tmp_target script =
+  let f =
+    string_of_cmd target
+      ~build_target:(string_of_path build_target)
+      ~tmp_target:(string_of_path tmp_target)
+  in
+  List.map script ~f
 
 let step ?(np = 1) ?(mem = 100) ?(timeout = 24) script =
   let deps = deps_of_cmds script in
@@ -138,6 +145,7 @@ module API = struct
     |> List.concat
 
   let target () = [ T ]
+  let tmp () = [ TMP ]
   let string s = [ S s ]
   let int i = [ S (string_of_int i) ]
   let float f = [ S (Float.to_string f) ]

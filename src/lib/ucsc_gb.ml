@@ -13,40 +13,24 @@ let string_of_genome = function
 | `mm10 -> "mm10"
 | `sacCer2 -> "sacCer2"
 
+module Types = struct
+  type twobit = ([`twobit], [`binary]) file
+  type chrom_sizes = (string * (int * unit), [`no], [`sharp]) tsv
 
-(* let package = Bistro_workflow.make <:script< *)
-(* URL=git://genome-source.cse.ucsc.edu/kent.git *)
-(* PREFIX=#DEST *)
+  type bedGraph = ([`bedGraph], [`text]) file
+  type wig = ([`wig], [`text]) file
+  type bigWig = ([`bigWig], [`binary]) file
+end
 
-(* git clone ${URL} || (echo "Failed to git kent repository" && exit 1) *)
-(* BINDIR=${PREFIX}/bin  *)
-(* MACHTYPE=`echo ${MACHTYPE} | cut -d '-' -f 1` *)
-(* MYSQLLIBS=`mysql_config --libs` || (echo "improper mysql install" && exit 1) *)
-(* MYSQLINC=`mysql_config --include | sed -e 's/-I//g'` || (echo "improper mysql install" && exit 1) *)
-(* sed -i -e 's/-Werror//g' kent/src/inc/common.mk *)
-(* sed -i -e 's/\\$A: \\$O \\${MYLIBS}/\\$A: \\$O/g' kent/src/hg/pslCDnaFilter/makefile *)
-(* make -C kent/src userApps \ *)
-(* 	BINDIR="${BINDIR}" \ *)
-(* 	SCRIPTS="${BINDIR}" \ *)
-(* 	MACHTYPE="${MACHTYPE}" \ *)
-(* 	MYSQLLIBS="${MYSQLLIBS} -lz" \ *)
-(* 	MYSQLINC="${MYSQLINC}" *)
-(* make -C kent/src/hg/genePredToGtf \ *)
-(* 	BINDIR="${BINDIR}" \ *)
-(* 	SCRIPTS="${BINDIR}" \ *)
-(* 	MACHTYPE="${MACHTYPE}" \ *)
-(* 	MYSQLLIBS="${MYSQLLIBS} -lz" \ *)
-(* 	MYSQLINC="${MYSQLINC}" *)
-(* make -C kent/src/hg/gpToGtf \ *)
-(* 	BINDIR="${BINDIR}" \ *)
-(* 	SCRIPTS="${BINDIR}" \ *)
-(* 	MACHTYPE="${MACHTYPE}" \ *)
-(* 	MYSQLLIBS="${MYSQLLIBS} -lz" \ *)
-(* 	MYSQLINC="${MYSQLINC}" *)
-(* >> *)
+let package_script = Utils.wget "https://raw.githubusercontent.com/pveber/compbio-scripts/master/kent-tree-install/306/kent-tree-install.sh"
+
+let package =
+  workflow [
+    bash package_script [ target () ]
+  ]
 
 
-type twobit = ([`twobit], [`binary]) file
+(** {5 Dealing with genome sequences} *)
 
 let chromosome_sequences org =
   let org = string_of_genome org in
@@ -80,10 +64,6 @@ let genome_sequence org =
 (* >> *)
 
 (* let genome_2bit_sequence org = Bistro_workflow.select (genome_2bit_sequence_dir org) ((string_of_genome org) ^ ".2bit") *)
-
-(* (\* type bigWig *\) *)
-(* (\* type wig *\) *)
-
 
 
 
@@ -132,31 +112,14 @@ let genome_sequence org =
 (* (\*     ) *\) *)
 (* (\*   ) *\) *)
 
-(* (\* module Chrom_info = struct *\) *)
-(* (\*   type tabular data = { *\) *)
-(* (\*     chrom : string ; *\) *)
-(* (\*     chrom_length : int *\) *)
-(* (\*   } *\) *)
-(* (\*   include Guizmin_table.Make(Row)(Obj)(Table)(Guizmin_table.Sharp_comment)(Guizmin_table.No_header) *\) *)
-(* (\* end *\) *)
+(** {5 Chromosome size and clipping} *)
 
-(* (\* let chrom_info_cmd1 org = Printf.sprintf "\ *\) *)
-(* (\* mysql --user=genome --host=genome-mysql.cse.ucsc.edu -A -N \ *\) *)
-(* (\* -e 'select chrom,size from chromInfo;' %s" (string_of_genome org) *\) *)
-(* (\* let chrom_info_cmd2 path = Printf.sprintf "\ *\) *)
-(* (\* gawk -F'\t' '{printf \"%%s\\t%%s\\n\", $1,$2}' >> %s" path *\) *)
-
-(* (\* let chrom_info org = *\) *)
-(* (\*   f0 *\) *)
-(* (\*     "guizmin.bioinfo.ucsc.chrom_info[r1]" *\) *)
-(* (\*     [ Param.string "org" (string_of_genome org) ] *\) *)
-(* (\*     (fun env path -> *\) *)
-(* (\*        let cmd = *\) *)
-(* (\*          pipefail *\) *)
-(* (\*            (chrom_info_cmd1 org) *\) *)
-(* (\*            (chrom_info_cmd2 path) *\) *)
-(* (\*        in *\) *)
-(* (\*        ignore (Sys.command cmd)) *\) *)
+let fetchChromSizes org =
+  workflow [
+    program "fetchChromSizes" ~path:[package] ~stdout:(target ()) [
+      string (string_of_genome org) ;
+    ]
+  ]
 
 (* (\* let bedClip org bed = *\) *)
 (* (\*   let chrom_info = chrom_info org in *\) *)
@@ -165,6 +128,10 @@ let genome_sequence org =
 (* (\*     chrom_info bed *\) *)
 (* (\*     (fun env (File chrom_info) (File bed) path -> *\) *)
 (* (\*        env.sh "bedClip -verbose=2 %s %s %s" bed chrom_info path) *\) *)
+
+
+
+(** {5 Conversion between annotation file formats} *)
 
 (* (\* let wig_of_bigWig bigWig = *\) *)
 (* (\*   f1 *\) *)
@@ -185,6 +152,21 @@ let genome_sequence org =
 (* (\*     (fun env (File chrom_info) (File wig) path -> *\) *)
 (* (\*       let clip = if clip then "-clip" else "" in *\) *)
 (* (\*       env.sh "wigToBigWig %s %s %s %s" clip wig chrom_info path) *\) *)
+
+let bedGraphToBigWig org bg =
+  workflow [
+    program "sort" ~stdout:(tmp ()) [
+      string "-k1,1" ;
+      string "-k2,2n" ;
+      dep bg ;
+    ] ;
+    program "BedGraphToBigWig" ~path:[package] [
+      tmp () ;
+      dep (fetchChromSizes org) ;
+      target () ;
+    ]
+  ]
+
 
 (* (\* module Lift_over = struct *\) *)
 (* (\*   open Printf *\) *)

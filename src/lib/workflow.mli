@@ -73,6 +73,7 @@ module API : sig
     shell_expr list -> cmd
 
   val target : unit -> shell_expr
+  val tmp : unit -> shell_expr
   val string : string -> shell_expr
   val int : int -> shell_expr
   val float : float -> shell_expr
@@ -96,7 +97,7 @@ module API : sig
 end
 
 val deps : u -> u list
-val shell_script : (u -> path) -> path -> cmd list -> string list
+val shell_script : (u -> path) -> build_target:path -> tmp_target:path -> cmd list -> string list
 
 
 (* let body = program "bowtie" [ *)
