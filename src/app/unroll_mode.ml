@@ -173,40 +173,20 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
     let url = Gzt.Ucsc_gb.CustomTrack.url genome opts in
     [ Html5.M.(a ~a:[a_href url] elt) ]
 
-(*   (\* let custom_track_link_of_bigwig_item webroot = *\) *)
-(*   (\*   function (sample, Guizmin_repo.Item (_,_,path)) -> *\) *)
-(*   (\*     let local_path = String.concat ~sep:"/" path in *\) *)
-(*   (\*     let name = sample.sample_id ^ " signal" in *\) *)
-(*   (\*     let opts = [ *\) *)
-(*   (\* `track_type "bigWig" ; *\) *)
-(*   (\* `bigDataUrl (webroot ^ "/" ^ local_path) ; *\) *)
-(*   (\*   `color (0,0,255) ; *\) *)
-(*   (\*   `visibility `dense ; *\) *)
-(*   (\*   `name name ; *\) *)
-(*   (\*   `description name ; *\) *)
-(*   (\*     ] *\) *)
-(*   (\*     in *\) *)
-(*   (\*     let url = Ucsc.CustomTrack.url (model sample.sample_model).model_genome opts in *\) *)
-(*   (\*     Html5.M.(a ~a:[a_href url] [ pcdata sample.sample_id ]) *\) *)
-
-(*   let link_table filter link_of_sample_doc collections = *)
-(*     let open Html5.M in *)
-(*     let links = *)
-(*       List.concat collections *)
-(*       |> List.filter ~f:(fun (s,_,_) -> filter s) *)
-(*       |> List.map ~f:(fun ((s,_,_) as e) -> s, link_of_sample_doc e) *)
-(*     in *)
-(*     let header = thead [ tr [ td [ k "Model" ] ; td [ k "Condition" ] ; td [ k "Experiment" ] ; td [ k "Sample" ] ] ] in *)
-(*     let lines = List.map links ~f:(fun (s,link) -> *)
-(*       tr [ *)
-(*         td [ k s#repr.sample_model ] ; *)
-(*         td [ k s#repr.sample_condition ] ; *)
-(*         td [ k (string_of_experiment s#repr.sample_exp) ] ; *)
-(*         td [ link ] ; *)
-(*       ] *)
-(*     ) *)
-(*     in *)
-(*     table ~a:[a_class ["table"]] ~thead:header lines *)
+  let custom_track_link_of_bigwig x genome bigwig elt =
+    let local_path = string_of_path (WWW.path bigwig) in
+      let name = x.sample_id ^ " signal" in
+      let opts = [
+        `track_type "bigWig" ;
+        `bigDataUrl (webroot ^ "/" ^ local_path) ;
+        `color (0,0,255) ;
+        `visibility `dense ;
+        `name name ;
+        `description name ;
+      ]
+    in
+    let url = Gzt.Ucsc_gb.CustomTrack.url genome opts in
+    [ Html5.M.(a ~a:[a_href url] [ k x.sample_id ]) ]
 
 (*   (\* let index_custom_tracks_section = *\) *)
 (*   (\*   let open Html5.M in *\) *)

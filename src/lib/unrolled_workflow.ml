@@ -1,4 +1,5 @@
 open Workflow.Types
+open Ucsc_gb.Types
 open Experiment_description
 
 type condition = (factor * string) list
@@ -31,6 +32,12 @@ class type mappable_short_read_sample = object
   method aligned_reads : Sam.workflow
   method aligned_reads_indexed_bam : [ `indexed_bam ] directory workflow
   method aligned_reads_bam : Bam.workflow
+end
+
+class type ucsc_short_read_sample = object
+  inherit mappable_short_read_sample
+  method ucsc_genome : Ucsc_gb.genome
+  method signal : bedGraph workflow
 end
 
 class type tf_chip_seq_sample = object

@@ -12,7 +12,7 @@ Library guizmin
   Pack:             true
   Modules:          Bam,
                     Bed,
-                    Bedgraph, Bedtools, Bowtie,
+                    Bedtools, Bowtie,
                     Defs,
                     Experiment_description,
                     Fasta,
