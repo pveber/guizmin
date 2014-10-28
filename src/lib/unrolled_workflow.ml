@@ -79,3 +79,50 @@ module type S = sig
 
 end
 
+module type S_alt = sig
+  open Workflow.Types
+  open Ucsc_gb.Types
+  open Experiment_description
+  open Defs
+
+  val project_name : string
+
+  module Genome : sig
+    type t = genome
+
+    val list : t list
+
+    val sequence : t -> Fasta.workflow
+    val bowtie_index : t -> Bowtie.index workflow
+  end
+
+  module Model : sig
+    type t = model
+
+    val list : t list
+  end
+
+  module Sample : sig
+    type t = sample
+
+    val model : t -> model
+    val genome : t -> genome option
+    val condition : t -> (factor * string) list
+
+    val ucsc_genome : t -> Ucsc_gb.genome option
+
+    (** Short read samples *)
+    val short_read_data : t -> short_read_data option
+    val sanger_fastq  : t -> [`sanger] Fastq.workflow list se_or_pe option
+    val fastQC_report : t -> FastQC.workflow se_or_pe option
+
+    (** Short read samples with a reference genome *)
+    val aligned_reads : t -> Sam.workflow option
+    val aligned_reads_indexed_bam : t -> [ `indexed_bam ] directory workflow option
+    val aligned_reads_bam : t -> Bam.workflow option
+
+    val signal : t -> bigWig workflow option
+  end
+
+
+end
