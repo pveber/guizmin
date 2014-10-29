@@ -105,6 +105,8 @@ module type S_alt = sig
   module Sample : sig
     type t = sample
 
+    val list : t list
+
     val model : t -> model
     val genome : t -> genome option
     val condition : t -> (factor * string) list
@@ -117,9 +119,9 @@ module type S_alt = sig
     val fastQC_report : t -> FastQC.workflow se_or_pe option
 
     (** Short read samples with a reference genome *)
-    val aligned_reads : t -> Sam.workflow option
-    val aligned_reads_indexed_bam : t -> [ `indexed_bam ] directory workflow option
-    val aligned_reads_bam : t -> Bam.workflow option
+    val mapped_reads : t -> Bam.workflow option
+    val mapped_reads_indexed : t -> [ `indexed_bam ] directory workflow option
+    val mapped_reads_sam : t -> Sam.workflow option
 
     val signal : t -> bigWig workflow option
   end

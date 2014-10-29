@@ -323,24 +323,58 @@ module Make_alt(S : Settings) = struct
       se_or_pe_map fqs ~f
 
 
-    let aligned_reads s =
-      genome s >>= fun g_s ->
-      sanger_fastq s >>| fun fqs ->
-      let index = Genome.bowtie_index g_s in
+    let dna_seq_mapped_reads_sam s genome fqs =
+      let index = Genome.bowtie_index genome in
       match fqs with
       | `single_end fqs ->
         Bowtie.bowtie ~v:2 ~m:1 index fqs
       | `paired_end _ -> assert false
 
-    let aligned_reads_indexed_bam s =
-      aligned_reads s >>| Samtools.indexed_bam_of_sam
+    let dna_seq_mapped_reads_indexed s genome fqs =
+      Samtools.indexed_bam_of_sam (dna_seq_mapped_reads_sam s genome fqs)
 
-    let aligned_reads_bam s =
-      aligned_reads_indexed_bam s >>| Samtools.bam_of_indexed_bam
+    let dna_seq_mapped_reads s genome fqs =
+      Samtools.bam_of_indexed_bam (dna_seq_mapped_reads_indexed s genome fqs)
+
+    let mapped_reads s =
+      genome s >>= fun g_s ->
+      sanger_fastq s >>| fun fqs ->
+      match s.sample_exp with
+      | `whole_cell_extract
+      | `TF_ChIP _
+      | `EM_ChIP _
+      | `FAIRE ->
+        dna_seq_mapped_reads s g_s fqs
+      | `mRNA ->
+        assert false
+
+    let mapped_reads_sam s =
+      genome s >>= fun g_s ->
+      sanger_fastq s >>| fun fqs ->
+      match s.sample_exp with
+      | `whole_cell_extract
+      | `TF_ChIP _
+      | `EM_ChIP _
+      | `FAIRE ->
+        dna_seq_mapped_reads_sam s g_s fqs
+      | `mRNA ->
+        assert false
+
+    let mapped_reads_indexed s =
+      genome s >>= fun g_s ->
+      sanger_fastq s >>| fun fqs ->
+      match s.sample_exp with
+      | `whole_cell_extract
+      | `TF_ChIP _
+      | `EM_ChIP _
+      | `FAIRE ->
+        dna_seq_mapped_reads_indexed s g_s fqs
+      | `mRNA ->
+        assert false
 
     let signal s =
       ucsc_genome s >>= fun org ->
-      aligned_reads_bam s >>| fun bam ->
+      mapped_reads s >>| fun bam ->
       Ucsc_gb.bedGraphToBigWig org (Macs2.pileup bam)
   end
 

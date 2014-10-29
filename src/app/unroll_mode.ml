@@ -2,7 +2,9 @@ open Core.Std
 open Common
 
 let string_of_path l = String.concat ~sep:"/" l
-
+let ( >>? ) o v = match o with
+  | Some x -> x
+  | None -> v
 
 module type Params = sig
   val workflow_output : Guizmin.Workflow.u -> string Lwt.t
@@ -11,10 +13,13 @@ module type Params = sig
 end
 
 
-module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
+module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
   open P
   open Guizmin
   open Experiment_description
+  open Html5.M
+  open Option.Monad_infix
+
 
   (* WEBSITE GENERATION *)
   module WWW = Website.Make(struct end)
@@ -47,16 +52,17 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
 
 
   (* === HTML HELPERS ===*)
+  let k = pcdata
+
+  let bb x = [ b [ k x ] ]
+
+  let medskip = [ br () ; br () ; ]
 
   let keyval_table ?(style = "") items =
     let the_style = style in
     let open Html5.M in
     let lines = List.map items (fun (k,v) -> tr [ td k ; td v]) in
     table ~a:[a_class ["table"] ; a_style the_style] lines
-
-  let lsnd = List.map ~f:snd
-
-  let k = Html5.M.pcdata
 
   let keyval_table_opt ?style items =
     keyval_table ?style (List.filter_map items ~f:ident)
@@ -117,51 +123,46 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
       )
     ]
 
+  let section ?a ?(intro = []) title paragraphs =
+    let contents = List.concat paragraphs in
+    if contents = [] then []
+    else
+      (h2 ?a [k title]) :: intro @ contents
 
 
+  let mapped_reads_indexed s =
+    W.Sample.mapped_reads_indexed s >>| fun bam ->
+    WWW.file_page
+      ~path:[ "aligned_reads" ; s.sample_id ]
+      bam
 
-
-
-
-
-  let indexed_bams =
-    List.map W.mappable_short_read_samples ~f:(fun x ->
-        x,
+  let fastQC_report_page s =
+    W.Sample.fastQC_report s >>| function
+    | `single_end report ->
+      let page =
         WWW.file_page
-          ~path:[ "aligned_reads" ; x # id ]
-          x#aligned_reads_indexed_bam
-      )
+          ~path:[ "quality_control" ; "FastQC" ; s.sample_id ]
+          (FastQC.html_report report) in
+      let per_base_sequence_content =
+        WWW.file_page (FastQC.per_base_sequence_content report) in
+      let per_base_quality =
+        WWW.file_page (FastQC.per_base_quality report) in
+      `single_end (page, per_base_sequence_content, per_base_quality)
 
+    | `paired_end (report_1, report_2) ->
+      let page_1 = WWW.file_page ~path:[ "quality_control" ; "FastQC" ; s.sample_id ^ "_1" ] report_1 in
+      let page_2 = WWW.file_page ~path:[ "quality_control" ; "FastQC" ; s.sample_id ^ "_2" ] report_2 in
+      let per_base_sequence_content_1 = WWW.file_page (FastQC.per_base_sequence_content report_1) in
+      let per_base_sequence_content_2 = WWW.file_page (FastQC.per_base_sequence_content report_2) in
+      let per_base_quality_1 = WWW.file_page (FastQC.per_base_quality report_1) in
+      let per_base_quality_2 = WWW.file_page (FastQC.per_base_quality report_2) in
+      `paired_end ((page_1, per_base_sequence_content_1, per_base_quality_1),
+                   (page_2, per_base_sequence_content_2, per_base_quality_2))
 
-  let fastQC_reports =
-    List.map W.short_read_samples ~f:(fun x ->
-        x,
-        match x#fastQC_report with
-        | `single_end report ->
-          let page =
-            WWW.file_page
-              ~path:[ "quality_control" ; "FastQC" ; x#id ]
-              (FastQC.html_report report) in
-          let per_base_sequence_content =
-            WWW.file_page (FastQC.per_base_sequence_content report) in
-          let per_base_quality =
-            WWW.file_page (FastQC.per_base_quality report) in
-          `single_end (page, per_base_sequence_content, per_base_quality)
-
-        | `paired_end (report_1, report_2) ->
-          let page_1 = WWW.file_page ~path:[ "quality_control" ; "FastQC" ; x#id ^ "_1" ] report_1 in
-          let page_2 = WWW.file_page ~path:[ "quality_control" ; "FastQC" ; x#id ^ "_2" ] report_2 in
-          let per_base_sequence_content_1 = WWW.file_page (FastQC.per_base_sequence_content report_1) in
-          let per_base_sequence_content_2 = WWW.file_page (FastQC.per_base_sequence_content report_2) in
-          let per_base_quality_1 = WWW.file_page (FastQC.per_base_quality report_1) in
-          let per_base_quality_2 = WWW.file_page (FastQC.per_base_quality report_2) in
-          `paired_end ((page_1, per_base_sequence_content_1, per_base_quality_1),
-                       (page_2, per_base_sequence_content_2, per_base_quality_2))
-      )
 
   let custom_track_link_of_bam_bai x genome bam_bai elt =
     let local_path = string_of_path (WWW.path bam_bai) in
-    let name = x#id ^ " aligned_reads" in
+    let name = x.sample_id ^ " mapped reads" in
     let opts = [
       `track_type "bam" ;
       `bigDataUrl (webroot ^ "/" ^ local_path ^ "/reads.bam") ;
@@ -238,114 +239,66 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
 (*   (\*   ] *\) *)
 
   module Sample_page = struct
-    open Html5.M
-
-    type fragment = [ Html5_types.flow5 ] elt list
-
-    let bb x = [ b [ k x ] ]
-
-    let ( $ ) assoc x = List.find_exn assoc ~f:(fun (y,_) -> x#id = y#id) |> snd
-
-    let upcast xs x = List.find xs ~f:(fun y -> x # id = y # id)
-
-    let ( >>+ ) l = function
-      | Some x -> l @ [ x ]
-      | None -> l
-
-    let ( >>@ ) l = function
-      | Some x -> l @ x
-      | None -> l
-
-    class base s = object (self)
-      method sample = (s :> Unrolled_workflow.sample)
-      method overview : fragment Lwt.t = Lwt.return [
-          h1 [b [k "Sample " ; k s#id ]] ;
-          hr () ;
+    let fastQC_single_end_paragraph s (html, snapshot1, snapshot2) =
+      ul [
+        li [
+          k "Snapshot:" ;
           br () ;
+          img ~a:[a_style "width:40% ; margin: 0 10%"] ~src:(WWW.href snapshot1) ~alt:"" () ;
+          img ~a:[a_style "width:40%"] ~src:(WWW.href snapshot2) ~alt:"" () ;
           br () ;
-          h2 [k "Overview"] ;
-          br () ;
-          keyval_table ~style:"width:50%" [
-            bb"Type", [ k (string_of_sample_data s#data) ] ;
-            bb"Experiment", [ k (string_of_experiment s#repr.sample_exp) ] ;
-            bb"Model", [ k s#repr.sample_model ] ;
-            bb"Condition", [ k (string_of_condition s#condition) ] ;
-          ] ;
-        ]
-      method paragraphs : fragment list Lwt.t =
-        self # overview >|= fun o -> [ o ]
-
-      method make () : Website.html_elt Lwt.t =
-        self#paragraphs >>= fun pgs ->
-        let pgs = List.intersperse pgs [ br () ; br () ] in
-        Lwt.return (html_page (sprintf "Sample :: %s" s#id) (List.concat pgs))
-    end
-    let base s = new base s
-
-    class short_read s = object (self)
-      inherit base s as super
-      method quality_check : fragment Lwt.t = Lwt.return [
-          h2 [k "Sequencing quality check"] ;
-          h3 [k "FastqQC report"] ;
-          (
-            match fastQC_reports $ s with
-            | `single_end (html, snapshot1, snapshot2) ->
-              ul [
-                li [
-                  k "Snapshot:" ;
-                  br () ;
-                  img ~a:[a_style "width:40% ; margin: 0 10%"] ~src:(WWW.href snapshot1) ~alt:"" () ;
-                  img ~a:[a_style "width:40%"] ~src:(WWW.href snapshot2) ~alt:"" () ;
-                  br () ;
-                ] ;
-                li [ k "Check the " ; WWW.a html [k "full report"] ] ;
-                li [ a ~a:[a_href "http://www.bioinformatics.babraham.ac.uk/projects/fastqc/"] [ k "More information on FastQC" ] ] ;
-              ]
-            | `paired_end ((html_1, snapshot1_1, snapshot2_1),
-                           (html_2, snapshot1_2, snapshot2_2)) ->
-              ul [
-                li [
-                  k "Snapshot (forward):" ;
-                  br () ;
-                  img ~a:[a_style "width:40% ; margin: 0 10%"] ~src:(WWW.href snapshot1_1) ~alt:"" () ;
-                  img ~a:[a_style "width:40%"] ~src:(WWW.href snapshot2_1) ~alt:"" () ;
-                  br () ;
-                  k "Snapshot (reverse):" ;
-                  br () ;
-                  img ~a:[a_style "width:40% ; margin: 0 10%"] ~src:(WWW.href snapshot1_2) ~alt:"" () ;
-                  img ~a:[a_style "width:40%"] ~src:(WWW.href snapshot2_2) ~alt:"" () ;
-                ] ;
-                li [ k "Check the full reports:" ; WWW.a html_1 [k "Forward"] ; WWW.a html_2 [k "Reverse"] ] ;
-                li [ a ~a:[a_href "http://www.bioinformatics.babraham.ac.uk/projects/fastqc/"] [ k "More information on FastQC" ] ] ;
-              ]
-          )
-        ]
-
-      method paragraphs =
-        super # paragraphs >>= fun pgs ->
-        self # quality_check >>= fun qc ->
-        Lwt.return (pgs @ [ qc ])
-    end
-    let short_read s =
-      (new short_read s :> base)
-
-    class mappable_short_read s = object
-      inherit short_read s as super
-    end
-
-    class mappable_short_read_ucsc s genome = object (self)
-      inherit mappable_short_read s as super
-
-      method aligned_bam_custom_track_link : fragment =
-        let bam = indexed_bams $ s in
-        custom_track_link_of_bam_bai s genome bam [k "Aligned reads" ]
-
-      method custom_track_links : fragment list = [
-        self#aligned_bam_custom_track_link ;
+        ] ;
+        li [ k "Check the " ; WWW.a html [k "full report"] ] ;
+        li [ a ~a:[a_href "http://www.bioinformatics.babraham.ac.uk/projects/fastqc/"] [ k "More information on FastQC" ] ] ;
       ]
 
-      method custom_tracks : fragment = [
-        h2 ~a:[a_id "custom-tracks"] [k "UCSC Genome Browser custom tracks"] ;
+    let fastQC_paired_end_paragraph s (html_1, snapshot1_1, snapshot2_1) (html_2, snapshot1_2, snapshot2_2) =
+      ul [
+        li [
+          k "Snapshot (forward):" ;
+          br () ;
+          img ~a:[a_style "width:40% ; margin: 0 10%"] ~src:(WWW.href snapshot1_1) ~alt:"" () ;
+          img ~a:[a_style "width:40%"] ~src:(WWW.href snapshot2_1) ~alt:"" () ;
+          br () ;
+          k "Snapshot (reverse):" ;
+          br () ;
+          img ~a:[a_style "width:40% ; margin: 0 10%"] ~src:(WWW.href snapshot1_2) ~alt:"" () ;
+          img ~a:[a_style "width:40%"] ~src:(WWW.href snapshot2_2) ~alt:"" () ;
+        ] ;
+        li [ k "Check the full reports:" ; WWW.a html_1 [k "Forward"] ; WWW.a html_2 [k "Reverse"] ] ;
+        li [ a ~a:[a_href "http://www.bioinformatics.babraham.ac.uk/projects/fastqc/"] [ k "More information on FastQC" ] ] ;
+      ]
+
+    let fastQC_paragraph s =
+      fastQC_report_page s >>| fun fqc_rp ->
+      let par = match fqc_rp with
+        | `single_end report ->
+          fastQC_single_end_paragraph s report
+        | `paired_end (report_1, report_2) ->
+          fastQC_paired_end_paragraph s report_1 report_2
+      in
+      [ h3 [ k "FastqQC report" ] ; par ]
+
+    let sequencing_quality_check_section s = section "Sequencing quality check" [
+        fastQC_paragraph s >>? [] ;
+      ]
+
+
+
+    let mapped_reads_indexed_custom_track_link s =
+      W.Sample.ucsc_genome s >>= fun org ->
+      mapped_reads_indexed s >>| fun bam_bai ->
+      custom_track_link_of_bam_bai s org bam_bai [k "Mapped reads" ]
+
+    let custom_track_links s = List.filter_map ~f:ident [
+      mapped_reads_indexed_custom_track_link s
+    ]
+
+    let custom_tracks_link_list s =
+        [ ul (List.map (custom_track_links s) ~f:li) ]
+
+    let custom_tracks_section s =
+      let intro = [
         p [k "The datasets can be visualized on the " ;
            a ~a:[a_href "http://genome.ucsc.edu/cgi-bin/hgTracks"] [k"UCSC Genome Browser"] ;
            k ". To achieve this, simply click on the link corresponding to the sample you want to visualize." ;
@@ -353,41 +306,47 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
            a ~a:[a_href "http://genome.ucsc.edu/goldenPath/help/hgSessionHelp.html"] [k"sessions"] ;
            k"."
           ] ;
-        ul (List.map self#custom_track_links ~f:li) ;
-      ]
+      ] in
+      let link_list = custom_tracks_link_list s in
+      section ~a:[a_id "custom-tracks"] ~intro "UCSC Genome Browser custom tracks" [ link_list ]
 
-      method! paragraphs =
-        super#paragraphs >>= fun pgs ->
-        Lwt.return (pgs @  [ self # custom_tracks ] )
-    end
+    let title s = [
+      h1 [b [k "Sample " ; k s.sample_id ]] ;
+      hr () ;
+    ]
 
-    let mappable_short_read s =
-      match s # reference_genome # repr with
-      | `ucsc g -> (new mappable_short_read_ucsc s g :> base)
-      | `fasta _ -> (new mappable_short_read s :> base)
+    let overview s = [
+      h2 [k "Overview"] ;
+      br () ;
+      keyval_table ~style:"width:50%" [
+        bb"Type", [ k (string_of_sample_data s.sample_data) ] ;
+        bb"Experiment", [ k (string_of_experiment s.sample_exp) ] ;
+        bb"Model", [ k s.sample_model ] ;
+        bb"Condition", [ k (string_of_condition (W.Sample.condition s)) ] ;
+      ] ;
+    ]
 
-    let contents = function
-      | `TF_ChIP_seq s -> mappable_short_read s
-      | `EM_ChIP_seq s -> mappable_short_read s
-      | `FAIRE_seq s -> mappable_short_read s
-      | `WCE_seq s -> mappable_short_read s
-      | `mRNA_seq s -> short_read s
-      | `Short_read_sample s -> short_read s
+    let sections s = List.concat [
+      sequencing_quality_check_section s ;
+      custom_tracks_section s ;
+    ]
 
-    let list = List.map W.samples ~f:(fun s ->
-        let obj = contents (W.any_sample s) in
-        obj#sample,
-        WWW.html_page
-          [ "sample" ; obj#sample#id ; "index.html" ]
-          ~f:obj#make
-          ()
+    let make s () =
+      let page_title = sprintf "Sample :: %s" s.sample_id in
+      let contents = List.concat [ title s ; medskip ; overview s ; medskip ; sections s ] in
+      Lwt.return (html_page page_title contents)
+
+    let list = List.map W.Sample.list ~f:(fun s ->
+        s,
+        WWW.html_page [ "sample" ; s.sample_id ^ ".html" ] ~f:(make s) ()
       )
   end
+
 
   let browse_by_sample_div =
     let open Html5.M in
     Sample_page.list
-    |> List.map ~f:(fun (s,page_s) -> WWW.a page_s [ k s#id ])
+    |> List.map ~f:(fun (s,page_s) -> WWW.a page_s [ k s.sample_id ])
     |> multicolumn_ul
 
 
@@ -416,7 +375,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
     WWW.html_page ["index.html"] ~f:(fun () -> Lwt.return (contents ())) ()
 end
 
-let make_website (module W : Guizmin.Unrolled_workflow.S) workflow_output ~output_dir ~webroot =
+let make_website (module W : Guizmin.Unrolled_workflow.S_alt) workflow_output ~output_dir ~webroot =
   let module P = struct
     let workflow_output = workflow_output
     let output_dir = output_dir
@@ -446,7 +405,7 @@ let backend dopts blog =
 let main opts dopts ged_file output_dir webroot = Guizmin.(
   let description = Experiment_description.load ged_file in
   check_errors description ;
-  let module W = (val Unroll_workflow.from_description description) in
+  let module W = (val Unroll_workflow.from_description_alt description) in
   let log_event, send_to_log_event = React.E.create () in
   let db = Guizmin_db.init "_guizmin" in
   let blog = Guizmin_log.make ~hook:send_to_log_event ~db () in
