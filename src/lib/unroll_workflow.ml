@@ -338,39 +338,39 @@ module Make_alt(S : Settings) = struct
 
     let mapped_reads s =
       genome s >>= fun g_s ->
-      sanger_fastq s >>| fun fqs ->
+      sanger_fastq s >>= fun fqs ->
       match s.sample_exp with
       | `whole_cell_extract
       | `TF_ChIP _
       | `EM_ChIP _
       | `FAIRE ->
-        dna_seq_mapped_reads s g_s fqs
+        Some (dna_seq_mapped_reads s g_s fqs)
       | `mRNA ->
-        assert false
+        None
 
     let mapped_reads_sam s =
       genome s >>= fun g_s ->
-      sanger_fastq s >>| fun fqs ->
+      sanger_fastq s >>= fun fqs ->
       match s.sample_exp with
       | `whole_cell_extract
       | `TF_ChIP _
       | `EM_ChIP _
       | `FAIRE ->
-        dna_seq_mapped_reads_sam s g_s fqs
+        Some (dna_seq_mapped_reads_sam s g_s fqs)
       | `mRNA ->
-        assert false
+        None
 
     let mapped_reads_indexed s =
       genome s >>= fun g_s ->
-      sanger_fastq s >>| fun fqs ->
+      sanger_fastq s >>= fun fqs ->
       match s.sample_exp with
       | `whole_cell_extract
       | `TF_ChIP _
       | `EM_ChIP _
       | `FAIRE ->
-        dna_seq_mapped_reads_indexed s g_s fqs
+        Some (dna_seq_mapped_reads_indexed s g_s fqs)
       | `mRNA ->
-        assert false
+        None
 
     let signal s =
       ucsc_genome s >>= fun org ->

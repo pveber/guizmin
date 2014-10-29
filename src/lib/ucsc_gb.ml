@@ -154,14 +154,15 @@ let fetchChromSizes org =
 (* (\*       env.sh "wigToBigWig %s %s %s %s" clip wig chrom_info path) *\) *)
 
 let bedGraphToBigWig org bg =
+  let tmp = seq [ tmp () ; string "/sorted.bedGraph" ] in
   workflow [
-    program "sort" ~stdout:(tmp ()) [
+    program "sort" ~stdout:tmp [
       string "-k1,1" ;
       string "-k2,2n" ;
       dep bg ;
     ] ;
-    program "BedGraphToBigWig" ~path:[package] [
-      tmp () ;
+    program "bedGraphToBigWig" ~path:[package] [
+      tmp ;
       dep (fetchChromSizes org) ;
       target () ;
     ]

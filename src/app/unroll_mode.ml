@@ -2,9 +2,14 @@ open Core.Std
 open Common
 
 let string_of_path l = String.concat ~sep:"/" l
+
 let ( >>? ) o v = match o with
   | Some x -> x
   | None -> v
+
+let assoc xs ~f = List.filter_map xs ~f:(fun x -> Option.map (f x) ~f:(fun y -> x, y))
+
+let ( $ ) xs x = List.Assoc.find xs x
 
 module type Params = sig
   val workflow_output : Guizmin.Workflow.u -> string Lwt.t
@@ -130,34 +135,46 @@ module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
       (h2 ?a [k title]) :: intro @ contents
 
 
-  let mapped_reads_indexed s =
-    W.Sample.mapped_reads_indexed s >>| fun bam ->
-    WWW.file_page
-      ~path:[ "aligned_reads" ; s.sample_id ]
-      bam
 
-  let fastQC_report_page s =
-    W.Sample.fastQC_report s >>| function
-    | `single_end report ->
-      let page =
-        WWW.file_page
-          ~path:[ "quality_control" ; "FastQC" ; s.sample_id ]
-          (FastQC.html_report report) in
-      let per_base_sequence_content =
-        WWW.file_page (FastQC.per_base_sequence_content report) in
-      let per_base_quality =
-        WWW.file_page (FastQC.per_base_quality report) in
-      `single_end (page, per_base_sequence_content, per_base_quality)
 
-    | `paired_end (report_1, report_2) ->
-      let page_1 = WWW.file_page ~path:[ "quality_control" ; "FastQC" ; s.sample_id ^ "_1" ] report_1 in
-      let page_2 = WWW.file_page ~path:[ "quality_control" ; "FastQC" ; s.sample_id ^ "_2" ] report_2 in
-      let per_base_sequence_content_1 = WWW.file_page (FastQC.per_base_sequence_content report_1) in
-      let per_base_sequence_content_2 = WWW.file_page (FastQC.per_base_sequence_content report_2) in
-      let per_base_quality_1 = WWW.file_page (FastQC.per_base_quality report_1) in
-      let per_base_quality_2 = WWW.file_page (FastQC.per_base_quality report_2) in
-      `paired_end ((page_1, per_base_sequence_content_1, per_base_quality_1),
-                   (page_2, per_base_sequence_content_2, per_base_quality_2))
+
+  (* PAGES CORRESPONDING TO DIRECT WORKFLOW OUTPUT *)
+
+  let mapped_reads_indexed = assoc W.Sample.list ~f:(fun s ->
+      W.Sample.mapped_reads_indexed s >>| fun bam ->
+      WWW.file_page
+        ~path:[ "sample" ; "mapped_reads" ; s.sample_id ]
+        bam
+    )
+
+  let fastQC_report_page = assoc W.Sample.list ~f:(fun s ->
+      W.Sample.fastQC_report s >>| function
+      | `single_end report ->
+        let page =
+          WWW.file_page
+            ~path:[ "sample" ; "quality_control" ; "FastQC" ; s.sample_id ]
+            (FastQC.html_report report) in
+        let per_base_sequence_content =
+          WWW.file_page (FastQC.per_base_sequence_content report) in
+        let per_base_quality =
+          WWW.file_page (FastQC.per_base_quality report) in
+        `single_end (page, per_base_sequence_content, per_base_quality)
+
+      | `paired_end (report_1, report_2) ->
+        let page_1 = WWW.file_page ~path:[ "quality_control" ; "FastQC" ; s.sample_id ^ "_1" ] report_1 in
+        let page_2 = WWW.file_page ~path:[ "quality_control" ; "FastQC" ; s.sample_id ^ "_2" ] report_2 in
+        let per_base_sequence_content_1 = WWW.file_page (FastQC.per_base_sequence_content report_1) in
+        let per_base_sequence_content_2 = WWW.file_page (FastQC.per_base_sequence_content report_2) in
+        let per_base_quality_1 = WWW.file_page (FastQC.per_base_quality report_1) in
+        let per_base_quality_2 = WWW.file_page (FastQC.per_base_quality report_2) in
+        `paired_end ((page_1, per_base_sequence_content_1, per_base_quality_1),
+                     (page_2, per_base_sequence_content_2, per_base_quality_2))
+    )
+
+  let signal_page = assoc W.Sample.list ~f:(fun s ->
+      W.Sample.signal s >>|
+      WWW.file_page ~path:[ "sample" ; "signal" ; s.sample_id ^ ".bw" ]
+    )
 
 
   let custom_track_link_of_bam_bai x genome bam_bai elt =
@@ -172,22 +189,22 @@ module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
     ]
     in
     let url = Gzt.Ucsc_gb.CustomTrack.url genome opts in
-    [ Html5.M.(a ~a:[a_href url] elt) ]
+    [ a ~a:[a_href url] elt ]
 
   let custom_track_link_of_bigwig x genome bigwig elt =
     let local_path = string_of_path (WWW.path bigwig) in
-      let name = x.sample_id ^ " signal" in
-      let opts = [
-        `track_type "bigWig" ;
-        `bigDataUrl (webroot ^ "/" ^ local_path) ;
-        `color (0,0,255) ;
-        `visibility `dense ;
-        `name name ;
-        `description name ;
-      ]
+    let name = x.sample_id ^ " signal" in
+    let opts = [
+      `track_type "bigWig" ;
+      `bigDataUrl (webroot ^ "/" ^ local_path) ;
+      `color (0,0,255) ;
+      `visibility `dense ;
+      `name name ;
+      `description name ;
+    ]
     in
     let url = Gzt.Ucsc_gb.CustomTrack.url genome opts in
-    [ Html5.M.(a ~a:[a_href url] [ k x.sample_id ]) ]
+    [ a ~a:[a_href url] elt ]
 
 (*   (\* let index_custom_tracks_section = *\) *)
 (*   (\*   let open Html5.M in *\) *)
@@ -223,21 +240,6 @@ module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
 (*   (\*     (\\* signal_link_table ; *\\) *\) *)
 (*   (\*   ] *\) *)
 
-
-(*   (\* let index_quality_control_section () = *\) *)
-(*   (\*   let open Html5.M in *\) *)
-(*   (\*   let fastQC_reports_table = *\) *)
-(*   (\*     link_table *\) *)
-(*   (\* (const true) *\) *)
-(*   (\* (fun (s,_) -> link_of_path s.sample_id ["quality_control" ; "FastQC" ; s.sample_id]) *\) *)
-(*   (\* [ List.map samples (fun s -> s, ()) ] *\) *)
-(*   (\*   in *\) *)
-(*   (\*   div [ *\) *)
-(*   (\*     h2 ~a:[a_id "quality-controls"] [k"Quality controls"] ; *\) *)
-(*   (\*     p [k "The following table provides links to FastQC reports to assess the quality of each HTS sample."] ; *\) *)
-(*   (\*     fastQC_reports_table ; *\) *)
-(*   (\*   ] *\) *)
-
   module Sample_page = struct
     let fastQC_single_end_paragraph s (html, snapshot1, snapshot2) =
       ul [
@@ -270,7 +272,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
       ]
 
     let fastQC_paragraph s =
-      fastQC_report_page s >>| fun fqc_rp ->
+      fastQC_report_page $ s >>| fun fqc_rp ->
       let par = match fqc_rp with
         | `single_end report ->
           fastQC_single_end_paragraph s report
@@ -287,11 +289,18 @@ module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
 
     let mapped_reads_indexed_custom_track_link s =
       W.Sample.ucsc_genome s >>= fun org ->
-      mapped_reads_indexed s >>| fun bam_bai ->
+      mapped_reads_indexed $ s >>| fun bam_bai ->
       custom_track_link_of_bam_bai s org bam_bai [k "Mapped reads" ]
 
+    let signal_custom_track_link s =
+      W.Sample.ucsc_genome s >>= fun org ->
+      signal_page $ s >>| fun bigWig ->
+      custom_track_link_of_bigwig s org bigWig [k "Signal intensity" ]
+
+
     let custom_track_links s = List.filter_map ~f:ident [
-      mapped_reads_indexed_custom_track_link s
+      mapped_reads_indexed_custom_track_link s ;
+      signal_custom_track_link s ;
     ]
 
     let custom_tracks_link_list s =
