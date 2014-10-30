@@ -176,6 +176,18 @@ module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
       WWW.file_page ~path:[ "sample" ; "signal" ; s.sample_id ^ ".bw" ]
     )
 
+  let called_peaks = assoc W.Sample.list ~f:(fun s ->
+      W.Sample.peak_calling s >>|
+      WWW.file_page ~path:[ "sample" ; "called_peaks" ; s.sample_id ^ ".bed" ]
+    )
+
+  let called_peaks_bb = assoc W.Sample.list ~f:(fun s ->
+      W.Sample.ucsc_genome s >>= fun org ->
+      W.Sample.peak_calling s >>| fun bed ->
+      WWW.file_page
+        ~path:[ "sample" ; "called_peaks" ; s.sample_id ^ ".bb" ]
+        (Ucsc_gb.bedToBigBed org bed)
+    )
 
   let custom_track_link_of_bam_bai x genome bam_bai elt =
     let local_path = string_of_path (WWW.path bam_bai) in
@@ -196,6 +208,21 @@ module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
     let name = x.sample_id ^ " signal" in
     let opts = [
       `track_type "bigWig" ;
+      `bigDataUrl (webroot ^ "/" ^ local_path) ;
+      `color (0,0,255) ;
+      `visibility `dense ;
+      `name name ;
+      `description name ;
+    ]
+    in
+    let url = Gzt.Ucsc_gb.CustomTrack.url genome opts in
+    [ a ~a:[a_href url] elt ]
+
+  let custom_track_link_of_bigBed x genome bigBed objects elt =
+    let local_path = string_of_path (WWW.path bigBed) in
+    let name = x.sample_id ^ " " ^ objects in
+    let opts = [
+      `track_type "bigBed" ;
       `bigDataUrl (webroot ^ "/" ^ local_path) ;
       `color (0,0,255) ;
       `visibility `dense ;
@@ -297,10 +324,15 @@ module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
       signal_page $ s >>| fun bigWig ->
       custom_track_link_of_bigwig s org bigWig [k "Signal intensity" ]
 
+    let called_peaks_custom_track_link s =
+      W.Sample.ucsc_genome s >>= fun org ->
+      called_peaks_bb $ s >>| fun bigBed ->
+      custom_track_link_of_bigBed s org bigBed "called peaks" [k "Called peaks" ]
 
     let custom_track_links s = List.filter_map ~f:ident [
       mapped_reads_indexed_custom_track_link s ;
       signal_custom_track_link s ;
+      called_peaks_custom_track_link s ;
     ]
 
     let custom_tracks_link_list s =

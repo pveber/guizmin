@@ -124,6 +124,12 @@ module type S_alt = sig
     val mapped_reads_sam : t -> Sam.workflow option
 
     val signal : t -> bigWig workflow option
+
+    (** Peak calling stuff *)
+    val chIP_TF : t -> string option
+    val macs2_peak_calling : t -> [`macs2_callpeak_output] directory workflow option
+    val peak_calling : t -> Bed.bed3 workflow option
+
   end
 
 

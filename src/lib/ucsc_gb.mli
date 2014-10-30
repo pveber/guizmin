@@ -2,8 +2,11 @@ open Workflow.Types
 
 module Types : sig
   type twobit = ([`twobit], [`binary]) file
-  type chrom_sizes = (string * (int * unit), [`no], [`sharp]) tsv
+  type chrom_sizes = < columns : string * (int * unit) ;
+                       header : [`no] ;
+                       comment : [`sharp] ; .. > tsv
 
+  type bigBed = ([`bigBed], [`binary]) file
   type bedGraph = ([`bedGraph], [`text]) file
   type wig = ([`wig], [`text]) file
   type bigWig = ([`bigWig], [`binary]) file
@@ -31,6 +34,7 @@ val fetchChromSizes : [< genome] -> chrom_sizes workflow
 (* val wig_of_bigWig : bigWig file -> wig file *)
 (* val bigWig_of_wig : ?clip:bool -> [< genome] -> wig file -> bigWig file *)
 val bedGraphToBigWig : [< genome] -> bedGraph workflow -> bigWig workflow
+val bedToBigBed      : [< genome] -> 'a Bed.bed3_like workflow -> bigBed workflow
 
 (* val wg_encode_crg_mappability_36  : [`mm9 | `hg18 | `hg19] -> bigWig file *)
 (* val wg_encode_crg_mappability_40  : [`mm9 | `hg18 | `hg19] -> bigWig file *)

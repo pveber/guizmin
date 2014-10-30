@@ -15,8 +15,11 @@ let string_of_genome = function
 
 module Types = struct
   type twobit = ([`twobit], [`binary]) file
-  type chrom_sizes = (string * (int * unit), [`no], [`sharp]) tsv
+  type chrom_sizes = < columns : string * (int * unit) ;
+                       header : [`no] ;
+                       comment : [`sharp] ; .. > tsv
 
+  type bigBed = ([`bigBed], [`binary]) file
   type bedGraph = ([`bedGraph], [`text]) file
   type wig = ([`wig], [`text]) file
   type bigWig = ([`bigWig], [`binary]) file
@@ -162,6 +165,21 @@ let bedGraphToBigWig org bg =
       dep bg ;
     ] ;
     program "bedGraphToBigWig" ~path:[package] [
+      tmp ;
+      dep (fetchChromSizes org) ;
+      target () ;
+    ]
+  ]
+
+let bedToBigBed org bed =
+  let tmp = seq [ tmp () ; string "/sorted.bed" ] in
+  workflow [
+    program "sort" ~stdout:tmp [
+      string "-k1,1" ;
+      string "-k2,2n" ;
+      dep bed ;
+    ] ;
+    program "bedToBigBed" ~path:[package] [
       tmp ;
       dep (fetchChromSizes org) ;
       target () ;

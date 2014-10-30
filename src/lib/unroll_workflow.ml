@@ -376,6 +376,32 @@ module Make_alt(S : Settings) = struct
       ucsc_genome s >>= fun org ->
       mapped_reads s >>| fun bam ->
       Ucsc_gb.bedGraphToBigWig org (Macs2.pileup bam)
+
+    let chIP_TF s = match s.sample_exp with
+      | `TF_ChIP tf -> Some tf
+      | _ -> None
+
+    let macs2_gsize_of_ucsc_org = function
+      | `hg18 | `hg19         -> `hs
+      | `mm8  | `mm9  | `mm10 -> `mm
+      | `dm3                  -> `dm
+      | `sacCer2              -> `gsize 12_000_000
+
+    let macs2_peak_calling s =
+      chIP_TF s >>= fun _ -> (* just to make sure we're dealing with TF ChIP samples *)
+      ucsc_genome s >>= fun org ->
+      mapped_reads s >>| fun bam ->
+      Macs2.callpeak
+        ~gsize:(macs2_gsize_of_ucsc_org org)
+        ~qvalue:0.01
+        ~call_summits:true
+        ~fix_bimodal:true
+        ~extsize:200
+        bam
+
+    let peak_calling s =
+      macs2_peak_calling s >>| Macs2.narrow_peaks
+
   end
 
   (* class tf_chip_seq_sample sample data genome tf = *)

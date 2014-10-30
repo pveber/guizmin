@@ -1,3 +1,4 @@
+open Core.Std
 open Workflow.Types
 open Workflow.API
 
@@ -20,3 +21,44 @@ let pileup ?extsize ?both_direction bam =
       option (opt "--extsize" int) extsize ;
     ]
   ]
+
+
+type gsize = [`hs | `mm | `ce | `dm | `gsize of int]
+
+let gsize_expr = function
+  | `hs -> string "hs"
+  | `mm -> string "mm"
+  | `dm -> string "dm"
+  | `ce -> string "ce"
+  | `gsize n -> int n
+
+let name = "macs2"
+
+let callpeak ?pvalue ?qvalue ?gsize ?call_summits
+             ?fix_bimodal ?extsize ?control treatment =
+  workflow [
+    macs2 "callpeak" [
+      opt "--outdir" target () ;
+      opt "--name" string name ;
+      opt "--format" string "BAM" ;
+      option (opt "--pvalue" float) pvalue ;
+      option (opt "--qvalue" float) qvalue ;
+      option (opt "--gsize" gsize_expr) gsize ;
+      string "--bdg" ;
+      option (flag string "--call-summits") call_summits ;
+      option (opt "--extsize" int) extsize ;
+      option (flag string "--fix-bimodal") fix_bimodal ;
+      option (opt "--control" dep) control ;
+      opt "--treatment" dep treatment ;
+    ]
+  ]
+
+type peaks_xls = < columns : string * (int * (int * (int * (int * (int * (float * (float * (float * unit)))))))) ;
+                  header : [`yes] ;
+                  comment : [`sharp] ; .. > tsv
+
+let peaks_xls o = Workflow.extract o [ name ^ "_peaks.xls" ]
+
+let narrow_peaks o =
+  Workflow.extract o [ name ^ "_peaks.narrowPeak" ]
+  |> Bed.keep3 (* this file has numerous fields which make it incompatible with bedToBigBed *)

@@ -38,15 +38,19 @@ module Types = struct
   type html = ([`html], [`text]) file
   type bash_script = ([`bash_script], [`text]) file
 
-  class type ['a, 'b, 'c, 'd] tabular = object
+  class type ['a] tabular = object ('a)
+    constraint 'a = < columns : 'b ; header : ([< `yes | `no] as 'c) ;
+                      sep : 'd ; comment : 'e ; .. >
     inherit [[`tabular], [`text]] file
-    method columns : 'a
-    method header : [< `yes | `no] as 'b
-    method sep : 'c
-    method comment : 'd
+    method columns : 'b
+    method header : 'c
+    method sep : 'd
+    method comment : 'e
   end
 
-  type ('a, 'b, 'c) tsv = ('a, 'b, [`tab], 'c) tabular
+  class type ['a] tsv = object
+    inherit [ < sep : [`tab] ; .. > as 'a ] tabular
+  end
 
 end
 
