@@ -1,9 +1,11 @@
 open Core.Std
 open Workflow.API
 
-let wget url =
+let wget ?no_check_certificate url =
   workflow [
-    program "wget" [ opt "-O" target () ; string url ]
+    program "wget" [
+      option (flag string "--no-check-certificate") no_check_certificate ;
+      opt "-O" target () ; string url ]
   ]
 
 let unzip zip =
