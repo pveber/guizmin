@@ -116,10 +116,7 @@ module Make(S : Settings) = struct
 
       method aligned_reads =
         let index = s#reference_genome#bowtie_index in
-        match s#sanger_fastq with
-        | `single_end fqs ->
-          Bowtie.bowtie ~v:2 ~m:1 index fqs
-        | `paired_end _ -> assert false
+        Bowtie.bowtie ~v:2 ~m:1 index s#sanger_fastq
 
       method aligned_reads_indexed_bam =
         Samtools.indexed_bam_of_sam s#aligned_reads
@@ -325,10 +322,7 @@ module Make_alt(S : Settings) = struct
 
     let dna_seq_mapped_reads_sam s genome fqs =
       let index = Genome.bowtie_index genome in
-      match fqs with
-      | `single_end fqs ->
-        Bowtie.bowtie ~v:2 ~m:1 index fqs
-      | `paired_end _ -> assert false
+      Bowtie.bowtie ~v:2 ~m:1 index fqs
 
     let dna_seq_mapped_reads_indexed s genome fqs =
       Samtools.indexed_bam_of_sam (dna_seq_mapped_reads_sam s genome fqs)
