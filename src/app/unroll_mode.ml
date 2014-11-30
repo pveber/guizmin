@@ -186,7 +186,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
       W.Sample.peak_calling s >>| fun bed ->
       WWW.file_page
         ~path:[ "sample" ; "called_peaks" ; s.sample_id ^ ".bb" ]
-        (Ucsc_gb.bedToBigBed org bed)
+        (Ucsc_gb.bedToBigBed_failsafe org bed)
     )
 
   let custom_track_link_of_bam_bai x genome bam_bai elt =
