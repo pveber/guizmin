@@ -196,7 +196,7 @@ let bedToBigBed org bed =
    else bedToBigBed (sort bed)
 *)
 let bedToBigBed_failsafe org bed =
-  let test = program "test" [ string "! -s" ] in
+  let test = program "test" [ string "! -s" ; dep bed ] in
   let touch = program "touch" [ target () ] in
   let cmd = or_list [
       and_list [ test ; touch ] ;
