@@ -34,5 +34,29 @@ let symlink src dst =
   then
     Sys.command_exn (Printf.sprintf "ln -s `readlink -f %s` %s" src dst)
 
-let ( >>= ) = Lwt.bind
-let ( >|= ) x f = Lwt.map f x
+let file_is_empty path =
+  Unix.((stat path).st_size = 0L)
+
+module Lwt_infix = struct
+  let ( >>= ) = Lwt.bind
+
+  let ( >|= ) x f = Lwt.map f x
+
+  let ( >>? ) x f =
+    Lwt.bind x (function
+        | None -> Lwt.return None
+        | Some x -> f x
+      )
+
+  let ( >|? ) x f = Lwt.map (Option.map ~f) x
+end
+
+let lwt_option_map x ~f =
+  match x with
+  | None -> Lwt.return None
+  | Some x -> Lwt.bind (f x) (fun y -> Lwt.return (Some y))
+
+let lwt_option_bind x ~f =
+  match x with
+  | None -> Lwt.return None
+  | Some x -> Lwt.bind (f x) (fun y -> Lwt.return y)

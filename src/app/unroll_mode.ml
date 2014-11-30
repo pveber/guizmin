@@ -8,8 +8,11 @@ let ( >>? ) o v = match o with
   | None -> v
 
 let assoc xs ~f = List.filter_map xs ~f:(fun x -> Option.map (f x) ~f:(fun y -> x, y))
+let assoc' xs ~f = List.map xs ~f:(fun x -> x, f x)
 
 let ( $ ) xs x = List.Assoc.find xs x
+let ( $$ ) xs x =
+  lwt_option_bind (xs $ x) ~f:ident
 
 module type Params = sig
   val workflow_output : Guizmin.Workflow.u -> string Lwt.t
@@ -25,6 +28,8 @@ module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
   open Html5.M
   open Option.Monad_infix
 
+  let workflow_output' x =
+    workflow_output (x : _ Guizmin.Workflow.t :> Guizmin.Workflow.u)
 
   (* WEBSITE GENERATION *)
   module WWW = Website.Make(struct end)
@@ -181,12 +186,19 @@ module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
       WWW.file_page ~path:[ "sample" ; "called_peaks" ; s.sample_id ^ ".bed" ]
     )
 
-  let called_peaks_bb = assoc W.Sample.list ~f:(fun s ->
-      W.Sample.ucsc_genome s >>= fun org ->
-      W.Sample.peak_calling s >>| fun bed ->
-      WWW.file_page
-        ~path:[ "sample" ; "called_peaks" ; s.sample_id ^ ".bb" ]
-        (Ucsc_gb.bedToBigBed_failsafe org bed)
+  let called_peaks_bb = assoc' W.Sample.list ~f:(fun s ->
+      let open Lwt_infix in
+      Lwt.return (W.Sample.ucsc_genome s) >>? fun org ->
+      Lwt.return (W.Sample.peak_calling s) >>? fun bed ->
+      workflow_output' bed >>= fun bed_path ->
+      if file_is_empty bed_path then Lwt.return None
+      else
+        let page =
+          WWW.file_page
+            ~path:[ "sample" ; "called_peaks" ; s.sample_id ^ ".bb" ]
+            (Ucsc_gb.bedToBigBed_failsafe org bed)
+        in
+        Lwt.return (Some page)
     )
 
   let custom_track_link_of_bam_bai x genome bam_bai elt =
@@ -312,6 +324,19 @@ module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
         fastQC_paragraph s >>? [] ;
       ]
 
+    let macs2_paragraph s =
+      called_peaks $ s >>| fun bed ->
+      [
+        h3 [ k "MACS2 output" ] ;
+        ul [
+          li [ WWW.a bed [ k "Called peaks" ] ]
+        ] ;
+      ]
+
+    let peak_calling_section s = section "Peak calling" [
+        macs2_paragraph s >>? [] ;
+      ]
+
 
 
     let mapped_reads_indexed_custom_track_link s =
@@ -325,18 +350,26 @@ module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
       custom_track_link_of_bigwig s org bigWig [k "Signal intensity" ]
 
     let called_peaks_custom_track_link s =
-      W.Sample.ucsc_genome s >>= fun org ->
-      called_peaks_bb $ s >>| fun bigBed ->
+      let open Lwt_infix in
+      Lwt.return (W.Sample.ucsc_genome s) >>? fun org ->
+      called_peaks_bb $$ s >|? fun bigBed ->
       custom_track_link_of_bigBed s org bigBed "called peaks" [k "Called peaks" ]
 
-    let custom_track_links s = List.filter_map ~f:ident [
-      mapped_reads_indexed_custom_track_link s ;
-      signal_custom_track_link s ;
-      called_peaks_custom_track_link s ;
-    ]
+    let custom_track_links s =
+      let open Lwt_infix in
+      called_peaks_custom_track_link s >>= fun called_peaks_custom_track_link ->
+      let links = List.filter_map ~f:ident [
+        mapped_reads_indexed_custom_track_link s ;
+        signal_custom_track_link s ;
+       called_peaks_custom_track_link ;
+        ]
+      in
+      Lwt.return links
 
     let custom_tracks_link_list s =
-        [ ul (List.map (custom_track_links s) ~f:li) ]
+      let open Lwt_infix in
+      custom_track_links s >|= fun links ->
+      [ ul (List.map links ~f:li) ]
 
     let custom_tracks_section s =
       let intro = [
@@ -348,7 +381,8 @@ module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
            k"."
           ] ;
       ] in
-      let link_list = custom_tracks_link_list s in
+      let open Lwt_infix in
+      custom_tracks_link_list s >|= fun link_list ->
       section ~a:[a_id "custom-tracks"] ~intro "UCSC Genome Browser custom tracks" [ link_list ]
 
     let title s = [
@@ -367,15 +401,21 @@ module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
       ] ;
     ]
 
-    let sections s = List.concat [
-      sequencing_quality_check_section s ;
-      custom_tracks_section s ;
-    ]
+    let sections s =
+      let open Lwt_infix in
+      custom_tracks_section s >|= fun custom_tracks ->
+      List.concat [
+        sequencing_quality_check_section s ;
+        peak_calling_section s ;
+        custom_tracks ;
+      ]
 
     let make s () =
       let page_title = sprintf "Sample :: %s" s.sample_id in
-      let contents = List.concat [ title s ; medskip ; overview s ; medskip ; sections s ] in
-      Lwt.return (html_page page_title contents)
+      let open Lwt_infix in
+      sections s >|= fun sections ->
+      let contents = List.concat [ title s ; medskip ; overview s ; medskip ; sections ] in
+      html_page page_title contents
 
     let list = List.map W.Sample.list ~f:(fun s ->
         s,
