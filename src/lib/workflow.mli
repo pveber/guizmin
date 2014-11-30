@@ -92,6 +92,8 @@ module API : sig
 
   val ( // ) : shell_expr -> string -> shell_expr
 
+  val or_list : cmd list -> cmd
+  val and_list : cmd list -> cmd
   val mkdir : shell_expr -> cmd
   val mkdir_p : shell_expr -> cmd
   val wget : string -> cmd

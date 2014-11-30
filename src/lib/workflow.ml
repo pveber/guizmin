@@ -189,6 +189,17 @@ module API = struct
     program "bash" ?path ?stdin ?stdout ?stderr (dep script :: args)
 
   let ( // ) x y = x @ [ S "/" ; S y ]
+
+  let par cmd =
+    S "( " :: (cmd @ [ S " )" ])
+
+  let cmd_list op cmds =
+    List.intersperse ~sep:[ S " " ; S op ; S " " ] cmds
+    |> List.concat
+    |> par
+
+  let or_list = cmd_list "||"
+  let and_list = cmd_list "&&"
 end
 
 let deps = function
