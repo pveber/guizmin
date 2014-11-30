@@ -186,6 +186,11 @@ module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
       WWW.file_page ~path:[ "sample" ; "called_peaks" ; s.sample_id ^ ".bed" ]
     )
 
+  let macs2_peaks = assoc W.Sample.list ~f:(fun s ->
+      W.Sample.macs2_peak_calling s >>| fun x ->
+      WWW.file_page (Macs2.peaks_xls x)
+    )
+
   let called_peaks_bb = assoc' W.Sample.list ~f:(fun s ->
       let open Lwt_infix in
       Lwt.return (W.Sample.ucsc_genome s) >>? fun org ->
@@ -325,11 +330,11 @@ module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
       ]
 
     let macs2_paragraph s =
-      called_peaks $ s >>| fun bed ->
+      macs2_peaks $ s >>| fun xls ->
       [
         h3 [ k "MACS2 output" ] ;
         ul [
-          li [ WWW.a bed [ k "Called peaks" ] ]
+          li [ WWW.a xls [ k "Called peaks" ] ]
         ] ;
       ]
 
