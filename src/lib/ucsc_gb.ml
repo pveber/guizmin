@@ -171,20 +171,38 @@ let bedGraphToBigWig org bg =
     ]
   ]
 
-let bedToBigBed org bed =
+let bedToBigBed_command org bed =
   let tmp = seq [ tmp () ; string "/sorted.bed" ] in
-  workflow [
+  let sort =
     program "sort" ~stdout:tmp [
       string "-k1,1" ;
       string "-k2,2n" ;
       dep bed ;
-    ] ;
+    ] in
+  let bedToBigBed =
     program "bedToBigBed" ~path:[package] [
       tmp ;
       dep (fetchChromSizes org) ;
       target () ;
-    ]
-  ]
+    ] in
+  and_list [ sort ; bedToBigBed ]
+
+let bedToBigBed org bed =
+  workflow [ bedToBigBed_command org bed ]
+
+(* implements the following algorithm
+   if bed is empty
+   then touch target
+   else bedToBigBed (sort bed)
+*)
+let bedToBigBed_failsafe org bed =
+  let test = program "test" [ string "! -s" ] in
+  let touch = program "touch" [ target () ] in
+  let cmd = or_list [
+      and_list [ test ; touch ] ;
+      bedToBigBed_command org bed
+    ] in
+  workflow [ cmd ]
 
 
 (* (\* module Lift_over = struct *\) *)
