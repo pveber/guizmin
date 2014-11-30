@@ -1,7 +1,11 @@
 (
   (Project mESC_demo)
 
-  (Condition wt)
+  (
+    Factor (
+      (factor_name condition)
+    )
+  )
 
   (
     Model (
@@ -16,7 +20,7 @@
       (sample_data (short_read_data (sra (single_end (SRR (SRR002012 SRR002013 SRR002014 SRR002015))))))
       (sample_exp (TF_ChIP Pou5f1))
       (sample_model mESC)
-      (sample_condition wt)
+      (sample_condition ((condition wt)))
     )
   )
 
@@ -26,7 +30,7 @@
       (sample_data (short_read_data (sra (single_end (SRR (SRR002023 SRR002024 SRR002025 SRR002026))))))
       (sample_exp (TF_ChIP Sox2))
       (sample_model mESC)
-      (sample_condition wt)
+      (sample_condition ((condition wt)))
     )
   )
 
@@ -36,7 +40,7 @@
       (sample_data (short_read_data (sra (single_end (SRR (SRR001992 SRR001993 SRR001994 SRR001995))))))
       (sample_exp (TF_ChIP Esrrb))
       (sample_model mESC)
-      (sample_condition wt)
+      (sample_condition ((condition wt)))
     )
   )
 
@@ -46,7 +50,7 @@
       (sample_data (short_read_data (sra (single_end (SRR (SRR023866 SRR023867 SRR023868 SRR023869))))))
       (sample_exp (TF_ChIP p300))
       (sample_model mESC)
-      (sample_condition wt)
+      (sample_condition ((condition wt)))
     )
   )
 
@@ -56,7 +60,7 @@
       (sample_data (short_read_data (sra (single_end (SRR (SRR185892))))))
       (sample_exp (TF_ChIP Sox2))
       (sample_model mESC)
-      (sample_condition wt)
+      (sample_condition ((condition wt)))
     )
   )
 
@@ -66,7 +70,7 @@
       (sample_data (short_read_data (sra (single_end (SRR (SRR1201335))))))
       (sample_exp (TF_ChIP Esrrb))
       (sample_model mESC)
-      (sample_condition wt)
+      (sample_condition ((condition wt)))
     )
   )
 
@@ -76,7 +80,7 @@
       (sample_data (short_read_data (sra (single_end (SRR (SRR1202455))))))
       (sample_exp (TF_ChIP Pou5f1))
       (sample_model mESC)
-      (sample_condition wt)
+      (sample_condition ((condition wt)))
     )
   )
 
@@ -86,7 +90,7 @@
       (sample_data (short_read_data (sra (single_end (SRR (SRR1202456))))))
       (sample_exp (TF_ChIP Pou5f1))
       (sample_model mESC)
-      (sample_condition wt)
+      (sample_condition ((condition wt)))
     )
   )
 
@@ -96,7 +100,7 @@
       (sample_data (short_read_data (sra (single_end (SRR (SRR1202457))))))
       (sample_exp (TF_ChIP Otx2))
       (sample_model mESC)
-      (sample_condition wt)
+      (sample_condition ((condition wt)))
     )
   )
 
@@ -106,7 +110,7 @@
       (sample_data (short_read_data (sra (single_end (SRR (SRR1202458))))))
       (sample_exp (TF_ChIP Otx2))
       (sample_model mESC)
-      (sample_condition wt)
+      (sample_condition ((condition wt)))
     )
   )
 
@@ -116,7 +120,7 @@
       (sample_data (short_read_data (sra (single_end (SRR (SRR1202453))))))
       (sample_exp (TF_ChIP p300))
       (sample_model mESC)
-      (sample_condition wt)
+      (sample_condition ((condition wt)))
     )
   )
 
@@ -126,7 +130,7 @@
       (sample_data (short_read_data (sra (single_end (SRR (SRR1202454))))))
       (sample_exp (TF_ChIP p300))
       (sample_model mESC)
-      (sample_condition wt)
+      (sample_condition ((condition wt)))
     )
   )
 
@@ -136,7 +140,7 @@
       (sample_data (short_read_data (sra (single_end (SRR (SRR1202463))))))
       (sample_exp FAIRE)
       (sample_model mESC)
-      (sample_condition wt)
+      (sample_condition ((condition wt)))
     )
   )
 
@@ -146,7 +150,7 @@
       (sample_data (short_read_data (sra (single_end (SRR (SRR1202459))))))
       (sample_exp (EM_ChIP H3K27ac))
       (sample_model mESC)
-      (sample_condition wt)
+      (sample_condition ((condition wt)))
     )
   )
 
@@ -156,7 +160,7 @@
       (sample_data (short_read_data (sra (single_end (SRR (SRR1202460))))))
       (sample_exp (EM_ChIP H3K27ac))
       (sample_model mESC)
-      (sample_condition wt)
+      (sample_condition ((condition wt)))
     )
   )
 
@@ -166,7 +170,7 @@
       (sample_data (short_read_data (sra (single_end (SRR (SRR1202461))))))
       (sample_exp (EM_ChIP H3K4me1))
       (sample_model mESC)
-      (sample_condition wt)
+      (sample_condition ((condition wt)))
     )
   )
 
@@ -176,7 +180,7 @@
       (sample_data (short_read_data (sra (single_end (SRR (SRR1202462))))))
       (sample_exp (EM_ChIP H3K4me1))
       (sample_model mESC)
-      (sample_condition wt)
+      (sample_condition ((condition wt)))
     )
   )
 
@@ -186,7 +190,7 @@
       (sample_data (short_read_data (sra (single_end (SRR (SRR1202464))))))
       (sample_exp whole_cell_extract)
       (sample_model mESC)
-      (sample_condition wt)
+      (sample_condition ((condition wt)))
     )
   )
 
@@ -196,7 +200,7 @@
       (sample_data (short_read_data (sra (single_end (SRR (SRR1202465))))))
       (sample_exp whole_cell_extract)
       (sample_model mESC)
-      (sample_condition wt)
+      (sample_condition ((condition wt)))
     )
   )
 
@@ -206,7 +210,7 @@
       (sample_data (short_read_data (sra (single_end (SRR (SRR039160))))))
       (sample_exp (TF_ChIP Rar))
       (sample_model mESC)
-      (sample_condition wt)
+      (sample_condition ((condition wt)))
     )
   )
 
@@ -216,7 +220,7 @@
       (sample_data (short_read_data (sra (single_end (SRR (SRR1536357))))))
       (sample_exp mRNA)
       (sample_model mESC)
-      (sample_condition wt)
+      (sample_condition ((condition wt)))
     )
   )
 
@@ -226,7 +230,7 @@
       (sample_data (short_read_data (sra (single_end (SRR (SRR1536358))))))
       (sample_exp mRNA)
       (sample_model mESC)
-      (sample_condition wt)
+      (sample_condition ((condition wt)))
     )
   )
 
@@ -236,7 +240,7 @@
       (sample_data (short_read_data (sra (single_end (SRR (SRR1536359))))))
       (sample_exp mRNA)
       (sample_model mESC)
-      (sample_condition wt)
+      (sample_condition ((condition wt)))
     )
   )
 )
