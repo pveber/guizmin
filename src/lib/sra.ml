@@ -16,11 +16,11 @@ let package =
 let input x = Workflow.input x
 
 let fetch_srr id =
-  if (String.length id = 9) then (
+  if (String.length id > 6) then (
     let prefix = String.prefix id 6 in
     Utils.wget (sprintf "ftp://ftp-trace.ncbi.nlm.nih.gov/sra/sra-instant/reads/ByRun/sra/SRR/%s/%s/%s.sra" prefix id id)
   )
-  else failwithf "Guizmin_workflow.Sra.fetch_srr: id %s is invalid (not 9 characters long)" id ()
+  else failwithf "Guizmin_workflow.Sra.fetch_srr: id %s is invalid (should be longer than 6 characters long)" id ()
 
 let fastq_dump sra =
   workflow [
