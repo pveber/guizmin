@@ -6,7 +6,7 @@ let keep ~n bed =
   if n < 1 then raise (Invalid_argument "Bed.keep") ;
   workflow [
     program "cut" ~stdout:(target ()) [
-      string (sprintf "1-%d" n) ;
+      string (sprintf "-f 1-%d" n) ;
       dep bed ;
     ]
   ]
