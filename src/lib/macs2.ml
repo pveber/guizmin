@@ -59,6 +59,8 @@ type peaks_xls = < columns : string * (int * (int * (int * (int * (int * (float 
 
 let peaks_xls o = Workflow.extract o [ name ^ "_peaks.xls" ]
 
+
+type narrow_peaks = (string * (float * (float * (float * (int * unit))))) Bed.bed5_like
+
 let narrow_peaks o =
   Workflow.extract o [ name ^ "_peaks.narrowPeak" ]
-  |> Bed.keep3 (* this file has numerous fields which make it incompatible with bedToBigBed *)

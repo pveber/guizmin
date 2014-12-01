@@ -28,6 +28,8 @@ type peaks_xls = < columns : string * (int * (int * (int * (int * (int * (float 
 val peaks_xls :
   [`macs2_callpeak_output] directory workflow -> peaks_xls workflow
 
+type narrow_peaks = (string * (float * (float * (float * (int * unit))))) Bed.bed5_like
+
 val narrow_peaks :
-  [`macs2_callpeak_output] directory workflow -> Bed.bed3 workflow
+  [`macs2_callpeak_output] directory workflow -> narrow_peaks workflow
 

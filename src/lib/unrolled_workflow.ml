@@ -128,7 +128,7 @@ module type S_alt = sig
     (** Peak calling stuff *)
     val chIP_TF : t -> string option
     val macs2_peak_calling : t -> [`macs2_callpeak_output] directory workflow option
-    val peak_calling : t -> Bed.bed3 workflow option
+    val peak_calling : t -> Macs2.narrow_peaks workflow option
 
   end
 
