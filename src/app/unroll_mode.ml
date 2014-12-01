@@ -201,7 +201,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
         let page =
           WWW.file_page
             ~path:[ "sample" ; "called_peaks" ; s.sample_id ^ ".bb" ]
-            (Ucsc_gb.bedToBigBed_failsafe org (Bed.keep5 bed))
+            (Ucsc_gb.bedToBigBed_failsafe org (`bed5 (Bed.keep5 bed)))
             (* macs2 has numerous non standard fields, which make it
                incompatible with bedToBigBed as is. That's why we keep
                only 5 fields when building the bigBed. *)

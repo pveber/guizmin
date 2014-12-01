@@ -35,11 +35,17 @@ val fetchChromSizes : [< genome] -> chrom_sizes workflow
 (* val bigWig_of_wig : ?clip:bool -> [< genome] -> wig file -> bigWig file *)
 val bedGraphToBigWig : [< genome] -> bedGraph workflow -> bigWig workflow
 
-val bedToBigBed      : [< genome] -> 'a Bed.bed3_like workflow -> bigBed workflow
+val bedToBigBed :
+  [< genome] ->
+  [ `bed3 of Bed.bed3 workflow | `bed5 of Bed.bed5 workflow ] ->
+  bigBed workflow
 (** {v bedToBigBed v} utility. Fails when given an empty BED file on
     input. *)
 
-val bedToBigBed_failsafe : [< genome] -> 'a Bed.bed3_like workflow -> bigBed workflow
+val bedToBigBed_failsafe :
+  [< genome] ->
+  [ `bed3 of Bed.bed3 workflow | `bed5 of Bed.bed5 workflow ] ->
+  bigBed workflow
 (** Same as {! Ucsc_gb.bedToBigBed} but produces an empty file when
     given an empty BED on input. *)
 

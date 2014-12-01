@@ -187,22 +187,30 @@ let bedToBigBed_command org bed =
     ] in
   and_list [ sort ; bedToBigBed ]
 
-let bedToBigBed org bed =
-  workflow [ bedToBigBed_command org bed ]
+let bedToBigBed org =
+  let f bed = workflow [ bedToBigBed_command org bed ] in
+  function
+  | `bed3 bed -> f bed
+  | `bed5 bed -> f bed
 
 (* implements the following algorithm
    if bed is empty
    then touch target
    else bedToBigBed (sort bed)
 *)
-let bedToBigBed_failsafe org bed =
-  let test = program "test" [ string "! -s" ; dep bed ] in
-  let touch = program "touch" [ target () ] in
-  let cmd = or_list [
-      and_list [ test ; touch ] ;
-      bedToBigBed_command org bed
-    ] in
-  workflow [ cmd ]
+let bedToBigBed_failsafe org =
+  let f bed =
+    let test = program "test" [ string "! -s" ; dep bed ] in
+    let touch = program "touch" [ target () ] in
+    let cmd = or_list [
+        and_list [ test ; touch ] ;
+        bedToBigBed_command org bed
+      ] in
+    workflow [ cmd ]
+  in
+  function
+  | `bed3 bed -> f bed
+  | `bed5 bed -> f bed
 
 
 (* (\* module Lift_over = struct *\) *)
