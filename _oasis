@@ -14,11 +14,15 @@ Library guizmin
                     Bed,
                     Bedtools, Bowtie,
                     Defs,
+                    Ensembl,
                     Experiment_description,
                     Fasta,
-                    Fastq, FastQC, Jaspar,
+                    Fastq, FastQC, Gff,
+                    Jaspar,
                     Macs, Macs2, Makefile,
-                    Sam, Samtools, Sra, Ucsc_gb, Unroll_workflow,
+                    Sam, Samtools, Sra,
+                    Ucsc_gb,
+                    Unroll_workflow,
                     Unrolled_workflow, Utils,
                     Workflow
   FindlibName:      guizmin

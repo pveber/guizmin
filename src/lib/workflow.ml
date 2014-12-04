@@ -200,6 +200,7 @@ module API = struct
 
   let or_list = cmd_list "||"
   let and_list = cmd_list "&&"
+  let pipe = cmd_list "|"
 end
 
 let deps = function

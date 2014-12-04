@@ -35,10 +35,15 @@ and short_read_data = [
 and model = {
   model_id : string ;
   model_genome : genome option ;
+  model_annotation : annotation option ;
 }
 and genome = [
 | `ucsc of Ucsc_gb.genome
 | `fasta of string
+]
+and annotation = [
+  | `ensembl of Ensembl.species * int
+  | `gff of string
 ]
 and 'a se_or_pe = [
   | `single_end of 'a
