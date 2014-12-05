@@ -26,7 +26,7 @@ module Types : sig
   type package = [`package] directory
 
   type 'a zip = ([`zip of 'a], [`binary]) file
-  type 'a gz = ([`gz of 'a], [`binary]) file constraint 'a = (_,_) file
+  type 'a gz = ([`gz of 'a], [`binary]) file constraint 'a = (_,_) #file
   type 'a tgz = ([`tgz of 'a],[`binary]) file
   type pdf = ([`pdf],[`text]) file
   type html = ([`html], [`text]) file
