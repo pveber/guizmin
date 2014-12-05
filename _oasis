@@ -21,7 +21,7 @@ Library guizmin
                     Jaspar,
                     Macs, Macs2, Makefile,
                     Sam, Samtools, Sra,
-                    Ucsc_gb,
+                    Tophat, Ucsc_gb,
                     Unroll_workflow,
                     Unrolled_workflow, Utils,
                     Workflow
