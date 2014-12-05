@@ -18,7 +18,7 @@ Library guizmin
                     Experiment_description,
                     Fasta,
                     Fastq, FastQC, Gff,
-                    Jaspar,
+                    Htseq, Jaspar,
                     Macs, Macs2, Makefile,
                     Sam, Samtools, Sra,
                     Tophat, Ucsc_gb,
