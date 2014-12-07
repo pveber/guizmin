@@ -15,3 +15,6 @@ val tophat2 :
   | `paired_end of 'a Fastq.workflow list * 'a Fastq.workflow list ] ->
   [`tophat_output] directory workflow
 
+val accepted_hits :
+  [`tophat_output] directory workflow ->
+  Bam.workflow

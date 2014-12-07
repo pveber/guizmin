@@ -37,3 +37,10 @@ let tophat2 ?num_threads index fqs =
       args
     ]
   ]
+
+let accepted_hits od =
+  Workflow.extract od ["accepted_hits.bam"]
+
+let junctions od =
+  Workflow.extract od ["junctions.bed"]
+
