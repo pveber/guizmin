@@ -1,6 +1,12 @@
 open Workflow.Types
 open Workflow.API
 
+let package_script = Utils.wget "https://raw.githubusercontent.com/pveber/compbio-scripts/master/tophat-install/2.0.13/tophat-install.sh"
+
+let package = workflow [
+    bash package_script [ target () ]
+  ]
+
 let tophat1 ?num_threads ?color index fqs =
   let args = match fqs with
     | `single_end fqs -> list dep ~sep:"," fqs
@@ -12,11 +18,11 @@ let tophat1 ?num_threads ?color index fqs =
       ]
   in
   workflow [
-    program ~path:[Bowtie.package ; Samtools.package] "tophat" [
+    program ~path:[package ; Bowtie.package ; Samtools.package] "tophat" [
       option (opt "--num-threads" int) num_threads ;
       option (flag string "--color") color ;
       opt "--output-dir" target () ;
-      dep index ;
+      seq [ dep index ; string "/index" ] ;
       args
     ]
   ]
@@ -32,10 +38,10 @@ let tophat2 ?num_threads index fqs =
       ]
   in
   workflow [
-    program ~path:[Bowtie2.package ; Samtools.package] "tophat2" [
+    program ~path:[package ; Bowtie2.package ; Samtools.package] "tophat2" [
       option (opt "--num-threads" int) num_threads ;
       opt "--output-dir" target () ;
-      dep index ;
+      seq [ dep index ; string "/index" ] ;
       args
     ]
   ]
