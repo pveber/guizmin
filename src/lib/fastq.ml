@@ -1,4 +1,5 @@
 open Workflow.Types
+open Workflow.API
 
 type _ format =
 | Sanger : [`sanger] format
@@ -22,11 +23,13 @@ let to_sanger (type s) (format : s format) (fq : s workflow) : [`sanger] workflo
   | Solexa -> sanger_of_solexa fq
   | Phred64 -> sanger_of_phred64 fq
 
-let concat fqs =
-  let open Workflow.API in
-  workflow [
-    program "cat" [ list dep ~sep:" " fqs ] ~stdout:(target ())
-  ]
+let concat = function
+  | [] -> raise (Invalid_argument "Fastq.concat: empty list")
+  | x :: [] -> x
+  | fqs ->
+    workflow [
+      program "cat" [ list dep ~sep:" " fqs ] ~stdout:(target ())
+    ]
 
 
 (* open Bistro_workflow.Types *)
