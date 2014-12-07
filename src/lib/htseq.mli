@@ -1,5 +1,10 @@
 open Workflow.Types
 
+type count_tsv =
+    < columns : string * (int * unit) ;
+    header : [`no] ;
+    comment : [`sharp] ; .. > tsv
+
 val count :
   ?mode:[`union | `intersection_strict | `intersection_nonempty] ->
   ?stranded:[` yes | `no | `reverse] ->
@@ -7,6 +12,4 @@ val count :
   ?minaqual:int ->
   ?idattribute:string ->
   Sam.workflow -> Gff.file workflow ->
-  < columns : string * (int * unit) ;
-    header : [`no] ;
-    comment : [`sharp] ; .. > tsv workflow
+  count_tsv workflow

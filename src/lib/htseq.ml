@@ -10,6 +10,11 @@ let package = workflow [
     bash package_script [ target () ]
   ]
 
+type count_tsv =
+    < columns : string * (int * unit) ;
+    header : [`no] ;
+    comment : [`sharp] ; .. > tsv
+
 let string_of_mode = function
   | `union -> "union"
   | `intersection_strict -> "intersection-strict"
