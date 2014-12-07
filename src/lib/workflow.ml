@@ -100,23 +100,27 @@ module API = struct
   let workflow = step
 
   let program ?path ?pythonpath p ?stdin ?stdout ?stderr args =
-    let path_expr =
+    let add_path =
       match path with
-      | None | Some [] -> []
+      | None | Some [] -> ident
       | Some pkgs ->
-        S "PATH=" ::
-        (
-          List.map pkgs ~f:(fun p -> [ D p ; S "/bin" ])
-          |> List.intersperse ~sep:[S ":"]
-          |> List.concat
-        )
-        @ [ S ":$PATH" ]
+        fun cmd ->
+          S "(export PATH="
+          :: (
+            List.map pkgs ~f:(fun p -> [ D p ; S "/bin" ])
+            |> List.intersperse ~sep:[S ":"]
+            |> List.concat
+          )
+          @ [ S ":$PATH ; " ]
+          @ cmd
+          @ [ S ")" ]
     in
-    let pythonpath_expr = match pythonpath with
-      | None | Some [] -> []
+    let add_pythonpath = match pythonpath with
+      | None | Some [] -> ident
       | Some pkgs ->
-        S "PYTHONPATH=" ::
-          (
+        fun cmd ->
+          S "(export PYTHONPATH="
+          :: (
             List.map pkgs ~f:(fun p -> [ D p ; S "/lib/python2.7/site-packages" ])
             (* FIXME: this won't work with other versions of python
                than 2.7 ; we should introduce execution-time variables
@@ -125,7 +129,9 @@ module API = struct
             |> List.intersperse ~sep:[S ":"]
             |> List.concat
           )
-        @ [ S ":$PYTHONPATH" ]
+          @ [ S ":$PYTHONPATH ; " ]
+          @ cmd
+          @ [ S ")" ]
     in
     let prog_expr = [ S p ] in
     let stdout_expr =
@@ -143,10 +149,12 @@ module API = struct
       | None -> []
       | Some e -> S " 2> " :: e
     in
-    [ path_expr ; pythonpath_expr ; prog_expr ] @ args @ [ stdin_expr ; stdout_expr ; stderr_expr ]
+    [ prog_expr ] @ args @ [ stdin_expr ; stdout_expr ; stderr_expr ]
     |> List.filter ~f:(( <> ) [])
     |> List.intersperse ~sep:[S " "]
     |> List.concat
+    |> add_pythonpath
+    |> add_path
 
   let target () = [ T ]
   let tmp () = [ TMP ]
