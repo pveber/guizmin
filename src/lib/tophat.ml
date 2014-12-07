@@ -15,6 +15,7 @@ let tophat1 ?num_threads ?color index fqs =
     program ~path:[Bowtie.package ; Samtools.package] "tophat" [
       option (opt "--num-threads" int) num_threads ;
       option (flag string "--color") color ;
+      opt "--output-dir" target () ;
       dep index ;
       args
     ]
@@ -33,6 +34,7 @@ let tophat2 ?num_threads index fqs =
   workflow [
     program ~path:[Bowtie2.package ; Samtools.package] "tophat2" [
       option (opt "--num-threads" int) num_threads ;
+      opt "--output-dir" target () ;
       dep index ;
       args
     ]
