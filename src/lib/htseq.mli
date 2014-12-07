@@ -6,10 +6,12 @@ type count_tsv =
     comment : [`sharp] ; .. > tsv
 
 val count :
+  ?order:[`name | `position] ->
   ?mode:[`union | `intersection_strict | `intersection_nonempty] ->
   ?stranded:[` yes | `no | `reverse] ->
   ?feature_type:string ->
   ?minaqual:int ->
   ?idattribute:string ->
-  Sam.workflow -> Gff.file workflow ->
+  [`sam of Sam.workflow | `bam of Bam.workflow] ->
+  Gff.file workflow ->
   count_tsv workflow
