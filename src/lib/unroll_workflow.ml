@@ -255,7 +255,10 @@ module Make_alt(S : Settings) = struct
       | `fasta url -> unsafe_file_of_url url
 
     let bowtie_index g =
-        Bowtie.bowtie_build (sequence g)
+      Bowtie.bowtie_build (sequence g)
+
+    let bowtie2_index g =
+      Bowtie2.bowtie2_build (sequence g)
 
   end
 
@@ -268,6 +271,14 @@ module Make_alt(S : Settings) = struct
         | _ -> None
       )
 
+    let annotation x = x.model_annotation
+
+    let gene_annotation x =
+      annotation x >>| function
+      | `ensembl (species, release) ->
+        Ensembl.gff ~chr_name:`ucsc ~release ~species
+      | `gff gff_url ->
+        unsafe_file_of_url gff_url
   end
 
   module Sample = struct
@@ -330,6 +341,20 @@ module Make_alt(S : Settings) = struct
     let dna_seq_mapped_reads s genome fqs =
       Samtools.bam_of_indexed_bam (dna_seq_mapped_reads_indexed s genome fqs)
 
+    let tophat s genome fqs =
+      let index = Genome.bowtie2_index genome in
+      Tophat.tophat2 index fqs
+
+    let mrna_seq_mapped_reads_indexed s genome fqs =
+      Samtools.indexed_bam_of_bam (Tophat.accepted_hits (tophat s genome fqs))
+
+    let mrna_seq_mapped_reads s genome fqs =
+      Samtools.bam_of_indexed_bam (mrna_seq_mapped_reads_indexed s genome fqs)
+
+    let mrna_seq_mapped_reads_sam s genome fqs =
+      Samtools.sam_of_bam (mrna_seq_mapped_reads s genome fqs)
+
+
     let mapped_reads s =
       genome s >>= fun g_s ->
       sanger_fastq s >>= fun fqs ->
@@ -340,7 +365,7 @@ module Make_alt(S : Settings) = struct
       | `FAIRE ->
         Some (dna_seq_mapped_reads s g_s fqs)
       | `mRNA ->
-        None
+        Some (mrna_seq_mapped_reads s g_s fqs)
 
     let mapped_reads_sam s =
       genome s >>= fun g_s ->
@@ -352,7 +377,7 @@ module Make_alt(S : Settings) = struct
       | `FAIRE ->
         Some (dna_seq_mapped_reads_sam s g_s fqs)
       | `mRNA ->
-        None
+        Some (mrna_seq_mapped_reads_sam s g_s fqs)
 
     let mapped_reads_indexed s =
       genome s >>= fun g_s ->
@@ -364,7 +389,7 @@ module Make_alt(S : Settings) = struct
       | `FAIRE ->
         Some (dna_seq_mapped_reads_indexed s g_s fqs)
       | `mRNA ->
-        None
+        Some (mrna_seq_mapped_reads_indexed s g_s fqs)
 
     let signal s =
       ucsc_genome s >>= fun org ->
@@ -396,6 +421,10 @@ module Make_alt(S : Settings) = struct
     let peak_calling s =
       macs2_peak_calling s >>| Macs2.narrow_peaks
 
+    let read_counts_per_gene s =
+      Model.gene_annotation (model s) >>= fun gff ->
+      mapped_reads s >>| fun bam ->
+      Htseq.count ~order:`position (`bam bam) gff
   end
 
   module Condition = struct

@@ -94,12 +94,15 @@ module type S_alt = sig
 
     val sequence : t -> Fasta.workflow
     val bowtie_index : t -> Bowtie.index workflow
+    val bowtie2_index : t -> Bowtie2.index workflow
   end
 
   module Model : sig
     type t = model
 
     val list : t list
+    val annotation : t -> annotation option
+    val gene_annotation : t -> Gff.file workflow option
   end
 
   module Sample : sig
@@ -130,6 +133,8 @@ module type S_alt = sig
     val macs2_peak_calling : t -> [`macs2_callpeak_output] directory workflow option
     val peak_calling : t -> Macs2.narrow_peaks workflow option
 
+    (** mRNA-seq analysis *)
+    val read_counts_per_gene : t -> Htseq.count_tsv workflow option
   end
 
   module Condition : sig
