@@ -96,6 +96,8 @@ module API : sig
   val and_list : cmd list -> cmd
   val pipe : cmd list -> cmd
 
+  val with_env : (string * shell_expr) list -> cmd -> cmd
+
   val mkdir : shell_expr -> cmd
   val mkdir_p : shell_expr -> cmd
   val wget : string -> cmd

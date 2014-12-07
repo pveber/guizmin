@@ -201,6 +201,14 @@ module API = struct
   let or_list = cmd_list "||"
   let and_list = cmd_list "&&"
   let pipe = cmd_list "|"
+
+  let with_env vars cmd =
+    (
+      List.map vars ~f:(fun (var, value) -> [ S var ; S "=" ] @ value)
+      |> List.intersperse ~sep:[ S " " ]
+      |> List.concat
+    )
+    @ (S " " :: cmd)
 end
 
 let deps = function
