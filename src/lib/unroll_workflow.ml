@@ -398,6 +398,24 @@ module Make_alt(S : Settings) = struct
 
   end
 
+  module Condition = struct
+    type t = (factor * string) list
+
+    let list =
+      List.map Sample.list ~f:Sample.condition
+      |> List.dedup
+
+    let rec product = function
+      | [] -> []
+      | h :: t ->
+        List.map t ~f:(fun i -> h, i)
+        @
+        product t
+
+    let pairs = product list
+  end
+
+
   (* class tf_chip_seq_sample sample data genome tf = *)
   (*   object (s) *)
   (*     inherit simply_mapped_dna_seq_sample sample data genome *)

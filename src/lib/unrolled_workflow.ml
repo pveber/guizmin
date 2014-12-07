@@ -132,5 +132,10 @@ module type S_alt = sig
 
   end
 
+  module Condition : sig
+    type t = (factor * string) list
+    val list : t list
+    val pairs : (t * t) list
+  end
 
 end
