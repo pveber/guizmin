@@ -211,6 +211,10 @@ module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
         Lwt.return (Some page)
     )
 
+  let htseq_counts = assoc W.Sample.list ~f:(fun s ->
+      W.Sample.read_counts_per_gene s >>| WWW.file_page
+    )
+
   let custom_track_link_of_bam_bai x genome bam_bai elt =
     let local_path = string_of_path (WWW.path bam_bai) in
     let name = x.sample_id ^ " mapped reads" in
@@ -347,7 +351,18 @@ module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
         macs2_paragraph s >>? [] ;
       ]
 
+    let htseq_paragraph s =
+      htseq_counts $ s >>| fun tsv ->
+      [
+        h3 [ k "HTSeq" ] ;
+        ul [
+          li [ WWW.a tsv [ k "Counts per gene" ] ] ;
+        ] ;
+      ]
 
+    let mrna_seq_section s = section "Expression" [
+        htseq_paragraph s >>? [] ;
+      ]
 
     let mapped_reads_indexed_custom_track_link s =
       W.Sample.ucsc_genome s >>= fun org ->
