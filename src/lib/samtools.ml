@@ -33,5 +33,15 @@ let indexed_bam_of_sam sam =
     rm_rf (target () // "temp.bam") ;
   ]
 
+let indexed_bam_of_bam bam =
+  workflow [
+    mkdir_p (target ()) ;
+    samtools "sort" [
+      dep bam ;
+      target () // "reads" ;
+    ] ;
+    samtools "index" [ target () // "reads.bam" ] ;
+  ]
+
 let bam_of_indexed_bam ibam =
   Workflow.extract ibam ["reads.bam"]
