@@ -20,6 +20,7 @@ Library guizmin
                     Fastq, FastQC, Gff,
                     Htseq, Jaspar,
                     Macs, Macs2, Makefile,
+                    Meme_suite,
                     Sam, Samtools, Sra,
                     Tophat, Ucsc_gb,
                     Unroll_workflow,
