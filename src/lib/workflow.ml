@@ -179,6 +179,8 @@ module API = struct
 
   let opt o f x = S o :: S " " :: f x
 
+  let opt' o f x = S o :: S "=" :: f x
+
   let flag f x b = if b then f x else []
 
   let mkdir d = program "mkdir" [ d ]

@@ -88,6 +88,7 @@ module API : sig
   val seq : shell_expr list -> shell_expr
   val enum : ('a * string) list -> 'a -> shell_expr
   val opt : string -> ('a -> shell_expr) -> 'a -> shell_expr
+  val opt' : string -> ('a -> shell_expr) -> 'a -> shell_expr
   val flag : ('a -> shell_expr) -> 'a -> bool -> shell_expr
 
   val ( // ) : shell_expr -> string -> shell_expr

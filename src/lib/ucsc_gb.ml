@@ -81,10 +81,14 @@ let genome_sequence org =
 (* (\* let wg_encode_crg_mappability_75 org = wg_encode_crg_mappability 75 org *\) *)
 (* (\* let wg_encode_crg_mappability_100 org = wg_encode_crg_mappability 100 org *\) *)
 
-(* let twoBitToFa bed twobits = Bistro_workflow.make <:script< *)
-(* export PATH=#w:package#:$PATH *)
-(* twoBitToFa -bed=#w:bed# #w:twobits# #DEST *)
-(* >> *)
+let twoBitToFa bed twobits =
+  workflow [
+    program ~path:[package] "twoBitToFa" [
+      opt' "-bed" dep bed ;
+      dep twobits ;
+      target ()
+    ]
+  ]
 
 (* let fasta_of_bed org bed = *)
 (*   twoBitToFa bed (genome_2bit_sequence org) *)

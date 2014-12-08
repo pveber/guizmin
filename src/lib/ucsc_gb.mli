@@ -22,7 +22,7 @@ val string_of_genome : [< genome] -> string
 val chromosome_sequences : [< genome] -> [`ucsc_chromosome_sequences] directory workflow
 val genome_sequence : [< genome] -> Fasta.workflow
 (* val genome_2bit_sequence : [< genome] -> twobit workflow *)
-(* val twoBitToFa : 'a Bed.bed4_like workflow -> twobit workflow -> Fasta.workflow *)
+val twoBitToFa : 'a Bed.bed4_like workflow -> twobit workflow -> Fasta.workflow
 
 
 (** {5 Chromosome size and clipping} *)
