@@ -31,7 +31,7 @@ let keep4 x = keep ~n:4 x
 
 
 
-type 'a bed5_like = (float * 'a) bed4_like
+type 'a bed5_like = (int * 'a) bed4_like
 
 type bed5 = unit bed5_like
 

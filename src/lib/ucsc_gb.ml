@@ -55,21 +55,21 @@ let genome_sequence org =
     ]
   ]
 
-(* (\* UGLY hack due to twoBitToFa: this tool requires that the 2bit *)
-(*    sequence should be put in a file with extension 2bit. So I'm forced *)
-(*    to create first a directory and then to select the unique file in it...*\) *)
-(* let genome_2bit_sequence_dir org = *)
-(*   let org = string_of_genome org in *)
-(*   Bistro_workflow.make <:script< *)
-(* mkdir #DEST *)
-(* cd #DEST *)
-(* wget ftp://hgdownload.cse.ucsc.edu/goldenPath/#s:org#/bigZips/#s:org#.2bit *)
-(* >> *)
+(* UGLY hack due to twoBitToFa: this tool requires that the 2bit
+   sequence should be put in a file with extension 2bit. So I'm forced
+   to create first a directory and then to select the unique file in it...*)
+let genome_2bit_sequence_dir org =
+  let org = string_of_genome org in
+  workflow [
+    mkdir (target ()) ;
+    and_list [
+      cd (target ()) ;
+      wget (sprintf "ftp://hgdownload.cse.ucsc.edu/goldenPath/%s/bigZips/%s.2bit" org org) ;
+    ]
+  ]
 
-(* let genome_2bit_sequence org = Bistro_workflow.select (genome_2bit_sequence_dir org) ((string_of_genome org) ^ ".2bit") *)
-
-
-
+let genome_2bit_sequence org =
+  Workflow.extract (genome_2bit_sequence_dir org) [ (string_of_genome org) ^ ".2bit" ]
 
 (* (\* let wg_encode_crg_mappability n org = *\) *)
 (* (\*   let url = sp "ftp://hgdownload.cse.ucsc.edu/gbdb/%s/bbi/wgEncodeCrgMapabilityAlign%dmer.bigWig" (string_of_genome org) n in *\) *)
