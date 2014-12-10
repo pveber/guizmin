@@ -40,6 +40,7 @@ let sort ?on:order bam =
       dep bam ;
       target () ;
     ] ;
+    mv (seq [target () ; string ".bam"]) (target ()) ;
   ]
 
 let indexed_bam_of_bam bam =
