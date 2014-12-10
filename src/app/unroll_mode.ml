@@ -432,6 +432,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
       List.concat [
         sequencing_quality_check_section s ;
         peak_calling_section s ;
+        mrna_seq_section s ;
         custom_tracks ;
       ]
 
