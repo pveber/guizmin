@@ -33,6 +33,15 @@ let indexed_bam_of_sam sam =
     rm_rf (target () // "temp.bam") ;
   ]
 
+let sort ?on:order bam =
+  workflow [
+    samtools "sort" [
+      option (fun o -> flag string "-n" (o = `name)) order ;
+      dep bam ;
+      target () ;
+    ] ;
+  ]
+
 let indexed_bam_of_bam bam =
   workflow [
     mkdir_p (target ()) ;
