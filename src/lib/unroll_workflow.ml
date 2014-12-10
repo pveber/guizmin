@@ -424,7 +424,8 @@ module Make_alt(S : Settings) = struct
     let read_counts_per_gene s =
       Model.gene_annotation (model s) >>= fun gff ->
       mapped_reads s >>| fun bam ->
-      Htseq.count ~order:`position (`bam bam) gff
+      let bam = Samtools.sort ~on:`name bam in
+      Htseq.count ~order:`name (`bam bam) gff
   end
 
   module Condition = struct
