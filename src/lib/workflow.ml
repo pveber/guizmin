@@ -193,7 +193,10 @@ module API = struct
 
   let mv x y = program "mv" [ x ; y ]
 
-  let wget url = program "wget" [ string url ]
+  let wget url ?dest () = program "wget" [
+      option (opt "-O" ident) dest ;
+      string url
+    ]
 
   let bash ?path script ?stdin ?stdout ?stderr args =
     program "bash" ?path ?stdin ?stdout ?stderr (dep script :: args)

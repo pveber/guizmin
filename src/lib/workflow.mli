@@ -101,7 +101,7 @@ module API : sig
 
   val mkdir : shell_expr -> cmd
   val mkdir_p : shell_expr -> cmd
-  val wget : string -> cmd
+  val wget : string -> ?dest:shell_expr -> unit -> cmd
   val cd : shell_expr -> cmd
   val rm_rf : shell_expr -> cmd
   val mv : shell_expr -> shell_expr -> cmd

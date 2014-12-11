@@ -40,7 +40,7 @@ let chromosome_sequences org =
   workflow [
     mkdir_p (target ()) ;
     cd (target ()) ;
-    wget (sprintf "ftp://hgdownload.cse.ucsc.edu/goldenPath/%s/chromosomes/*" org) ;
+    wget (sprintf "ftp://hgdownload.cse.ucsc.edu/goldenPath/%s/chromosomes/*" org) () ;
     program "gunzip" [ string "*.gz" ]
   ]
 
@@ -64,7 +64,7 @@ let genome_2bit_sequence_dir org =
     mkdir (target ()) ;
     and_list [
       cd (target ()) ;
-      wget (sprintf "ftp://hgdownload.cse.ucsc.edu/goldenPath/%s/bigZips/%s.2bit" org org) ;
+      wget (sprintf "ftp://hgdownload.cse.ucsc.edu/goldenPath/%s/bigZips/%s.2bit" org org) () ;
     ]
   ]
 
