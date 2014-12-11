@@ -14,6 +14,7 @@ Library guizmin
                     Bed,
                     Bedtools, Bowtie, Bowtie2,
                     Defs,
+                    Deseq2,
                     Ensembl,
                     Experiment_description,
                     Fasta,

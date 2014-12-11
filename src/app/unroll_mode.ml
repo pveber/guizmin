@@ -191,6 +191,11 @@ module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
       WWW.file_page (Macs2.peaks_xls x)
     )
 
+  let deseq2_wrapper_output =
+    Option.map
+      W.Transcriptome.deseq2_wrapper_output
+      ~f:(fun x -> WWW.file_page (Deseq2.index_of_wrapper_output x))
+
   let called_peaks_bb = assoc' W.Sample.list ~f:(fun s ->
       let open Lwt_infix in
       Lwt.return (W.Sample.ucsc_genome s) >>? fun org ->
@@ -456,12 +461,41 @@ module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
     |> List.map ~f:(fun (s,page_s) -> WWW.a page_s [ k s.sample_id ])
     |> multicolumn_ul
 
+  let mRNA_levels_page =
+    let contents = List.concat [
+      section ~a:[a_id "differential-expression"] "Differentially expressed genes" [
+        (
+          deseq2_wrapper_output >>| fun deseq2_wrapper_output ->
+          [
+            ul [
+              li [ WWW.a deseq2_wrapper_output [ k "DESeq2 output" ] ]
+            ]
+          ]
+        ) >>? [] ;
+      ]
+    ]
+    in
+    if contents <> []
+    then Some (
+        WWW.html_page [ "mRNA.html" ] ~f:(fun () ->
+            Lwt.return (html_page "mRNA levels" contents)
+          ) ()
+      )
+    else None
 
+  let browse_by_measurement_div =
+    [
+      mRNA_levels_page >>| ((Fn.flip WWW.a) [ k "mRNA levels" ])
+    ]
+    |> List.filter_opt
+    |> multicolumn_ul
+    
   let browse_by_div =
     let open Html5.M in
     let tabs = tabs [
-        "browse-by-sample", "Samples", [ browse_by_sample_div ] ;
-        "browse-by-condition", "Conditions", [ k"Under construction" ]
+        "browse-by-sample", "Sample", [ browse_by_sample_div ] ;
+        "browse-by-condition", "Condition", [ k"Under construction" ] ;
+        "browse-by-measurement", "Measurement", [ browse_by_measurement_div ] ;
       ]
     in
     div ((k "Browse by...") :: tabs)

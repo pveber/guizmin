@@ -143,4 +143,7 @@ module type S_alt = sig
     val pairs : (t * t) list
   end
 
+  module Transcriptome : sig
+    val deseq2_wrapper_output : Deseq2.wrapper_output workflow option
+  end
 end

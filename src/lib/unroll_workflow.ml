@@ -445,6 +445,34 @@ module Make_alt(S : Settings) = struct
     let pairs = product list
   end
 
+  module Transcriptome = struct
+
+    let deseq2_wrapper_output =
+      let samples =
+        List.map Sample.list ~f:(fun s ->
+            Sample.read_counts_per_gene s >>| fun counts ->
+            s, counts
+          )
+        |> List.filter_opt
+      in
+      match samples with
+      | [] | [ _ ] -> None
+      | _ ->
+        let factors =
+          List.map factors ~f:(fun x -> x.factor_name)
+          |> List.sort ~cmp:compare
+        in
+        let samples = List.map samples ~f:(fun (s, counts) ->
+            let factors_s =
+              s.sample_condition
+              |> List.sort ~cmp:compare
+              |> List.map ~f:snd
+            in
+            factors_s, counts
+          )
+        in
+        Some (Deseq2.wrapper factors samples)
+  end
 
   (* class tf_chip_seq_sample sample data genome tf = *)
   (*   object (s) *)

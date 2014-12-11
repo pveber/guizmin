@@ -33,3 +33,5 @@ let wrapper factors samples =
   workflow [
     program "deseq2-wrapper.R" (factors :: samples @ [ target () ]) ;
   ]
+
+let index_of_wrapper_output o = Workflow.extract o [ "index.html" ]
