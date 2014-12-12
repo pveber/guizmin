@@ -30,8 +30,9 @@ let wrapper factors samples =
       seq [ list string ~sep:"," factor_vals ; string "," ; dep counts ]
     )
   in
+  let outdir = opt "--outdir" target () in
   workflow [
-    program "deseq2-wrapper.R" (factors :: samples @ [ target () ]) ;
+    program ~path:[wrapper_package] "deseq2-wrapper.R" (outdir :: factors :: samples) ;
   ]
 
 let index_of_wrapper_output o = Workflow.extract o [ "index.html" ]
