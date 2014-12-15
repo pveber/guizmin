@@ -425,7 +425,7 @@ module Make_alt(S : Settings) = struct
       Model.gene_annotation (model s) >>= fun gff ->
       mapped_reads s >>| fun bam ->
       let bam = Samtools.sort ~on:`name bam in
-      Htseq.count ~order:`name (`bam bam) gff
+      Htseq.count ~stranded:`no ~order:`name (`bam bam) gff
   end
 
   module Condition = struct
