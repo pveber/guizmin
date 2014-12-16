@@ -14,7 +14,7 @@ let r_library_package =
 let wrapper_package = workflow [
     mkdir_p (target () // "bin") ;
     wget
-      "https://raw.githubusercontent.com/pveber/compbio-scripts/master/deseq2-wrapper/0.0.0/deseq2-wrapper.R"
+      "https://raw.githubusercontent.com/pveber/compbio-scripts/master/deseq2-wrapper/0.0.1/deseq2-wrapper.R"
       ~dest:(target () // "bin/deseq2-wrapper.R") () ;
     program "chmod" [
       string "u+x" ;
