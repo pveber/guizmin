@@ -101,7 +101,7 @@ let bowtie2
       option (flag string "--dovetail") dovetail ;
       option (flag string "--no-contain") no_contain ;
       option (flag string "--no-overlap") no_overlap ;
-      option (opt "--threas" int) threads ;
+      option (opt "--threads" int) threads ;
       option (opt "--seed" int) seed ;
       option (opt "-q" (qual_option % string)) fastq_format ;
       seq [dep index ; string "/index"] ;
