@@ -69,7 +69,8 @@ let bowtie2
     ?fastq_format index fqs =
 
   let args = match fqs with
-    | `single_end fqs -> list dep ~sep:"," fqs
+    | `single_end fqs ->
+      opt "-U" (list dep ~sep:",") fqs
     | `paired_end (fqs1, fqs2) ->
       seq [
         opt "-1" (list dep ~sep:",") fqs1 ;
@@ -79,7 +80,6 @@ let bowtie2
   in
   workflow ~mem:(3 * 1024) ~timeout:24 ?np:threads [
     program "bowtie2" ~path:[package] [
-      string "-S" ;
       option (opt "--skip" int) skip ;
       option (opt "--qupto" int) qupto ;
       option (opt "--trim5" int) trim5 ;
@@ -104,8 +104,8 @@ let bowtie2
       option (opt "--threads" int) threads ;
       option (opt "--seed" int) seed ;
       option (opt "-q" (qual_option % string)) fastq_format ;
-      seq [dep index ; string "/index"] ;
+      opt "-x" (fun index -> seq [dep index ; string "/index"]) index ;
       args ;
-      target () ;
+      opt "-S" target () ;
     ]
   ]
