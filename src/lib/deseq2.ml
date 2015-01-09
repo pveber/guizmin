@@ -4,21 +4,21 @@ open Workflow.API
 
 let r_library_package =
   workflow [
-    program "mkdir" [ string "-p" ; target () ] ;
+    program "mkdir" [ string "-p" ; dest ] ;
     pipe [
       program "echo" [ string "'source(\"http://bioconductor.org/biocLite.R\") ; biocLite(\"DESeq2\")'" ] ;
-      with_env [ "R_LIBS_USER", target () ] (program "R" [ string "--vanilla" ]) ;
+      with_env [ "R_LIBS_USER", dest ] (program "R" [ string "--vanilla" ]) ;
     ]
   ]
 
 let wrapper_package = workflow [
-    mkdir_p (target () // "bin") ;
+    mkdir_p (dest // "bin") ;
     wget
       "https://raw.githubusercontent.com/pveber/compbio-scripts/master/deseq2-wrapper/0.0.1/deseq2-wrapper.R"
-      ~dest:(target () // "bin/deseq2-wrapper.R") () ;
+      ~dest:(dest // "bin/deseq2-wrapper.R") () ;
     program "chmod" [
       string "u+x" ;
-      (target () // "bin/deseq2-wrapper.R")
+      (dest // "bin/deseq2-wrapper.R")
     ]
   ]
 
@@ -30,7 +30,7 @@ let wrapper factors samples =
       seq [ list string ~sep:"," factor_vals ; string "," ; dep counts ]
     )
   in
-  let outdir = opt "--outdir" target () in
+  let outdir = opt "--outdir" ident dest in
   workflow [
     program ~path:[wrapper_package] "deseq2-wrapper.R" (outdir :: factors :: samples) ;
   ]

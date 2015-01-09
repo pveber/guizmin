@@ -5,6 +5,6 @@ let package_script = Utils.wget "https://raw.githubusercontent.com/pveber/compbi
 
 let package =
   workflow [
-    bash package_script [ target () ]
+    bash package_script [ dest ]
   ]
 

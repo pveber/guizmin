@@ -1,10 +1,11 @@
+open Core.Std
 open Workflow.Types
 open Workflow.API
 
 let package_script = Utils.wget "https://raw.githubusercontent.com/pveber/compbio-scripts/master/samtools-install/0.1.17/samtools-install.sh"
 
 let package = workflow [
-    bash package_script [ target () ]
+    bash package_script [ dest ]
   ]
 
 let samtools cmd args = program "samtools" ~path:[package] (string cmd :: args)
@@ -12,25 +13,25 @@ let samtools cmd args = program "samtools" ~path:[package] (string cmd :: args)
 let sam_of_bam bam =
   workflow [
     samtools "view" [
-      opt "-o" target () ;
+      opt "-o" ident dest ;
       dep bam ;
     ]
   ]
 
 let indexed_bam_of_sam sam =
   workflow [
-    mkdir_p (target ()) ;
+    mkdir_p dest ;
     samtools "view" [
       string "-S -b" ;
-      opt "-o" (fun () -> target () // "temp.bam") () ;
+      opt "-o" (fun () -> dest // "temp.bam") () ;
       dep sam ;
     ] ;
     samtools "sort" [
-      target () // "temp.bam" ;
-      target () // "reads" ;
+      dest // "temp.bam" ;
+      dest // "reads" ;
     ] ;
-    samtools "index" [ target () // "reads.bam" ] ;
-    rm_rf (target () // "temp.bam") ;
+    samtools "index" [ dest // "reads.bam" ] ;
+    rm_rf (dest // "temp.bam") ;
   ]
 
 let sort ?on:order bam =
@@ -38,19 +39,19 @@ let sort ?on:order bam =
     samtools "sort" [
       option (fun o -> flag string "-n" (o = `name)) order ;
       dep bam ;
-      target () ;
+      dest ;
     ] ;
-    mv (seq [target () ; string ".bam"]) (target ()) ;
+    mv (seq [dest ; string ".bam"]) dest ;
   ]
 
 let indexed_bam_of_bam bam =
   workflow [
-    mkdir_p (target ()) ;
+    mkdir_p dest ;
     samtools "sort" [
       dep bam ;
-      target () // "reads" ;
+      dest // "reads" ;
     ] ;
-    samtools "index" [ target () // "reads.bam" ] ;
+    samtools "index" [ dest // "reads.bam" ] ;
   ]
 
 let bam_of_indexed_bam ibam =

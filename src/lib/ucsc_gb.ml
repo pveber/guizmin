@@ -29,7 +29,7 @@ let package_script = Utils.wget "https://raw.githubusercontent.com/pveber/compbi
 
 let package =
   workflow [
-    bash package_script [ target () ]
+    bash package_script [ dest ]
   ]
 
 
@@ -38,8 +38,8 @@ let package =
 let chromosome_sequences org =
   let org = string_of_genome org in
   workflow [
-    mkdir_p (target ()) ;
-    cd (target ()) ;
+    mkdir_p dest ;
+    cd dest ;
     wget (sprintf "ftp://hgdownload.cse.ucsc.edu/goldenPath/%s/chromosomes/*" org) () ;
     program "gunzip" [ string "*.gz" ]
   ]
@@ -51,7 +51,7 @@ let genome_sequence org =
     program "bash" [
       opt "-c" string "'shopt -s nullglob ; cat $0/{chr?.fa,chr??.fa,chr???.fa,chr????.fa} > $1'" ;
       dep chr_seqs ;
-      target ()
+      dest
     ]
   ]
 
@@ -61,9 +61,9 @@ let genome_sequence org =
 let genome_2bit_sequence_dir org =
   let org = string_of_genome org in
   workflow [
-    mkdir (target ()) ;
+    mkdir dest ;
     and_list [
-      cd (target ()) ;
+      cd dest ;
       wget (sprintf "ftp://hgdownload.cse.ucsc.edu/goldenPath/%s/bigZips/%s.2bit" org org) () ;
     ]
   ]
@@ -86,7 +86,7 @@ let twoBitToFa bed twobits =
     program ~path:[package] "twoBitToFa" [
       opt' "-bed" dep bed ;
       dep twobits ;
-      target ()
+      dest
     ]
   ]
 
@@ -123,7 +123,7 @@ let twoBitToFa bed twobits =
 
 let fetchChromSizes org =
   workflow [
-    program "fetchChromSizes" ~path:[package] ~stdout:(target ()) [
+    program "fetchChromSizes" ~path:[package] ~stdout:dest [
       string (string_of_genome org) ;
     ]
   ]
@@ -161,7 +161,7 @@ let fetchChromSizes org =
 (* (\*       env.sh "wigToBigWig %s %s %s %s" clip wig chrom_info path) *\) *)
 
 let bedGraphToBigWig org bg =
-  let tmp = seq [ tmp () ; string "/sorted.bedGraph" ] in
+  let tmp = seq [ tmp ; string "/sorted.bedGraph" ] in
   workflow [
     program "sort" ~stdout:tmp [
       string "-k1,1" ;
@@ -171,12 +171,12 @@ let bedGraphToBigWig org bg =
     program "bedGraphToBigWig" ~path:[package] [
       tmp ;
       dep (fetchChromSizes org) ;
-      target () ;
+      dest ;
     ]
   ]
 
 let bedToBigBed_command org bed =
-  let tmp = seq [ tmp () ; string "/sorted.bed" ] in
+  let tmp = seq [ tmp ; string "/sorted.bed" ] in
   let sort =
     program "sort" ~stdout:tmp [
       string "-k1,1" ;
@@ -187,7 +187,7 @@ let bedToBigBed_command org bed =
     program "bedToBigBed" ~path:[package] [
       tmp ;
       dep (fetchChromSizes org) ;
-      target () ;
+      dest ;
     ] in
   and_list [ sort ; bedToBigBed ]
 
@@ -205,7 +205,7 @@ let bedToBigBed org =
 let bedToBigBed_failsafe org =
   let f bed =
     let test = program "test" [ string "! -s" ; dep bed ] in
-    let touch = program "touch" [ target () ] in
+    let touch = program "touch" [ dest ] in
     let cmd = or_list [
         and_list [ test ; touch ] ;
         bedToBigBed_command org bed

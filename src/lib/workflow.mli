@@ -76,8 +76,8 @@ module API : sig
     ?stdin:shell_expr -> ?stdout:shell_expr -> ?stderr:shell_expr ->
     shell_expr list -> cmd
 
-  val target : unit -> shell_expr
-  val tmp : unit -> shell_expr
+  val dest : shell_expr
+  val tmp : shell_expr
   val string : string -> shell_expr
   val int : int -> shell_expr
   val float : float -> shell_expr
@@ -85,7 +85,7 @@ module API : sig
   val dep : _ t -> shell_expr
   val option : ('a -> shell_expr) -> 'a option -> shell_expr
   val list : ('a -> shell_expr) -> ?sep:string -> 'a list -> shell_expr
-  val seq : shell_expr list -> shell_expr
+  val seq : ?sep:string -> shell_expr list -> shell_expr
   val enum : ('a * string) list -> 'a -> shell_expr
   val opt : string -> ('a -> shell_expr) -> 'a -> shell_expr
   val opt' : string -> ('a -> shell_expr) -> 'a -> shell_expr

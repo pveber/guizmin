@@ -7,13 +7,13 @@ let ( % ) = Fn.compose
 let pysam_package_script = Utils.wget "https://raw.githubusercontent.com/pveber/compbio-scripts/master/pysam-install/0.8.1/pysam-install.sh"
 
 let pysam_package = workflow [
-    bash pysam_package_script [ target () ]
+    bash pysam_package_script [ dest ]
   ]
 
 let package_script = Utils.wget "https://raw.githubusercontent.com/pveber/compbio-scripts/master/htseq-install/0.6.1p1/htseq-install.sh"
 
 let package = workflow [
-    bash package_script [ target () ]
+    bash package_script [ dest ]
   ]
 
 type count_tsv =
@@ -41,7 +41,7 @@ let count ?order ?mode ?stranded ?feature_type ?minaqual ?idattribute alns gff =
     | `bam bam -> "bam", dep bam
   in
   workflow [
-    program ~pythonpath:[package ; pysam_package] ~path:[package] ~stdout:(target ()) "htseq-count" [
+    program ~pythonpath:[package ; pysam_package] ~path:[package] ~stdout:dest "htseq-count" [
       opt "-f" string format ;
       option (opt "-m" (string % string_of_mode)) mode ;
       option (opt "-r" (string % string_of_order)) order ;

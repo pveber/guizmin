@@ -9,13 +9,13 @@ type index = [`bowtie2_index] directory
 let package_script = Utils.wget "https://raw.githubusercontent.com/pveber/compbio-scripts/master/bowtie2-install/2.2.4/bowtie2-install.sh"
 
 let package = workflow [
-    bash package_script [ target () ]
+    bash package_script [ dest ]
   ]
 
 (* memory bound correspond to storing a human index in memory, following bowtie manual *)
 let bowtie2_build ?large_index ?noauto ?packed ?bmax ?bmaxdivn ?dcv ?nodc ?noref ?justref ?offrate ?ftabchars ?seed ?cutoff fa =
   workflow ~mem:(3 * 1024) ~timeout:24 [
-    mkdir_p (target ()) ;
+    mkdir_p dest ;
     program "bowtie2-build" ~path:[package] [
       option (flag string "--large-index") large_index ;
       option (flag string "--no-auto") noauto ;
@@ -32,7 +32,7 @@ let bowtie2_build ?large_index ?noauto ?packed ?bmax ?bmaxdivn ?dcv ?nodc ?noref
       option (opt "--cutoff" int) cutoff ;
 
       opt "-f" dep fa ;
-      seq [ target () ; string "/index" ]
+      seq [ dest ; string "/index" ]
     ]
   ]
 
@@ -106,6 +106,6 @@ let bowtie2
       option (opt "-q" (qual_option % string)) fastq_format ;
       opt "-x" (fun index -> seq [dep index ; string "/index"]) index ;
       args ;
-      opt "-S" target () ;
+      opt "-S" ident dest ;
     ]
   ]

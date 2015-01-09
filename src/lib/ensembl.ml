@@ -33,7 +33,7 @@ let ucsc_chr_names_gtf gff =
       ] ;
       program "sed" [
         string "'s/chrMT/chrM/g'" ;
-        target () ;
+        dest ;
       ]
     ]
   ]

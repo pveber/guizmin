@@ -4,7 +4,7 @@ open Workflow.API
 let package_script = Utils.wget "https://raw.githubusercontent.com/pveber/compbio-scripts/master/meme-install/4.9.1/meme-install.sh"
 
 let package = workflow [
-    bash package_script [ target () ]
+    bash package_script [ dest ]
   ]
 
 let meme_chip ?meme_nmotifs ?meme_minw ?meme_maxw ?meme_p fa =

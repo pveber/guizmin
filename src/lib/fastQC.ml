@@ -5,21 +5,21 @@ let package_script = Utils.wget "https://raw.githubusercontent.com/pveber/compbi
 
 let package =
   workflow [
-    bash package_script [ target () ]
+    bash package_script [ dest ]
   ]
 
 type report
 type workflow = report directory Workflow.t
 
 let run fq = workflow [
-    mkdir_p (target ()) ;
+    mkdir_p dest ;
     program "fastqc" ~path:[package] [
-      seq [string "--outdir=" ; target ()] ;
+      seq [string "--outdir=" ; dest] ;
       dep fq ;
     ] ;
-    rm_rf (target () // "*.zip") ;
-    mv (target () // "*_fastqc/*") (target ()) ;
-    rm_rf (target () // "*_fastqc") ;
+    rm_rf (dest // "*.zip") ;
+    mv (dest // "*_fastqc/*") (dest) ;
+    rm_rf (dest // "*_fastqc") ;
   ]
 
 

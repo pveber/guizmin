@@ -10,7 +10,7 @@ let package_install_script = Utils.wget "https://raw.githubusercontent.com/pvebe
 
 let package =
   workflow [
-    bash package_install_script [ target () ]
+    bash package_install_script [ dest ]
   ]
 
 let input x = Workflow.input x
@@ -24,7 +24,7 @@ let fetch_srr id =
 
 let fastq_dump sra =
   workflow [
-    program "fastq-dump" ~path:[package] [ string "-Z" ; dep sra ] ~stdout:(target ())
+    program "fastq-dump" ~path:[package] [ string "-Z" ; dep sra ] ~stdout:dest
   ]
 
 

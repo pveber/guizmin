@@ -28,7 +28,7 @@ let concat = function
   | x :: [] -> x
   | fqs ->
     workflow [
-      program "cat" [ list dep ~sep:" " fqs ] ~stdout:(target ())
+      program "cat" [ list dep ~sep:" " fqs ] ~stdout:dest
     ]
 
 

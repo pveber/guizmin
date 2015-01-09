@@ -17,7 +17,7 @@ and cmd = token list
 and token =
   | S : string -> token
   | D : _ t -> token
-  | T : token
+  | DEST : token
   | TMP : token
 
 module Types = struct
@@ -57,7 +57,7 @@ end
 let deps_of_cmd l =
   List.filter_map l ~f:(function
       | D r -> Some (r :> u)
-      | S _ | T | TMP -> None
+      | S _ | DEST | TMP -> None
     )
   |> List.dedup
 
@@ -69,7 +69,7 @@ let deps_of_cmds l =
 let string_of_token target ~tmp_target ~build_target = function
   | S s -> s
   | D w -> string_of_path (target (w :> u))
-  | T -> build_target
+  | DEST -> build_target
   | TMP -> tmp_target
 
 let string_of_cmd target ~build_target ~tmp_target tokens =
@@ -156,8 +156,8 @@ module API = struct
     |> add_pythonpath
     |> add_path
 
-  let target () = [ T ]
-  let tmp () = [ TMP ]
+  let dest = [ DEST ]
+  let tmp = [ TMP ]
   let string s = [ S s ]
   let int i = [ S (string_of_int i) ]
   let float f = [ S (Float.to_string f) ]
@@ -173,7 +173,7 @@ module API = struct
     |> List.intersperse ~sep:[ S sep ]
     |> List.concat
 
-  let seq xs = List.concat xs
+  let seq ?(sep = "") xs = List.concat (List.intersperse ~sep:(string sep) xs)
 
   let enum dic x = [ S (List.Assoc.find_exn dic x) ]
 

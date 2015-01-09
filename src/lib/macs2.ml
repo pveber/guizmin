@@ -6,7 +6,7 @@ let package_script = Utils.wget "https://raw.githubusercontent.com/pveber/compbi
 
 let package =
   workflow [
-    bash package_script [ target () ]
+    bash package_script [ dest ]
   ]
 
 let macs2 cmd opts =
@@ -16,7 +16,7 @@ let pileup ?extsize ?both_direction bam =
   workflow [
     macs2 "pileup" [
       opt "-i" dep bam ;
-      opt "-o" target () ;
+      opt "-o" ident dest ;
       option (flag string "-B") both_direction ;
       option (opt "--extsize" int) extsize ;
     ]
@@ -38,7 +38,7 @@ let callpeak ?pvalue ?qvalue ?gsize ?call_summits
              ?fix_bimodal ?extsize ?control treatment =
   workflow [
     macs2 "callpeak" [
-      opt "--outdir" target () ;
+      opt "--outdir" ident dest ;
       opt "--name" string name ;
       opt "--format" string "BAM" ;
       option (opt "--pvalue" float) pvalue ;

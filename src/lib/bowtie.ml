@@ -7,18 +7,18 @@ type index = [`bowtie_index] directory
 let package_script = Utils.wget "https://raw.githubusercontent.com/pveber/compbio-scripts/master/bowtie-install/1.0.1/bowtie-install.sh"
 
 let package = workflow [
-    bash package_script [ target () ]
+    bash package_script [ dest ]
   ]
 
 (* memory bound correspond to storing a human index in memory, following bowtie manual *)
 let bowtie_build ?packed ?color fa =
   workflow ~mem:(3 * 1024) ~timeout:24 [
-    mkdir_p (target ()) ;
+    mkdir_p dest ;
     program "bowtie-build" ~path:[package] [
       option (flag string "-a -p") packed ;
       option (flag string "--color") color ;
       opt "-f" dep fa ;
-      seq [ target () ; string "/index" ]
+      seq [ dest ; string "/index" ]
     ]
   ]
 
@@ -50,7 +50,7 @@ let bowtie ?l ?e ?m ?fastq_format ?n ?v ?p ?maxins index fastq_files =
       option (opt "--maxins" int) maxins ;
       seq [dep index ; string "/index"] ;
       args ;
-      target () ;
+      dest ;
     ]
   ]
 
