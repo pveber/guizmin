@@ -27,6 +27,20 @@ let fastq_dump sra =
     program "fastq-dump" ~path:[package] [ string "-Z" ; dep sra ] ~stdout:dest
   ]
 
+let fastq_dump_pe sra =
+  let dir =
+    workflow [
+      and_list [
+        mkdir_p dest ;
+        cd dest ;
+        program "fastq-dump" ~path:[package] [ string "--split-files" ; dep sra ] ;
+        mv (string "*_1.fastq") (string "reads_1.fastq") ;
+        mv (string "*_2.fastq") (string "reads_2.fastq") ;
+      ]
+    ]
+  in
+  Workflow.extract dir ["reads_1.fastq"],
+  Workflow.extract dir ["reads_2.fastq"]
 
 (* open Core.Std *)
 (* open Bistro_workflow.Types *)

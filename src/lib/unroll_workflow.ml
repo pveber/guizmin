@@ -94,7 +94,7 @@ module Make(S : Settings) = struct
       in
       match se_or_pe with
       | `single_end -> `single_end (List.map sras ~f:Sra.fastq_dump)
-      | `paired_end -> assert false
+      | `paired_end -> `paired_end (List.unzip (List.map sras ~f:Sra.fastq_dump_pe))
 
   class short_read_sample sample data : Unrolled_workflow.short_read_sample = object (s)
     inherit sample sample

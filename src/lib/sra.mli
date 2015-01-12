@@ -10,6 +10,8 @@ val fetch_srr : string -> workflow
 
 val fastq_dump : workflow -> [`sanger] Fastq.workflow
 
+val fastq_dump_pe : workflow -> [`sanger] Fastq.workflow * [`sanger] Fastq.workflow
+
 (* open Bistro_workflow.Types *)
 
 (* val package : package workflow *)
