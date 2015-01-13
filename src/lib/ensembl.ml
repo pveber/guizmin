@@ -31,10 +31,7 @@ let ucsc_chr_names_gtf gff =
         string "'{print \"chr\" $0}'" ;
         dep gff
       ] ;
-      program "sed" [
-        string "'s/chrMT/chrM/g'" ;
-        dest ;
-      ]
+      program "sed" [ string "'s/chrMT/chrM/g'" ] ~stdout:dest
     ]
   ]
 
