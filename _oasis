@@ -48,6 +48,14 @@ Library guizmin_lwt_backend
   BuildDepends:     core, guizmin.backend, lwt.unix, threads
   XMETARequires:    core, guizmin.backend, lwt.unix, threads
 
+Library guizmin_repo
+  Path:             src/repo
+  Modules:          Guizmin_repo
+  FindlibName:      repo
+  FindlibParent:    guizmin
+  BuildDepends:     core, guizmin, lwt.unix, threads, tyxml
+  XMETARequires:    core, guizmin, lwt.unix, threads, tyxml
+
 
 Executable guizmin_app
   Path:             src/app
