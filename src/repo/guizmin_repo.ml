@@ -51,38 +51,6 @@ module Make(E : Engine) = struct
     | File_page of Guizmin.Workflow.u
     | In_situ_file_page of Guizmin.Workflow.u * path * path (* path of the container, path inside the container *)
 
-
-  let html_page p f = { path = p ; kind = Html_page f }
-
-  let file_path u =
-    [ "file" ; Guizmin.Defs.digest u ]
-
-  let file_page ?path ?(in_situ = true) w =
-    let u = Guizmin.Workflow.((w : _ t :> u)) in
-    let path = match path with
-      | Some p -> p
-      | None -> file_path u
-    in
-    match u, in_situ with
-      | Guizmin.Workflow.Extract (v, p), true ->
-        { path = path @ p ;
-          kind = In_situ_file_page (v, path, p) }
-      | _ -> { path ; kind = File_page u }
-
-
-  let path p = p.path
-
-
-  let href d = string_of_path (path d)
-
-  let a d elts =
-    Html5.M.(a ~a:[a_href (href d)] elts)
-
-
-  type t = page list
-
-  let empty = []
-
   let inserted_page page =
     match page.kind with
     | In_situ_file_page (u, path_u, _) ->
@@ -107,6 +75,42 @@ module Make(E : Engine) = struct
     | `conflict p -> failwithf "Path %s is already taken" (string_of_path p) ()
     | `insert page -> page :: site
 
+  let site = ref []
+
+  let html_page p f =
+    let page = { path = p ; kind = Html_page f } in
+    site := add_page !site page ;
+    page
+
+  let file_path u =
+    [ "file" ; Guizmin.Defs.digest u ]
+
+  let file_page ?path ?(in_situ = true) w =
+    let u = Guizmin.Workflow.((w : _ t :> u)) in
+    let path = match path with
+      | Some p -> p
+      | None -> file_path u
+    in
+    let page = match u, in_situ with
+      | Guizmin.Workflow.Extract (v, p), true ->
+        { path = path @ p ;
+          kind = In_situ_file_page (v, path, p) }
+      | _ -> { path ; kind = File_page u }
+    in
+    site := add_page !site page ;
+    page
+
+
+  let path p = p.path
+
+
+  let href d = string_of_path (path d)
+
+  let a d elts =
+    Html5.M.(a ~a:[a_href (href d)] elts)
+
+
+  (* === REPO GENERATION === *)
   let fspath output_dir x =
     Filename.concat output_dir (string_of_path x)
 
@@ -134,9 +138,9 @@ module Make(E : Engine) = struct
     Lwt.return ()
 
 
-  let generate ~dir pages =
+  let generate dir =
     let fspath = fspath dir in
-    List.map pages ~f:(fun page ->
+    List.map !site ~f:(fun page ->
         match page.kind with
         | Html_page f ->
           generate_html_page fspath page f

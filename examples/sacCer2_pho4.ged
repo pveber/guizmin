@@ -4,7 +4,8 @@
     (factor_name treatment)))
   (Model (
     (model_id sacCer)
-    (model_genome ((ucsc sacCer2)))))
+    (model_genome ((ucsc sacCer2)))
+    (model_annotation ())))
   (Sample (
     (sample_id chIP_pho4_noPi)
     (sample_data (short_read_data (sra (single_end (SRR (SRR217304))))))

@@ -1,7 +1,11 @@
 B _build/src/app
 B _build/src/lib
+B _build/src/repo
+B _build/src/backend
+B _build/src/lwt_backend
 PKG cmdliner
 PKG core
 PKG gzt
 PKG lwt.unix
+PKG react
 PKG tyxml

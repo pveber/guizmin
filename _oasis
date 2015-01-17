@@ -61,7 +61,7 @@ Executable guizmin_app
   Path:             src/app
   MainIs:           guizmin_app.ml
   BuildDepends:     cmdliner, core,
-                    guizmin,
+                    guizmin.repo,
                     guizmin.backend.lwt,
                     gzt, lambda-term,
                     lwt.syntax,

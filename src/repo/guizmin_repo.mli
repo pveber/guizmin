@@ -7,15 +7,13 @@ end
 
 module Make(E : Engine) : sig
   type page
-  type t
 
   val html_page : path -> (unit -> html_elt Lwt.t) -> page
   val file_page : ?path:path -> ?in_situ:bool -> _ Guizmin.Workflow.t -> page
 
+  val path : page -> path
   val href : page -> string
   val a : page -> 'a Html5.M.elt list -> [> `A of 'a] Html5.M.elt
 
-  val empty : t
-  val add_page : t -> page -> t
-  val generate : dir:string -> t -> unit Lwt.t
+  val generate : string -> unit Lwt.t
 end

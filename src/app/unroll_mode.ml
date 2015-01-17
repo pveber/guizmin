@@ -32,7 +32,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
     workflow_output (x : _ Guizmin.Workflow.t :> Guizmin.Workflow.u)
 
   (* WEBSITE GENERATION *)
-  module WWW = Website.Make(struct end)
+  module WWW = Guizmin_repo.Make(struct let build x = workflow_output x end)
 
   let string_of_experiment = function
     | `whole_cell_extract -> "WCE"
@@ -450,7 +450,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
 
     let list = List.map W.Sample.list ~f:(fun s ->
         s,
-        WWW.html_page [ "sample" ; s.sample_id ^ ".html" ] ~f:(make s) ()
+        WWW.html_page [ "sample" ; s.sample_id ^ ".html" ] (make s)
       )
   end
 
@@ -477,9 +477,9 @@ module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
     in
     if contents <> []
     then Some (
-        WWW.html_page [ "mRNA.html" ] ~f:(fun () ->
+        WWW.html_page [ "mRNA.html" ] (fun () ->
             Lwt.return (html_page "mRNA levels" contents)
-          ) ()
+          )
       )
     else None
 
@@ -489,7 +489,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
     ]
     |> List.filter_opt
     |> multicolumn_ul
-    
+
   let browse_by_div =
     let open Html5.M in
     let tabs = tabs [
@@ -513,7 +513,8 @@ module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
         (* index_custom_tracks_section ; *)
       ]
     in
-    WWW.html_page ["index.html"] ~f:(fun () -> Lwt.return (contents ())) ()
+    WWW.html_page ["index.html"] (fun () -> Lwt.return (contents ()))
+
 end
 
 let make_website (module W : Guizmin.Unrolled_workflow.S_alt) workflow_output ~output_dir ~webroot =
@@ -524,7 +525,7 @@ let make_website (module W : Guizmin.Unrolled_workflow.S_alt) workflow_output ~o
   end in
   let module WWW = Make_website(W)(P) in
   mkdir_p output_dir ;
-  WWW.WWW.generate ~workflow_output ~output_dir
+  WWW.WWW.generate output_dir
 
 
 let check_errors descr =
