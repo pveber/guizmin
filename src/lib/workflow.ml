@@ -12,6 +12,7 @@ and step = {
   np : int ; (** Required number of processors *)
   mem : int ; (** Required memory in MB *)
   timeout : int ; (** Maximum allowed running time in hours *)
+  version : int option ; (** Version number of the wrapper *)
 }
 and cmd = token list
 and token =
@@ -84,9 +85,9 @@ let shell_script target ~build_target ~tmp_target script =
   in
   List.map script ~f
 
-let step ?(np = 1) ?(mem = 100) ?(timeout = 24) script =
+let step ?(np = 1) ?(mem = 100) ?(timeout = 24) ?version script =
   let deps = deps_of_cmds script in
-  Step { deps ; script ; np ; mem ; timeout }
+  Step { deps ; script ; np ; mem ; timeout ; version }
 
 let extract u path = match u with
   | Extract (v, p) -> Extract (v, p @ path)

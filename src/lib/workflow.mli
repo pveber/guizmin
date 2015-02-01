@@ -11,6 +11,7 @@ and step = {
   np : int ; (** Required number of processors *)
   mem : int ; (** Required memory in MB *)
   timeout : int ; (** Maximum allowed running time in hours *)
+  version : int option ; (** Version number of the wrapper *)
 }
 and cmd
 
@@ -52,6 +53,7 @@ open Types
 
 val step :
   ?np:int -> ?mem:int -> ?timeout:int ->
+  ?version:int ->
   cmd list -> 'a t
 val extract : _ directory t -> path -> 'a t
 val input : string -> 'a t
@@ -61,6 +63,7 @@ module API : sig
   type shell_expr
   val workflow :
     ?np:int -> ?mem:int -> ?timeout:int ->
+    ?version:int ->
     cmd list -> 'a t
 
   val program :
