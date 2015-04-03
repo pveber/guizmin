@@ -34,8 +34,8 @@ let fastq_dump_pe sra =
         mkdir_p dest ;
         cd dest ;
         program "fastq-dump" ~path:[package] [ string "--split-files" ; dep sra ] ;
-        mv (string "*_1.fastq") (string "reads_1.fastq") ;
-        mv (string "*_2.fastq") (string "reads_2.fastq") ;
+        mv (dest // "*_1.fastq") (dest // "reads_1.fastq") ;
+        mv (dest // "*_2.fastq") (dest // "reads_2.fastq") ;
       ]
     ]
   in
