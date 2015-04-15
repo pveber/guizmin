@@ -30,13 +30,14 @@ let fastq_dump sra =
 let fastq_dump_pe sra =
   let dir =
     workflow [
-      and_list [
-        mkdir_p dest ;
-        cd dest ;
-        program "fastq-dump" ~path:[package] [ string "--split-files" ; dep sra ] ;
-        mv (dest // "*_1.fastq") (dest // "reads_1.fastq") ;
-        mv (dest // "*_2.fastq") (dest // "reads_2.fastq") ;
-      ]
+      mkdir_p dest ;
+      program "fastq-dump" ~path:[package] [
+        opt "-O" ident dest ;
+        string "--split-files" ;
+        dep sra
+      ] ;
+      mv (dest // "*_1.fastq") (dest // "reads_1.fastq") ;
+      mv (dest // "*_2.fastq") (dest // "reads_2.fastq") ;
     ]
   in
   Workflow.extract dir ["reads_1.fastq"],
