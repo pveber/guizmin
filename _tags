@@ -1,3 +1,4 @@
 # OASIS_START
 # OASIS_STOP
 true: annot, debug
+<lib/experiment_description.*>: syntax_camlp4o, pkg_sexplib.syntax

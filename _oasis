@@ -17,12 +17,14 @@ Library guizmin
                     Bedtools,
                     Deseq2,
                     Ensembl,
+                    Experiment_description,
                     Fasta,
                     Fastq,
                     Gff,
                     Sam,
                     Sra,
-                    Std
+                    Std,
+                    Ucsc_gb
   FindlibName:      guizmin
   BuildDepends:     bistro, ppx_bistro, threads
   XMETARequires:    bistro, threads
