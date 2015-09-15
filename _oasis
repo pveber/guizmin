@@ -8,72 +8,81 @@ Plugins:     META (0.4), DevFiles (0.4)
 BuildTools:  ocamlbuild
 
 Library guizmin
-  Path:             src/lib
+  Path:             lib
   Pack:             true
-  Modules:          Bam,
-                    Bed,
-                    Bedtools, Bowtie, Bowtie2,
-                    Defs,
-                    Deseq2,
-                    Ensembl,
-                    Experiment_description,
-                    Fasta,
-                    Fastq, FastQC, Gff,
-                    Htseq, Jaspar,
-                    Macs, Macs2, Makefile,
-                    Meme_suite,
-                    Sam, Samtools, Sra,
-                    Tophat, Ucsc_gb,
-                    Unroll_workflow,
-                    Unrolled_workflow, Utils,
-                    Workflow
+  Modules:          Fastq,
+                    Sra
   FindlibName:      guizmin
-  BuildDepends:     core, sexplib.syntax, threads
-  XMETARequires:    core, threads
+  BuildDepends:     bistro, ppx_bistro, threads
+  XMETARequires:    bistro, threads
 
-Library guizmin_backend
-  Path:             src/backend
-  Modules:          Guizmin_backend, Guizmin_db, Guizmin_log
-  FindlibName:      backend
-  FindlibParent:    guizmin
-  BuildDepends:     core, guizmin, threads
-  XMETARequires:    core, guizmin, threads
+# Library guizmin
+#   Path:             src/lib
+#   Pack:             true
+#   Modules:          Bam,
+#                     Bed,
+#                     Bedtools, Bowtie, Bowtie2,
+#                     Defs,
+#                     Deseq2,
+#                     Ensembl,
+#                     Experiment_description,
+#                     Fasta,
+#                     Fastq, FastQC, Gff,
+#                     Htseq, Jaspar,
+#                     Macs, Macs2, Makefile,
+#                     Meme_suite,
+#                     Sam, Samtools, Sra,
+#                     Tophat, Ucsc_gb,
+#                     Unroll_workflow,
+#                     Unrolled_workflow, Utils,
+#                     Workflow
+#   FindlibName:      guizmin
+#   BuildDepends:     core, sexplib.syntax, threads
+#   XMETARequires:    core, threads
+
+# Library guizmin_backend
+#   Path:             src/backend
+#   Modules:          Guizmin_backend, Guizmin_db, Guizmin_log
+#   FindlibName:      backend
+#   FindlibParent:    guizmin
+#   BuildDepends:     core, guizmin, threads
+#   XMETARequires:    core, guizmin, threads
 
 
-Library guizmin_lwt_backend
-  Path:             src/lwt_backend
-  Modules:          Guizmin_lwt_backend, Guizmin_lwt_engine, Guizmin_pool
-  FindlibName:      lwt
-  FindlibParent:    guizmin_backend
-  BuildDepends:     core, guizmin.backend, lwt.unix, threads
-  XMETARequires:    core, guizmin.backend, lwt.unix, threads
+# Library guizmin_lwt_backend
+#   Path:             src/lwt_backend
+#   Modules:          Guizmin_lwt_backend, Guizmin_lwt_engine, Guizmin_pool
+#   FindlibName:      lwt
+#   FindlibParent:    guizmin_backend
+#   BuildDepends:     core, guizmin.backend, lwt.unix, threads
+#   XMETARequires:    core, guizmin.backend, lwt.unix, threads
 
-Library guizmin_repo
-  Path:             src/repo
-  Modules:          Guizmin_repo
-  FindlibName:      repo
-  FindlibParent:    guizmin
-  BuildDepends:     core, guizmin, lwt.unix, threads, tyxml
-  XMETARequires:    core, guizmin, lwt.unix, threads, tyxml
+# Library guizmin_repo
+#   Path:             src/repo
+#   Modules:          Guizmin_repo
+#   FindlibName:      repo
+#   FindlibParent:    guizmin
+#   BuildDepends:     core, guizmin, lwt.unix, threads, tyxml
+#   XMETARequires:    core, guizmin, lwt.unix, threads, tyxml
 
 
-Executable guizmin_app
-  Path:             src/app
-  MainIs:           guizmin_app.ml
-  BuildDepends:     cmdliner, core,
-                    guizmin.repo,
-                    guizmin.backend.lwt,
-                    gzt, lambda-term,
-                    lwt.syntax,
-                    react,
-                    sexplib.syntax, threads, tyxml
-  CompiledObject:   native
+# Executable guizmin_app
+#   Path:             src/app
+#   MainIs:           guizmin_app.ml
+#   BuildDepends:     cmdliner, core,
+#                     guizmin.repo,
+#                     guizmin.backend.lwt,
+#                     gzt, lambda-term,
+#                     lwt.syntax,
+#                     react,
+#                     sexplib.syntax, threads, tyxml
+#   CompiledObject:   native
   
-Document guizmin_doc
-  Title:                API reference for Guizmin
-  Type:                 OCamlbuild (0.4)
-  InstallDir:           $docdir/api
-  BuildTools:           ocamldoc, ocamlbuild
-  XOCamlbuildPath:      .
-  XOCamlbuildLibraries: guizmin
+# Document guizmin_doc
+#   Title:                API reference for Guizmin
+#   Type:                 OCamlbuild (0.4)
+#   InstallDir:           $docdir/api
+#   BuildTools:           ocamldoc, ocamlbuild
+#   XOCamlbuildPath:      .
+#   XOCamlbuildLibraries: guizmin
   
