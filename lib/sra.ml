@@ -40,13 +40,13 @@ let fetch_srr id =
   else failwithf "Guizmin_workflow.Sra.fetch_srr: id %s is invalid (should be longer than 6 characters long)" id ()
 
 let fastq_dump sra =
-  workflow [
+  workflow ~descr:"sratoolkit.fastq_dump" [
     cmd "fastq-dump" ~path:[toolkit_package] [ string "-Z" ; dep sra ] ~stdout:dest
   ]
 
 let fastq_dump_pe sra =
   let dir =
-    workflow [
+    workflow ~descr:"sratoolkit.fastq_dump" [
       mkdir_p dest ;
       cmd "fastq-dump" ~path:[toolkit_package] [
         opt "-O" ident dest ;

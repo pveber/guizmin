@@ -10,8 +10,16 @@ BuildTools:  ocamlbuild
 Library guizmin
   Path:             lib
   Pack:             true
-  Modules:          Fastq,
-                    Sra
+  Modules:          Bam,
+                    Bed,
+                    Bowtie,
+                    Bowtie2,
+                    Bedtools,
+                    Fasta,
+                    Fastq,
+                    Sam,
+                    Sra,
+                    Std
   FindlibName:      guizmin
   BuildDepends:     bistro, ppx_bistro, threads
   XMETARequires:    bistro, threads
