@@ -1,4 +1,4 @@
-open Bistro_std
+open Std
 open Bistro.EDSL_sh
 
 let package_script = Utils.wget "https://raw.githubusercontent.com/pveber/compbio-scripts/master/bedtools-install/2.11.2/bedtools-install.sh"

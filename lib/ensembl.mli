@@ -1,4 +1,4 @@
-open Bistro_std
+open Std
 
 type species = [
   | `homo_sapiens

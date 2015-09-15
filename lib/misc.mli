@@ -5,6 +5,8 @@ val path_of_string : string -> path
 
 val digest : 'a -> string
 
-val ( % ) : ('a -> 'b) -> ('b -> 'c) -> 'a -> 'c
-
 val python_version : [ `M_m ] -> string option
+
+module Infix : sig
+  val ( % ) : ('a -> 'b) -> ('b -> 'c) -> 'a -> 'c
+end

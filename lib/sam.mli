@@ -1,3 +1,3 @@
-open Bistro_std
+open Std
 
 type workflow = ([`sam],[`text]) file Workflow.t

@@ -1,4 +1,4 @@
-open Bistro_std
+open Std
 
 type index = [`bowtie_index] directory
 

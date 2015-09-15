@@ -1,5 +1,5 @@
 open Core.Std
-open Bistro_std
+open Std
 open Bistro.EDSL_sh
 
 type workflow = ([`sra], [`binary]) file Workflow.t

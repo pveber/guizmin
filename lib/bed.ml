@@ -1,5 +1,5 @@
 open Core.Std
-open Bistro_std
+open Std
 open Bistro.EDSL_sh
 
 let keep ~n bed =

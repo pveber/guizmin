@@ -1,3 +1,3 @@
-open Bistro_std
+open Std
 
 type workflow = ([`fasta],[`text]) file Workflow.t

@@ -1,4 +1,4 @@
-open Bistro_std
+open Std
 
 val wget :
   ?no_check_certificate:bool ->

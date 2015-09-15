@@ -1,5 +1,5 @@
 open Core.Std
-open Bistro_std
+open Std
 open Bistro.EDSL_sh
 
 let r_library_package = Workflow.make ~descr:"deseq2.package" [%sh{|

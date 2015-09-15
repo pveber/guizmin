@@ -1,4 +1,4 @@
-open Bistro_std
+open Std
 
 val toolkit_package : package workflow
 

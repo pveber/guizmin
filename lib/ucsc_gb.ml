@@ -1,5 +1,5 @@
 open Core.Std
-open Bistro_std
+open Std
 open Bistro.EDSL_sh
 
 type genome = [ `dm3 | `hg18 | `hg19 | `mm8 | `mm9 | `mm10 | `sacCer2 ]

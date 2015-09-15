@@ -1,4 +1,4 @@
-open Bistro_std
+open Std
 
 module Types : sig
   type twobit = ([`twobit], [`binary]) file

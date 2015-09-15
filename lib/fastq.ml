@@ -1,4 +1,4 @@
-open Bistro_std
+open Std
 
 type _ format =
   | Sanger  : [`sanger] format

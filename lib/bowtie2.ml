@@ -1,6 +1,6 @@
 open Core.Std
 open Std
-open Bistro_std
+open Misc.Infix
 open Bistro.EDSL_sh
 
 type index = [`bowtie2_index] directory
