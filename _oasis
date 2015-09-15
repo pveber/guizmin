@@ -15,8 +15,11 @@ Library guizmin
                     Bowtie,
                     Bowtie2,
                     Bedtools,
+                    Deseq2,
+                    Ensembl,
                     Fasta,
                     Fastq,
+                    Gff,
                     Sam,
                     Sra,
                     Std
