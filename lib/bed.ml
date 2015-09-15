@@ -11,13 +11,11 @@ let keep ~n bed =
     ]
   ]
 
-type closed
-
 type 'a bed3_like = < columns : string * (int * (int * 'a)) ;
                       header : [`no] ;
                       comment : [`sharp] ; .. > tsv
 
-type bed3 = closed bed3_like
+type bed3 = unit bed3_like
 
 let keep3 x = keep ~n:3 x
 
@@ -26,7 +24,7 @@ let keep3 x = keep ~n:3 x
 
 type 'a bed4_like = (string * 'a) bed3_like
 
-type bed4 = closed bed4_like
+type bed4 = unit bed4_like
 
 let keep4 x = keep ~n:4 x
 
@@ -35,6 +33,6 @@ let keep4 x = keep ~n:4 x
 
 type 'a bed5_like = (int * 'a) bed4_like
 
-type bed5 = closed bed5_like
+type bed5 = unit bed5_like
 
 let keep5 x = keep ~n:5 x

@@ -22,11 +22,19 @@ Library guizmin
                     Fasta,
                     Fastq,
                     Gff,
+                    Htseq,
+                    Jaspar,
+                    Macs,
+                    Macs2,
+                    Meme_suite,
                     Misc,
                     Sam,
+                    Samtools,
                     Sra,
                     Std,
-                    Ucsc_gb
+                    Tophat,
+                    Ucsc_gb,
+                    Utils
   FindlibName:      guizmin
   BuildDepends:     bistro, ppx_bistro, threads
   XMETARequires:    bistro, threads
