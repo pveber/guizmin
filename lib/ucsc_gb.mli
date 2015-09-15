@@ -1,6 +1,6 @@
 open Std
 
-module Types : sig
+module Formats : sig
   type twobit = ([`twobit], [`binary]) file
   type chrom_sizes = < columns : string * (int * unit) ;
                        header : [`no] ;
@@ -12,7 +12,7 @@ module Types : sig
   type bigWig = ([`bigWig], [`binary]) file
 end
 
-open Types
+open Formats
 
 type genome = [ `dm3 | `hg18 | `hg19 | `mm8 | `mm9 | `mm10 | `sacCer2 ]
 val string_of_genome : [< genome] -> string

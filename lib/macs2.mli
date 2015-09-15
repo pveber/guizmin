@@ -1,5 +1,5 @@
 open Std
-open Ucsc_gb.Types
+open Ucsc_gb.Formats
 
 val package : package workflow
 

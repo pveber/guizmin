@@ -34,6 +34,7 @@ Library guizmin
                     Std,
                     Tophat,
                     Ucsc_gb,
+                    Unrolled_workflow,
                     Utils
   FindlibName:      guizmin
   BuildDepends:     bistro, ppx_bistro, threads

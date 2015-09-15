@@ -13,7 +13,7 @@ let string_of_genome = function
 | `mm10 -> "mm10"
 | `sacCer2 -> "sacCer2"
 
-module Types = struct
+module Formats = struct
   type twobit = ([`twobit], [`binary]) file
   type chrom_sizes = < columns : string * (int * unit) ;
                        header : [`no] ;
