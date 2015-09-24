@@ -24,7 +24,7 @@ let macs2 subcmd opts =
   cmd "macs2" ~path:[package] ~pythonpath:[package] (string subcmd :: opts)
 
 let pileup ?extsize ?both_direction bam =
-  workflow [
+  workflow ~descr:"macs2.pileup" [
     macs2 "pileup" [
       opt "-i" dep bam ;
       opt "-o" ident dest ;
@@ -47,7 +47,7 @@ let name = "macs2"
 
 let callpeak ?pvalue ?qvalue ?gsize ?call_summits
              ?fix_bimodal ?extsize ?control treatment =
-  workflow [
+  workflow ~descr:"macs2.callpeak" [
     macs2 "callpeak" [
       opt "--outdir" ident dest ;
       opt "--name" string name ;

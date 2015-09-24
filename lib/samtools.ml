@@ -2,7 +2,7 @@ open Core.Std
 open Std
 open Bistro.EDSL_sh
 
-let package = Workflow.make [%sh{|
+let package = Workflow.make ~descr:"samtools.package" [%sh{|
 PREFIX={{ dest }}
 
 URL=http://sourceforge.net/projects/samtools/files/samtools/0.1.17/samtools-0.1.17.tar.bz2/download
@@ -32,7 +32,7 @@ make clean
 let samtools subcmd args = cmd "samtools" ~path:[package] (string subcmd :: args)
 
 let sam_of_bam bam =
-  workflow [
+  workflow ~descr:"samtools.sam_of_bam" [
     samtools "view" [
       opt "-o" ident dest ;
       dep bam ;
@@ -40,7 +40,7 @@ let sam_of_bam bam =
   ]
 
 let indexed_bam_of_sam sam =
-  workflow [
+  workflow ~descr:"samtools.indexed_bam_of_sam" [
     mkdir_p dest ;
     samtools "view" [
       string "-S -b" ;
@@ -56,7 +56,7 @@ let indexed_bam_of_sam sam =
   ]
 
 let sort ?on:order bam =
-  workflow [
+  workflow ~descr:"samtools.sort" [
     samtools "sort" [
       option (fun o -> flag string "-n" (o = `name)) order ;
       dep bam ;

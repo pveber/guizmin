@@ -2,8 +2,9 @@ open Core.Std
 open Std
 open Bistro.EDSL_sh
 
-let wget ?no_check_certificate url =
-  workflow ~descr:"utils.wget" [
+let wget ?descr_url ?no_check_certificate url =
+  let info = match descr_url with None -> "" | Some i -> sprintf "(%s)" i in
+  workflow ~descr:("utils.wget" ^ info) [
     cmd "wget" [
       option (flag string "--no-check-certificate") no_check_certificate ;
       opt "-O" ident dest ; string url ]

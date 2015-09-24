@@ -1,6 +1,7 @@
 open Std
 
 val wget :
+  ?descr_url:string ->
   ?no_check_certificate:bool ->
   string -> (_,_) #file workflow
 val gunzip : 'a gz workflow -> 'a workflow

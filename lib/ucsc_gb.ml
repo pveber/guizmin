@@ -66,7 +66,7 @@ make -C kent/src/hg/gpToGtf \
 
 let chromosome_sequences org =
   let org = string_of_genome org in
-  workflow [
+  workflow ~descr:"ucsc_gb.chromosome_sequence" [
     mkdir_p dest ;
     cd dest ;
     wget (sprintf "ftp://hgdownload.cse.ucsc.edu/goldenPath/%s/chromosomes/*" org) () ;
@@ -76,7 +76,7 @@ let chromosome_sequences org =
 let genome_sequence org =
   let chr_seqs = chromosome_sequences org in
   let open Workflow in
-  workflow [
+  workflow ~descr:"ucsc_db.genome_sequence" [
     cmd "bash" [
       opt "-c" string "'shopt -s nullglob ; cat $0/{chr?.fa,chr??.fa,chr???.fa,chr????.fa} > $1'" ;
       dep chr_seqs ;
