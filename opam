@@ -1,0 +1,20 @@
+opam-version: "1.2"
+name: "guizmin"
+version: "dev"
+maintainer: "pveber <philippe.veber@gmail.com>"
+authors: "pveber <philippe.veber@gmail.com>"
+homepage: "https://github.com/pveber/guizmin/"
+dev-repo: "https://github.com/pveber/guizmin.git"
+license: "GPL"
+build: [
+  ["./configure" "--prefix=%{prefix}%"]
+  [make]
+]
+install: [make "install"]
+remove: [
+  ["ocamlfind" "remove" "guizmin"]
+]
+depends: [
+  "guizmin"
+  "tyxml"
+]
