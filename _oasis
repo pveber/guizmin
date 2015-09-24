@@ -11,50 +11,25 @@ Library guizmin
   Path:             lib
   Pack:             true
   Modules:          Experiment_description,
+                    Guizmin_repo,
                     Misc,
+                    Unroll_workflow,                    
                     Unrolled_workflow
   FindlibName:      guizmin
-  BuildDepends:     bistro, ppx_bistro, threads
-  XMETARequires:    bistro, threads
+  BuildDepends:     bistro.std, core, ppx_bistro, lwt, threads, tyxml
+  XMETARequires:    bistro.std, core, threads, lwt, tyxml
 
 
-# Library guizmin_backend
-#   Path:             src/backend
-#   Modules:          Guizmin_backend, Guizmin_db, Guizmin_log
-#   FindlibName:      backend
-#   FindlibParent:    guizmin
-#   BuildDepends:     core, guizmin, threads
-#   XMETARequires:    core, guizmin, threads
-
-
-# Library guizmin_lwt_backend
-#   Path:             src/lwt_backend
-#   Modules:          Guizmin_lwt_backend, Guizmin_lwt_engine, Guizmin_pool
-#   FindlibName:      lwt
-#   FindlibParent:    guizmin_backend
-#   BuildDepends:     core, guizmin.backend, lwt.unix, threads
-#   XMETARequires:    core, guizmin.backend, lwt.unix, threads
-
-# Library guizmin_repo
-#   Path:             src/repo
-#   Modules:          Guizmin_repo
-#   FindlibName:      repo
-#   FindlibParent:    guizmin
-#   BuildDepends:     core, guizmin, lwt.unix, threads, tyxml
-#   XMETARequires:    core, guizmin, lwt.unix, threads, tyxml
-
-
-# Executable guizmin_app
-#   Path:             src/app
-#   MainIs:           guizmin_app.ml
-#   BuildDepends:     cmdliner, core,
-#                     guizmin.repo,
-#                     guizmin.backend.lwt,
-#                     gzt, lambda-term,
-#                     lwt.syntax,
-#                     react,
-#                     sexplib.syntax, threads, tyxml
-#   CompiledObject:   native
+Executable guizmin_app
+  Path:             app
+  MainIs:           guizmin_app.ml
+  BuildDepends:     cmdliner, core,
+                    guizmin, bistro.engine, netstring,
+                    lambda-term,
+                    lwt.syntax,
+                    react,
+                    sexplib.syntax, threads
+  CompiledObject:   native
   
 # Document guizmin_doc
 #   Title:                API reference for Guizmin

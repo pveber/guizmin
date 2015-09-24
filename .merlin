@@ -1,8 +1,9 @@
 B _build/lib
-B _build/src/app
-B _build/src/lib
-B _build/src/repo
-B _build/src/backend
-B _build/src/lwt_backend
+B _build/app
 PKG bistro
+PKG core
+PKG netstring
+PKG lwt.unix
 PKG ppx_bistro
+PKG tyxml
+

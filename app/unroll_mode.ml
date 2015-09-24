@@ -1,4 +1,5 @@
 open Core.Std
+open Bistro_std
 open Common
 
 let string_of_path l = String.concat ~sep:"/" l
@@ -15,13 +16,13 @@ let ( $$ ) xs x =
   lwt_option_bind (xs $ x) ~f:ident
 
 module type Params = sig
-  val workflow_output : Guizmin.Workflow.u -> string Lwt.t
+  val workflow_output : Bistro.Workflow.u -> string Lwt.t
   val output_dir : string
   val webroot : string
 end
 
 
-module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
+module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
   open P
   open Guizmin
   open Experiment_description
@@ -29,7 +30,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
   open Option.Monad_infix
 
   let workflow_output' x =
-    workflow_output (x : _ Guizmin.Workflow.t :> Guizmin.Workflow.u)
+    workflow_output (x : _ Bistro.Workflow.t :> Bistro.Workflow.u)
 
   (* WEBSITE GENERATION *)
   module WWW = Guizmin_repo.Make(struct let build x = workflow_output x end)
@@ -231,7 +232,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
       `description name ;
     ]
     in
-    let url = Gzt.Ucsc_gb.CustomTrack.url genome opts in
+    let url = Ucsc_utils.CustomTrack.url genome opts in
     [ a ~a:[a_href url] elt ]
 
   let custom_track_link_of_bigwig x genome bigwig elt =
@@ -246,7 +247,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
       `description name ;
     ]
     in
-    let url = Gzt.Ucsc_gb.CustomTrack.url genome opts in
+    let url = Ucsc_utils.CustomTrack.url genome opts in
     [ a ~a:[a_href url] elt ]
 
   let custom_track_link_of_bigBed x genome bigBed objects elt =
@@ -261,7 +262,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
       `description name ;
     ]
     in
-    let url = Gzt.Ucsc_gb.CustomTrack.url genome opts in
+    let url = Ucsc_utils.CustomTrack.url genome opts in
     [ a ~a:[a_href url] elt ]
 
 (*   (\* let index_custom_tracks_section = *\) *)
@@ -517,7 +518,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S_alt)(P : Params) = struct
 
 end
 
-let make_website (module W : Guizmin.Unrolled_workflow.S_alt) workflow_output ~output_dir ~webroot =
+let make_website (module W : Guizmin.Unrolled_workflow.S) workflow_output ~output_dir ~webroot =
   let module P = struct
     let workflow_output = workflow_output
     let output_dir = output_dir
@@ -536,37 +537,16 @@ let check_errors descr =
     |> String.concat ~sep:", "
     |> failwith
 
-let backend dopts blog =
-  match dopts.backend with
-  | Local ->
-    Guizmin_lwt_backend.local ~np:dopts.np ~mem:(dopts.mem * 1024) blog
-  | Pbs ->
-    assert false
-(*     Bistro_pbs.worker blog *)
+open Bistro_engine
 
 let main opts dopts ged_file output_dir webroot = Guizmin.(
   let description = Experiment_description.load ged_file in
   check_errors description ;
-  let module W = (val Unroll_workflow.from_description_alt description) in
-  let log_event, send_to_log_event = React.E.create () in
-  let db = Guizmin_db.init "_guizmin" in
-  let blog = Guizmin_log.make ~hook:send_to_log_event ~db () in
-  let backend = backend dopts blog in
-  let engine = Guizmin_lwt_engine.make db blog backend in
-  let () = if opts.verbosity = Verbose then (
-      Lwt_stream.iter_s
-        (fun e -> Lwt_io.printl (Guizmin_log.Entry.to_string e))
-        (Lwt_react.E.to_stream log_event)
-      |> ignore
-    )
-  in
-  let workflow_output u =
-    let open Option in
-    Lwt.bind
-      (Option.value_exn (Guizmin_lwt_engine.send' engine u))
-      (fun () -> Lwt.return (Guizmin_db.path db u))
-  in
+  let module W = (val Unroll_workflow.from_description description) in
+  let db = Db.init_exn "_guizmin" in
+  let scheduler = Scheduler.make ~np:dopts.np ~mem:(dopts.mem * 1024) db in
+  let workflow_output u = Scheduler.build_exn' scheduler u in
   let t = make_website (module W) workflow_output ~output_dir ~webroot in
-  let finish_pending_jobs = Guizmin_lwt_engine.shutdown engine in
+  let finish_pending_jobs = Scheduler.shutdown scheduler in
   Lwt_unix.run (Lwt.join [ t ; finish_pending_jobs ])
 )

@@ -36,10 +36,10 @@ let file_is_empty path =
   Unix.((stat path).st_size = 0L)
 
 module type Engine = sig
-  val build : Guizmin.Workflow.u -> string Lwt.t
+  val build : Bistro.Workflow.u -> string Lwt.t
 end
 
-let string_of_path = Guizmin.Defs.string_of_path
+let string_of_path = Misc.string_of_path
 
 module Make(E : Engine) = struct
   type page = {
@@ -48,8 +48,8 @@ module Make(E : Engine) = struct
   }
   and kind =
     | Html_page of (unit -> html_elt Lwt.t)
-    | File_page of Guizmin.Workflow.u
-    | In_situ_file_page of Guizmin.Workflow.u * path * path (* path of the container, path inside the container *)
+    | File_page of Bistro.Workflow.u
+    | In_situ_file_page of Bistro.Workflow.u * path * path (* path of the container, path inside the container *)
 
   let inserted_page page =
     match page.kind with
@@ -83,16 +83,16 @@ module Make(E : Engine) = struct
     page
 
   let file_path u =
-    [ "file" ; Guizmin.Defs.digest u ]
+    [ "file" ; Misc.digest u ]
 
   let file_page ?path ?(in_situ = true) w =
-    let u = Guizmin.Workflow.((w : _ t :> u)) in
+    let u = Bistro.Workflow.((w : _ t :> u)) in
     let path = match path with
       | Some p -> p
       | None -> file_path u
     in
     let page = match u, in_situ with
-      | Guizmin.Workflow.Extract (v, p), true ->
+      | Bistro.Workflow.Extract (_, v, p), true ->
         { path = path @ p ;
           kind = In_situ_file_page (v, path, p) }
       | _ -> { path ; kind = File_page u }
