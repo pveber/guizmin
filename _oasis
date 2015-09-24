@@ -10,59 +10,13 @@ BuildTools:  ocamlbuild
 Library guizmin
   Path:             lib
   Pack:             true
-  Modules:          Bam,
-                    Bed,
-                    Bowtie,
-                    Bowtie2,
-                    Bedtools,
-                    Deseq2,
-                    Ensembl,
-                    Experiment_description,
-                    FastQC,
-                    Fasta,
-                    Fastq,
-                    Gff,
-                    Htseq,
-                    Jaspar,
-                    Macs,
-                    Macs2,
-                    Meme_suite,
+  Modules:          Experiment_description,
                     Misc,
-                    Sam,
-                    Samtools,
-                    Sra,
-                    Std,
-                    Tophat,
-                    Ucsc_gb,
-                    Unrolled_workflow,
-                    Utils
+                    Unrolled_workflow
   FindlibName:      guizmin
   BuildDepends:     bistro, ppx_bistro, threads
   XMETARequires:    bistro, threads
 
-# Library guizmin
-#   Path:             src/lib
-#   Pack:             true
-#   Modules:          Bam,
-#                     Bed,
-#                     Bedtools, Bowtie, Bowtie2,
-#                     Defs,
-#                     Deseq2,
-#                     Ensembl,
-#                     Experiment_description,
-#                     Fasta,
-#                     Fastq, FastQC, Gff,
-#                     Htseq, Jaspar,
-#                     Macs, Macs2, Makefile,
-#                     Meme_suite,
-#                     Sam, Samtools, Sra,
-#                     Tophat, Ucsc_gb,
-#                     Unroll_workflow,
-#                     Unrolled_workflow, Utils,
-#                     Workflow
-#   FindlibName:      guizmin
-#   BuildDepends:     core, sexplib.syntax, threads
-#   XMETARequires:    core, threads
 
 # Library guizmin_backend
 #   Path:             src/backend

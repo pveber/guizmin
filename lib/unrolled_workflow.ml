@@ -1,5 +1,5 @@
-open Std
-open Ucsc_gb.Formats
+open Bistro_std
+open Bistro_std.Types
 open Experiment_description
 
 type condition = (factor * string) list
@@ -13,7 +13,7 @@ module type S = sig
 
     val list : t list
 
-    val sequence : t -> Fasta.workflow
+    val sequence : t -> fasta workflow
     val bowtie_index : t -> Bowtie.index workflow
     val bowtie2_index : t -> Bowtie2.index workflow
   end
@@ -23,7 +23,7 @@ module type S = sig
 
     val list : t list
     val annotation : t -> annotation option
-    val gene_annotation : t -> Gff.file workflow option
+    val gene_annotation : t -> gff workflow option
   end
 
   module Sample : sig
@@ -39,15 +39,15 @@ module type S = sig
 
     (** Short read samples *)
     val short_read_data : t -> short_read_data option
-    val sanger_fastq  : t -> [`sanger] Fastq.workflow list se_or_pe option
-    val fastQC_report : t -> FastQC.workflow se_or_pe option
+    val sanger_fastq  : t -> [`sanger] fastq workflow list se_or_pe option
+    val fastQC_report : t -> FastQC.report workflow se_or_pe option
 
     (** Short read samples with a reference genome *)
-    val mapped_reads : t -> Bam.workflow option
+    val mapped_reads : t -> bam workflow option
     val mapped_reads_indexed : t -> [ `indexed_bam ] directory workflow option
-    val mapped_reads_sam : t -> Sam.workflow option
+    val mapped_reads_sam : t -> sam workflow option
 
-    val signal : t -> bigWig workflow option
+    val signal : t -> Ucsc_gb.bigWig workflow option
 
     (** Peak calling stuff *)
     val chIP_TF : t -> string option

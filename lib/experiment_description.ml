@@ -1,4 +1,4 @@
-open Core.Std
+open Core_kernel.Std
 
 type t = statement list
 and statement =
