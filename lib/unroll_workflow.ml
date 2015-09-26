@@ -250,13 +250,15 @@ module Make(S : Settings) = struct
 
   module Transcriptome = struct
 
-    let deseq2_wrapper_output =
+    let deseq2_wrapper_output model =
       let samples =
-        List.map Sample.list ~f:(fun s ->
-            Sample.read_counts_per_gene s >>| fun counts ->
-            s, counts
+        List.filter_map Sample.list ~f:(fun s ->
+            if s.sample_model = model.model_id then
+              Sample.read_counts_per_gene s >>= fun counts ->
+              Some (s, counts)
+            else
+              None
           )
-        |> List.filter_opt
       in
       match samples with
       | [] | [ _ ] -> None

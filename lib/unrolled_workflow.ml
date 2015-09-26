@@ -65,6 +65,6 @@ module type S = sig
   end
 
   module Transcriptome : sig
-    val deseq2_wrapper_output : Deseq2.output workflow option
+    val deseq2_wrapper_output : Model.t -> Deseq2.output workflow option
   end
 end

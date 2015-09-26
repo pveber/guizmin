@@ -196,11 +196,25 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
     ]
 
   let section ?a ?(intro = []) title paragraphs =
-    let contents = List.concat paragraphs in
+    let contents =
+      paragraphs
+      |> List.filter_map ~f:ident
+      |> List.concat
+    in
     if contents = [] then []
     else
       (h2 ?a [k title]) :: intro @ contents
 
+  let subsection ?a ?(intro = []) title paragraphs =
+    let contents =
+      paragraphs
+      |> List.filter_map ~f:ident
+      |> List.concat
+    in
+    if contents = [] then
+      []
+    else
+      (h4 ?a [k title]) :: intro @ contents
 
 
 
@@ -253,9 +267,9 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
       WWW.file_page (Macs2.peaks_xls x)
     )
 
-  let deseq2_wrapper_output =
+  let deseq2_wrapper_output m =
     Option.map
-      W.Transcriptome.deseq2_wrapper_output
+      (W.Transcriptome.deseq2_wrapper_output m)
       ~f:(fun x -> WWW.file_page (Deseq2.index_of_wrapper_output x))
 
   let called_peaks_bb : (W.Sample.t * WWW.page option result) list = assoc W.Sample.list ~f:(fun s ->
@@ -403,7 +417,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
     let sequencing_quality_check_section s =
       fastQC_paragraph s >>| fun fqc_par ->
       section "Sequencing quality check" [
-        Option.value fqc_par ~default:[] ;
+        fqc_par ;
       ]
 
     let macs2_paragraph s =
@@ -418,7 +432,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
     let peak_calling_section s =
       macs2_paragraph s >>| fun macs2_par ->
       section "Peak calling" [
-        Option.value macs2_par ~default:[] ;
+        macs2_par ;
       ]
 
     let htseq_paragraph s =
@@ -433,7 +447,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
     let mrna_seq_section s =
       htseq_paragraph s >>| fun htseq_par ->
       section "Expression" [
-         Option.value htseq_par ~default:[] ;
+         htseq_par ;
       ]
 
     let mapped_reads_indexed_custom_track_link s =
@@ -468,7 +482,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
       [ ul (List.map links ~f:li) ]
 
     let custom_tracks_section s =
-      custom_tracks_link_list s >>|? fun link_list ->
+      custom_tracks_link_list s >>| fun link_list ->
       let intro = [
         p [k "The datasets can be visualized on the " ;
            a ~a:[a_href "http://genome.ucsc.edu/cgi-bin/hgTracks"] [k"UCSC Genome Browser"] ;
@@ -501,7 +515,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
         sequencing_quality_check_section s ;
         peak_calling_section s ;
         mrna_seq_section s ;
-        custom_tracks_section s >>| Option.value ~default:[] ;
+        custom_tracks_section s ;
       ]
 
     let make s : 'a result =
@@ -517,57 +531,92 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
       )
   end
 
+  module Model_page = struct
+    let mRNA_diff_expr_subsection m =
+      deseq2_wrapper_output m >|? fun page ->
+      subsection ~a:[a_id "mRNA-differential-expression"] "Differentially expressed genes" [
+        Some [ ul [ li [ WWW.a page [ k "DESeq2 output" ] ] ] ]
+      ]
 
-  let browse_by_sample_div =
-    let open Html5.M in
-    Sample_page.list
-    |> List.map ~f:(fun (s,page_s) -> page_s >>| fun page_s -> WWW.a page_s [ k s.sample_id ])
-    |> merge
-    >>| multicolumn_ul
+    let mRNA_section m =
+      mRNA_diff_expr_subsection m >>| fun diff_subsection ->
+      section ~a:[a_id "mRNA"] "mRNA levels" [
+        diff_subsection ;
+      ]
 
-  let mRNA_levels_page =
-    Option.map deseq2_wrapper_output ~f:(fun page ->
-        WWW.html_page [ "mRNA.html" ] (
-          html_page "mRNA levels" (
-            section ~a:[a_id "differential-expression"] "Differentially expressed genes" [
-              [ ul [ li [ WWW.a page [ k "DESeq2 output" ] ] ] ]
-            ]
-          )
-        )
+    let title m = [
+      h1 [b [k "Model " ; k m.model_id ]] ;
+      hr () ;
+    ]
+
+    let overview s = [
+      h2 [k "Overview"] ;
+      br () ;
+      keyval_table ~style:"width:50%" [
+        (* bb"Type", [ k (string_of_sample_data s.sample_data) ] ; *)
+        (* bb"Experiment", [ k (string_of_experiment s.sample_exp) ] ; *)
+        (* bb"Model", [ k s.sample_model ] ; *)
+        (* bb"Condition", [ k (string_of_condition (W.Sample.condition s)) ] ; *)
+      ] ;
+    ]
+    
+    let sections m =
+      merge_concat [
+        mRNA_section m
+      ]
+
+    let make m =
+      let page_title = sprintf "Model :: %s" m.model_id in
+      sections m >>| fun sections ->
+      let contents = List.concat [ title m ; medskip ; overview m ; medskip ; sections ] in
+      html_page page_title contents
+
+    let list = assoc W.Model.list ~f:(fun m ->
+        make m >>|
+        WWW.html_page [ "model" ; m.model_id ^ ".html" ]
       )
+  end
 
-  let browse_by_measurement_div =
-    [ Option.map mRNA_levels_page ~f:(fun page -> WWW.a page [ k "mRNA levels" ]) ]
-    |> List.filter_opt
-    |> multicolumn_ul
+  module Index = struct
+    let browse_by_sample_div =
+      let open Html5.M in
+      Sample_page.list
+      |> List.map ~f:(fun (s,page_s) -> page_s >>| fun page_s -> WWW.a page_s [ k s.sample_id ])
+      |> merge
+      >>| multicolumn_ul
 
-  let browse_by_div =
-    let open Html5.M in
-    browse_by_sample_div >>| fun browse_by_sample_div ->
-    let tabs = tabs [
-        "browse-by-sample", "Sample", [ browse_by_sample_div ] ;
-        "browse-by-condition", "Condition", [ k"Under construction" ] ;
-        "browse-by-measurement", "Measurement", [ browse_by_measurement_div ] ;
-      ]
-    in
-    div ((k "Browse by...") :: tabs)
+    let browse_by_model_div =
+      let open Html5.M in
+      Model_page.list
+      |> List.map ~f:(fun (m, page_m) -> page_m >>| fun page_m -> WWW.a page_m [ k m.model_id ])
+      |> merge
+      >>| multicolumn_ul
 
-  let index =
-    let open Html5.M in
-    browse_by_div >>| fun browse_by_div ->
-    let contents =
-      html_page "Guizmin workflow" [
-        h1 [b [k"Project " ; i [k W.project_name]]] ;
-        hr () ;
-        br () ;
-        br () ;
-        browse_by_div ;
-        (* index_quality_control_section () ; *)
-        (* index_custom_tracks_section ; *)
-      ]
-    in
-    WWW.html_page ["index.html"] contents
+    let browse_by_div =
+      let open Html5.M in
+      browse_by_sample_div >>= fun browse_by_sample_div ->
+      browse_by_model_div >>| fun browse_by_model_div ->
+      let tabs = tabs [
+          "browse-by-sample", "Sample", [ browse_by_sample_div ] ;
+          "browse-by-model",  "Model",  [ browse_by_model_div ] ;
+        ]
+      in
+      div ((k "Browse by...") :: tabs)
 
+    let page =
+      let open Html5.M in
+      browse_by_div >>| fun browse_by_div ->
+      let contents =
+        html_page "Guizmin workflow" [
+          h1 [b [k"Project " ; i [k W.project_name]]] ;
+          hr () ;
+          br () ;
+          br () ;
+          browse_by_div ;
+        ]
+      in
+      WWW.html_page ["index.html"] contents
+  end
 end
 
 let make_website (module W : Guizmin.Unrolled_workflow.S) workflow_output ~output_dir ~webroot =
