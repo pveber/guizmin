@@ -16,6 +16,10 @@ let ( >>? ) x f =
 
 let ( >|? ) x f = Lwt.map (Option.map ~f) x
 
+let ( >>=? ) x f = x >>= function
+  | `Ok x -> f x
+  | `Error e -> Lwt.return (`Error e)
+
 let symlink src dst =
   let create_link =
     if Sys.file_exists dst = `Yes then Unix.(
@@ -36,7 +40,7 @@ let file_is_empty path =
   Unix.((stat path).st_size = 0L)
 
 module type Engine = sig
-  val build : Bistro.Workflow.u -> string Lwt.t
+  val build : Bistro.Workflow.u -> [`Ok of string | `Error of (Bistro.Workflow.u * string) list] Lwt.t
 end
 
 let string_of_path = Misc.string_of_path
@@ -47,7 +51,7 @@ module Make(E : Engine) = struct
     kind : kind
   }
   and kind =
-    | Html_page of (unit -> html_elt Lwt.t)
+    | Html_page of html_elt
     | File_page of Bistro.Workflow.u
     | In_situ_file_page of Bistro.Workflow.u * path * path (* path of the container, path inside the container *)
 
@@ -114,14 +118,13 @@ module Make(E : Engine) = struct
   let fspath output_dir x =
     Filename.concat output_dir (string_of_path x)
 
-  let generate_html_page fspath page f =
-    f () >>= fun html ->
+  let generate_html_page fspath page html =
     let fspath = fspath (path page) in
     Unix.mkdir_p (Filename.dirname fspath) ;
     Core.Out_channel.with_file fspath ~f:(fun oc ->
         Html5.P.print ~output:(output_string oc) html
       ) ;
-    Lwt.return ()
+    Lwt.return (`Ok ())
 
   let alias fspath p1 p2 =
     let p2_to_p1 = List.map ~f:(fun _ -> "..") (List.tl_exn p2) @ p1 in
@@ -132,24 +135,32 @@ module Make(E : Engine) = struct
   let generate_file_page fspath path_u u =
     let file_fspath = fspath (file_path u) in
     Unix.mkdir_p (Filename.dirname file_fspath) ;
-    E.build u >>= fun cache_fspath ->
+    E.build u >>=? fun cache_fspath ->
     symlink cache_fspath file_fspath ;
     if path_u <> file_path u then alias fspath (file_path u) path_u ;
-    Lwt.return ()
+    Lwt.return (`Ok ())
 
 
   let generate dir =
     let fspath = fspath dir in
-    List.map !site ~f:(fun page ->
-        match page.kind with
-        | Html_page f ->
-          generate_html_page fspath page f
-        | File_page u ->
-          generate_file_page fspath page.path u
-        | In_situ_file_page _ -> assert false
-      )
-    |> Lwt.join
-
+    let foreach_page page =
+      match page.kind with
+      | Html_page contents ->
+        generate_html_page fspath page contents
+      | File_page u ->
+        generate_file_page fspath page.path u
+      | In_situ_file_page _ -> assert false
+    in
+    Lwt_list.map_p foreach_page !site >>= fun results ->
+    let merged_result = List.fold_left results ~init:(`Ok ()) ~f:(fun status res ->
+      match status, res with
+      | `Ok (), `Ok () -> `Ok ()
+      | `Error es, `Ok () -> `Error es
+      | `Ok (), `Error es -> `Error es
+      | `Error es, `Error es' -> `Error (es @ es')
+    )
+    in
+    Lwt.return merged_result
 end
 
 
