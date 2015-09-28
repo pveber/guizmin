@@ -2,10 +2,40 @@ open Core.Std
 open Bistro_std
 open Common
 open Lwt_infix
+open Misc.Infix
 
 let string_of_path l = String.concat ~sep:"/" l
 
-module Result = struct
+let read_table fn =
+  Lwt.return (
+    `Ok (
+      In_channel.read_lines fn
+      |> List.map ~f:(String.split ~on:'\t')
+    )
+  )
+
+
+type 'a fragment = 'a Html5.M.elt list
+
+type 'a result = [ `Ok of 'a | `Error of (Bistro.Workflow.u * string) list ] Lwt.t
+
+module Result :
+sig
+  type 'a t = 'a result
+
+  val return : 'a -> 'a t
+  val ( >>= ) : 'a t -> ('a -> 'b t) -> 'b t
+  val ( >>| ) : 'a t -> ('a -> 'b) -> 'b t
+  val ( >>=? ) : 'a option t -> ('a -> 'b option t) -> 'b option t
+  val ( >>|? ) : 'a option t -> ('a -> 'b) -> 'b option t
+
+  val ( >=? ) : 'a option -> ('a -> 'b option t) -> 'b option t
+  val ( >|? ) : 'a option -> ('a -> 'b) -> 'b option t
+  val merge : 'a t list -> 'a list t
+  val merge_concat : 'a list t list -> 'a list t
+end
+=
+struct
   type 'a t = [ `Ok of 'a | `Error of (Bistro.Workflow.u * string) list ] Lwt.t
 
   let return x = Lwt.return (`Ok x)
@@ -61,8 +91,6 @@ module Result = struct
            )
          |> Lwt.return)
 end
-
-type 'a result = 'a Result.t
 
 module type Params = sig
   val workflow_output : Bistro.Workflow.u -> [ `Ok of string
@@ -267,10 +295,29 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
       WWW.file_page (Macs2.peaks_xls x)
     )
 
-  let deseq2_wrapper_output m =
-    Option.map
-      (W.Transcriptome.deseq2_wrapper_output m)
-      ~f:(fun x -> WWW.file_page (Deseq2.index_of_wrapper_output x))
+  let deseq2_sample_clustering = assoc W.Model.list ~f:(fun m ->
+      W.Transcriptome.deseq2 m >|? fun deseq ->
+      WWW.file_page deseq#sample_clustering
+    )
+
+  let deseq2_comparison_summary = assoc W.Model.list ~f:(fun m ->
+      W.Transcriptome.deseq2 m >|? fun deseq ->
+      WWW.file_page
+        ~path:[ "model" ; m.model_id ; "deseq2" ; "comparison_summary.tsv" ]
+        deseq#comparison_summary
+    )
+
+  let deseq2_sample_pca = assoc W.Model.list ~f:(fun m ->
+      W.Transcriptome.deseq2 m >|? fun deseq ->
+      WWW.file_page deseq#sample_pca
+    )
+
+  let deseq2_sample_pca = assoc W.Model.list ~f:(fun m ->
+      W.Transcriptome.deseq2 m >|? fun deseq ->
+      List.map deseq#comparisons ~f:(fun (id, comp) ->
+          id, WWW.file_page comp
+        )
+    )
 
   let called_peaks_bb : (W.Sample.t * WWW.page option result) list = assoc W.Sample.list ~f:(fun s ->
       W.Sample.ucsc_genome s >=? fun org ->
@@ -532,17 +579,34 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
   end
 
   module Model_page = struct
-    let mRNA_diff_expr_subsection m =
-      deseq2_wrapper_output m >|? fun page ->
-      subsection ~a:[a_id "mRNA-differential-expression"] "Differentially expressed genes" [
-        Some [ ul [ li [ WWW.a page [ k "DESeq2 output" ] ] ] ]
+    let comparison_summary u : _ fragment result =
+      workflow_output' u >>= fun path ->
+      read_table path >>| function
+      | [] -> assert false
+      | header :: data ->
+        [
+          table
+            ~a:[a_class ["table"]]
+            ~thead:(thead [tr (List.map header ~f:(fun x -> td [ pcdata x ]))])
+            (List.map data ~f:(List.map ~f:(fun x -> td [ pcdata x ]) % tr))
+        ]
+
+    let mRNA_diff_expr_subsection m : _ fragment result =
+      W.Transcriptome.deseq2 m >=? fun deseq2 ->
+      comparison_summary deseq2#comparison_summary >>| Option.some >>| fun comparison_summary ->
+      subsection ~a:[a_id "mRNA-differential-expression-with-DESeq2"] "Differential expression with DESeq2" [
+        comparison_summary ;
       ]
 
     let mRNA_section m =
       mRNA_diff_expr_subsection m >>| fun diff_subsection ->
-      section ~a:[a_id "mRNA"] "mRNA levels" [
-        diff_subsection ;
-      ]
+      deseq2_sample_clustering $ m >>|? fun clustering ->
+      Some (
+        section ~a:[a_id "mRNA"] "mRNA levels" [
+          Some [ img ~a:[a_style "width:40%"] ~src:(WWW.href clustering) ~alt:"" () ] ;
+          diff_subsection ;
+        ]
+      )
 
     let title m = [
       h1 [b [k "Model " ; k m.model_id ]] ;
@@ -559,7 +623,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
         (* bb"Condition", [ k (string_of_condition (W.Sample.condition s)) ] ; *)
       ] ;
     ]
-    
+
     let sections m =
       merge_concat [
         mRNA_section m

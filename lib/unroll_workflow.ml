@@ -250,7 +250,7 @@ module Make(S : Settings) = struct
 
   module Transcriptome = struct
 
-    let deseq2_wrapper_output model =
+    let deseq2 model =
       let samples =
         List.filter_map Sample.list ~f:(fun s ->
             if s.sample_model = model.model_id then
@@ -276,7 +276,7 @@ module Make(S : Settings) = struct
             factors_s, counts
           )
         in
-        Some (Deseq2.wrapper factors samples)
+        Some (Deseq2.main_effects factors samples)
   end
 
   (* class tf_chip_seq_sample sample data genome tf = *)
