@@ -1,3 +1,4 @@
+let unique = Misc.unique
 open Core.Std
 open Bistro
 open Bistro_std
@@ -25,7 +26,7 @@ module Make(S : Settings) = struct
   open Option.Monad_infix
 
   let extract f = List.filter_map S.config_file ~f
-  let extract_unique f = List.dedup (extract f)
+  let extract_unique f = unique (extract f)
 
   let project_name =
     List.find_map S.config_file ~f:(function
@@ -253,9 +254,10 @@ module Make(S : Settings) = struct
     let deseq2 model =
       let samples =
         List.filter_map Sample.list ~f:(fun s ->
-            if s.sample_model = model.model_id then
+            if s.sample_model = model.model_id then (
               Sample.read_counts_per_gene s >>= fun counts ->
               Some (s, counts)
+            )
             else
               None
           )

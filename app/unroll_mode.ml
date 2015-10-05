@@ -8,7 +8,7 @@ let string_of_path l = String.concat ~sep:"/" l
 
 let read_table fn =
   Lwt.return (
-    `Ok (
+    `Some (
       In_channel.read_lines fn
       |> List.map ~f:(String.split ~on:'\t')
     )
@@ -17,64 +17,72 @@ let read_table fn =
 
 type 'a fragment = 'a Html5.M.elt list
 
-type 'a result = [ `Ok of 'a | `Error of (Bistro.Workflow.u * string) list ] Lwt.t
+type 'a result = [ `Some of 'a | `None | `Error of (Bistro.Workflow.u * string) list ] Lwt.t
 
 module Result :
 sig
   type 'a t = 'a result
 
   val return : 'a -> 'a t
+  val none : unit -> 'a t
   val ( >>= ) : 'a t -> ('a -> 'b t) -> 'b t
   val ( >>| ) : 'a t -> ('a -> 'b) -> 'b t
-  val ( >>=? ) : 'a option t -> ('a -> 'b option t) -> 'b option t
-  val ( >>|? ) : 'a option t -> ('a -> 'b) -> 'b option t
+  val ( >>=? ) : 'a option t -> ('a -> 'b t) -> 'b t
+  val ( >>|? ) : 'a option t -> ('a -> 'b) -> 'b t
 
-  val ( >=? ) : 'a option -> ('a -> 'b option t) -> 'b option t
-  val ( >|? ) : 'a option -> ('a -> 'b) -> 'b option t
+  val ( >=? ) : 'a option -> ('a -> 'b t) -> 'b t
+  val ( >|? ) : 'a option -> ('a -> 'b) -> 'b t
   val merge : 'a t list -> 'a list t
   val merge_concat : 'a list t list -> 'a list t
 end
 =
 struct
-  type 'a t = [ `Ok of 'a | `Error of (Bistro.Workflow.u * string) list ] Lwt.t
+  type 'a t = 'a result
 
-  let return x = Lwt.return (`Ok x)
+  let return x = Lwt.return (`Some x)
+
+  let none () = Lwt.return `None
 
   let ( >=? ) x f = match x with
     | Some x' -> f x'
-    | None -> return None
+    | None -> Lwt.return `None
 
   let ( >|? ) x f = match x with
-    | Some x' -> return (Some (f x'))
-    | None -> return None
+    | Some x' -> return (f x')
+    | None -> Lwt.return `None
 
   let ( >>= ) x f = x >>= function
-    | `Ok x -> f x
+    | `Some x -> f x
+    | `None -> Lwt.return `None
     | `Error e -> Lwt.return (`Error e)
 
   let ( >>=? ) x f = x >>= function
     | Some x -> f x
-    | None -> return None
+    | None -> Lwt.return `None
 
   let ( >>| ) x f = x >>= fun x -> return (f x)
 
   let ( >>|? ) x f = x >>= function
-    | Some x -> return (Some (f x))
-    | None -> return None
+    | Some x -> return (f x)
+    | None -> Lwt.return `None
 
   let merge xs =
     Lwt.bind
       (Lwt_list.map_p ident xs)
       (fun xs ->
-         List.fold_left xs ~init:(`Ok []) ~f:(fun status res ->
+         List.fold_left xs ~init:(`Some []) ~f:(fun status res ->
              match status, res with
-             | `Ok xs, `Ok ys -> `Ok (ys :: xs)
-             | `Error es, `Ok _ -> `Error es
-             | `Ok _, `Error es -> `Error es
+             | `Some xs, `Some ys -> `Some (ys :: xs)
+             | `Some xs, `None -> `Some xs
+             | `None, `Some ys -> `Some [ ys ]
+             | `None, `None -> `None
              | `Error es, `Error es' -> `Error (es @ es')
+             | `Error es, _ -> `Error es
+             | _, `Error es -> `Error es
            )
          |> (function
-             | `Ok xs -> `Ok (List.rev xs)
+             | `Some xs -> `Some (List.rev xs)
+             | `None -> `None
              | `Error xs -> `Error xs)
          |> Lwt.return)
 
@@ -82,12 +90,15 @@ struct
     Lwt.bind
       (Lwt_list.map_p ident xs)
       (fun xs ->
-         List.fold_left xs ~init:(`Ok []) ~f:(fun status res ->
+         List.fold_left xs ~init:(`Some []) ~f:(fun status res ->
              match status, res with
-             | `Ok xs, `Ok ys -> `Ok (xs @ ys)
-             | `Error es, `Ok _ -> `Error es
-             | `Ok _, `Error es -> `Error es
+             | `Some xs, `Some ys -> `Some (xs @ ys)
              | `Error es, `Error es' -> `Error (es @ es')
+             | `Error es, _ -> `Error es
+             | _, `Error es -> `Error es
+             | `Some xs, `None -> `Some xs
+             | `None, `Some ys -> `Some ys
+             | `None, `None -> `None
            )
          |> Lwt.return)
 end
@@ -116,10 +127,14 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
   let ( $ ) xs x =
     match List.Assoc.find xs x with
     | Some x -> x
-    | None -> return None
+    | None -> Lwt.return `None
 
   let workflow_output' x : string result =
-    workflow_output (x : _ Bistro.Workflow.t :> Bistro.Workflow.u)
+    Lwt.bind
+      (workflow_output (x : _ Bistro.Workflow.t :> Bistro.Workflow.u))
+      (function
+        | `Ok x -> Lwt.return (`Some x)
+        | `Error e -> Lwt.return (`Error e))
 
   (* WEBSITE GENERATION *)
   module WWW = Guizmin_repo.Make(struct let build x = workflow_output x end)
@@ -224,21 +239,13 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
     ]
 
   let section ?a ?(intro = []) title paragraphs =
-    let contents =
-      paragraphs
-      |> List.filter_map ~f:ident
-      |> List.concat
-    in
+    let contents = List.concat paragraphs in
     if contents = [] then []
     else
       (h2 ?a [k title]) :: intro @ contents
 
   let subsection ?a ?(intro = []) title paragraphs =
-    let contents =
-      paragraphs
-      |> List.filter_map ~f:ident
-      |> List.concat
-    in
+    let contents = List.concat paragraphs in
     if contents = [] then
       []
     else
@@ -312,18 +319,18 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
       WWW.file_page deseq#sample_pca
     )
 
-  let deseq2_sample_pca = assoc W.Model.list ~f:(fun m ->
+  let deseq2_comparisons = assoc W.Model.list ~f:(fun m ->
       W.Transcriptome.deseq2 m >|? fun deseq ->
       List.map deseq#comparisons ~f:(fun (id, comp) ->
           id, WWW.file_page comp
         )
     )
 
-  let called_peaks_bb : (W.Sample.t * WWW.page option result) list = assoc W.Sample.list ~f:(fun s ->
+  let called_peaks_bb : (W.Sample.t * WWW.page result) list = assoc W.Sample.list ~f:(fun s ->
       W.Sample.ucsc_genome s >=? fun org ->
       W.Sample.peak_calling s >=? fun bed ->
-      workflow_output' bed >>| fun bed_path ->
-      if file_is_empty bed_path then None
+      workflow_output' bed >>= fun bed_path ->
+      if file_is_empty bed_path then none ()
       else
         let page =
           WWW.file_page
@@ -335,7 +342,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
                interest here and field 5 contains number potentially
                greater than 1000). *)
         in
-        Some page
+        return page
     )
 
   let htseq_counts = assoc W.Sample.list ~f:(fun s ->
@@ -452,7 +459,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
       ]
 
     let fastQC_paragraph s =
-      fastQC_report_page $ s >>|? fun fqc_rp ->
+      fastQC_report_page $ s >>| fun fqc_rp ->
       let par = match fqc_rp with
         | `single_end report ->
           fastQC_single_end_paragraph s report
@@ -468,7 +475,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
       ]
 
     let macs2_paragraph s =
-      macs2_peaks $ s >>|? fun xls ->
+      macs2_peaks $ s >>| fun xls ->
       [
         h3 [ k "MACS2 output" ] ;
         ul [
@@ -483,7 +490,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
       ]
 
     let htseq_paragraph s =
-      htseq_counts $ s >>|? fun tsv ->
+      htseq_counts $ s >>| fun tsv ->
       [
         h3 [ k "HTSeq" ] ;
         ul [
@@ -499,33 +506,30 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
 
     let mapped_reads_indexed_custom_track_link s =
       W.Sample.ucsc_genome s >=? fun org ->
-      mapped_reads_indexed $ s >>|? fun bam_bai ->
+      mapped_reads_indexed $ s >>| fun bam_bai ->
       custom_track_link_of_bam_bai s org bam_bai [k "Mapped reads" ]
 
     let signal_custom_track_link s =
       W.Sample.ucsc_genome s >=? fun org ->
-      signal_page $ s >>|? fun bigWig ->
+      signal_page $ s >>| fun bigWig ->
       custom_track_link_of_bigwig s org bigWig [k "Signal intensity" ]
 
-    let called_peaks_custom_track_link s : _ option result =
+    let called_peaks_custom_track_link s : _ fragment result =
       W.Sample.ucsc_genome s >=? fun org ->
-      called_peaks_bb $ s >>|? fun bigBed ->
+      called_peaks_bb $ s >>| fun bigBed ->
       custom_track_link_of_bigBed s org bigBed "called peaks" [k "Called peaks" ]
 
     let custom_track_links s =
-      called_peaks_custom_track_link s >>= fun called_peaks_custom_track_link ->
-      mapped_reads_indexed_custom_track_link s >>= fun mapped_reads_indexed_custom_track_link ->
-      signal_custom_track_link s >>= fun signal_custom_track_link ->
-      let links = List.filter_map ~f:ident [
-        mapped_reads_indexed_custom_track_link ;
-        signal_custom_track_link ;
-        called_peaks_custom_track_link ;
-        ]
-      in
-      return (if links = [] then None else Some links)
+      merge [
+        called_peaks_custom_track_link s ;
+        mapped_reads_indexed_custom_track_link s ;
+        signal_custom_track_link s ;
+      ]
+      >>= fun links ->
+      if links = [] then none () else return links
 
     let custom_tracks_link_list s =
-      custom_track_links s >>|? fun links ->
+      custom_track_links s >>| fun links ->
       [ ul (List.map links ~f:li) ]
 
     let custom_tracks_section s =
@@ -579,7 +583,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
   end
 
   module Model_page = struct
-    let comparison_summary u : _ fragment result =
+    let comparison_summary_table u : _ fragment result =
       workflow_output' u >>= fun path ->
       read_table path >>| function
       | [] -> assert false
@@ -591,22 +595,55 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
             (List.map data ~f:(List.map ~f:(fun x -> td [ pcdata x ]) % tr))
         ]
 
+    let comparison_table u : _ fragment result =
+      workflow_output' u >>= fun path ->
+      read_table path >>| function
+      | [] -> assert false
+      | header :: data ->
+        let data' =
+          data
+          |> List.filter ~f:(List.last % Option.value_map ~default:false ~f:(( <> ) "NA"))
+          |> List.filter ~f:(Fn.flip List.nth 2 % Option.value_map ~default:false ~f:(( <> ) "NA"))
+          |> List.sort ~cmp:(fun x y ->
+              let f x = Option.map (List.nth x 2) ~f:(Float.of_string % Float.abs) in
+              compare (f y) (f x)
+            )
+        in
+        [
+          table
+            ~a:[a_class ["table"]]
+            ~thead:(thead [tr (List.map header ~f:(fun x -> td [ pcdata x ]))])
+            (List.map data' ~f:(List.map ~f:(fun x -> td [ pcdata x ]) % tr))
+        ]
+
+    let comparison_tabs comps : _ fragment result =
+      merge (List.map comps ~f:(snd % comparison_table)) >>| fun tables ->
+      List.map2_exn comps tables ~f:(fun ((name, l1, l2), _) table ->
+          sprintf "deseq2-comp-%s-%s-%s" name l1 l2,
+          sprintf "%s: %s vs %s" name l1 l2,
+          table
+        )
+      |> tabs
+
     let mRNA_diff_expr_subsection m : _ fragment result =
       W.Transcriptome.deseq2 m >=? fun deseq2 ->
-      comparison_summary deseq2#comparison_summary >>| Option.some >>| fun comparison_summary ->
-      subsection ~a:[a_id "mRNA-differential-expression-with-DESeq2"] "Differential expression with DESeq2" [
-        comparison_summary ;
-      ]
+      comparison_summary_table deseq2#comparison_summary >>= fun comparison_summary_table ->
+      comparison_tabs deseq2#comparisons >>| fun comparison_tabs ->
+      subsection
+        ~a:[a_id "mRNA-differential-expression-with-DESeq2"] "Differential expression with DESeq2"
+        [ comparison_summary_table ; comparison_tabs ]
 
-    let mRNA_section m =
-      mRNA_diff_expr_subsection m >>| fun diff_subsection ->
-      deseq2_sample_clustering $ m >>|? fun clustering ->
-      Some (
-        section ~a:[a_id "mRNA"] "mRNA levels" [
-          Some [ img ~a:[a_style "width:40%"] ~src:(WWW.href clustering) ~alt:"" () ] ;
-          diff_subsection ;
-        ]
-      )
+    let mRNA_section m : _ fragment result =
+      mRNA_diff_expr_subsection m >>= fun diff_subsection ->
+      deseq2_sample_clustering $ m >>= fun clustering ->
+      deseq2_sample_pca $ m >>| fun pca ->
+      section ~a:[a_id "mRNA"] "mRNA levels" [
+        medskip ;
+        [ p [ strong [ k"Sample overview " ] ; ] ] ;
+        [ img ~a:[a_style "width:40%"] ~src:(WWW.href clustering) ~alt:"" () ] ;
+        [ img ~a:[a_style "width:40%"] ~src:(WWW.href pca) ~alt:"" () ] ;
+        diff_subsection ;
+      ]
 
     let title m = [
       h1 [b [k "Model " ; k m.model_id ]] ;
@@ -632,7 +669,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
     let make m =
       let page_title = sprintf "Model :: %s" m.model_id in
       sections m >>| fun sections ->
-      let contents = List.concat [ title m ; medskip ; overview m ; medskip ; sections ] in
+      let contents = List.concat [ title m ; medskip ; medskip ; sections ] in
       html_page page_title contents
 
     let list = assoc W.Model.list ~f:(fun m ->
@@ -691,8 +728,11 @@ let make_website (module W : Guizmin.Unrolled_workflow.S) workflow_output ~outpu
   end in
   let module WWW = Make_website(W)(P) in
   mkdir_p output_dir ;
-  WWW.WWW.generate output_dir
-
+  WWW.WWW.generate output_dir >>= fun status ->
+  WWW.Index.page >>= function
+  | `Some _ -> Lwt.return status
+  | `None -> assert false
+  | `Error xs -> Lwt.return (`Error xs)
 
 let check_errors descr =
   match Guizmin.Experiment_description.check descr with
@@ -704,6 +744,13 @@ let check_errors descr =
 
 open Bistro_engine
 
+let output_errors db xs =
+  fprintf stderr "Some workflow(s) failed:\n" ;
+  List.iter xs ~f:(fun (u, msg) ->
+      fprintf stderr "\t%s\t%s\n" (Bistro.Workflow.id' u) msg
+    ) ;
+  List.iter xs ~f:(fun (u, _) -> Db.output_report db u stderr)
+
 let main opts dopts ged_file output_dir webroot = Guizmin.(
   let description = Experiment_description.load ged_file in
   check_errors description ;
@@ -713,12 +760,6 @@ let main opts dopts ged_file output_dir webroot = Guizmin.(
   let workflow_output u = Scheduler.build' scheduler u in
   make_website (module W) workflow_output ~output_dir ~webroot >>= function
   | `Ok () -> Lwt.return ()
-  | `Error xs ->
-    fprintf stderr "Some workflow(s) failed:\n" ;
-    List.iter xs ~f:(fun (u, msg) ->
-        fprintf stderr "\t%s\t%s\n" (Bistro.Workflow.id' u) msg
-      ) ;
-    List.iter xs ~f:(fun (u, _) -> Db.output_report db u stderr) ;
-    Lwt.return ()
+  | `Error xs -> output_errors db xs ; Lwt.return ()
   )
   |> Lwt_unix.run

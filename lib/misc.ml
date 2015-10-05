@@ -24,3 +24,18 @@ let python_version fmt =
 module Infix = struct
   let ( % ) f g x = g (f x)
 end
+
+(*
+   remove duplicates *and* keep original order
+   not tail-recursive and quadratic complexity
+*)
+let unique xs =
+  let rec aux seen = function
+    | [] -> []
+    | h :: t ->
+      if List.mem seen h then
+        aux seen t
+      else
+        h :: aux (h :: seen) t
+  in
+  aux [] xs
