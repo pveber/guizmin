@@ -324,19 +324,19 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
 
   let deseq2_sample_clustering = assoc W.Model.list ~f:(fun m ->
       W.Transcriptome.deseq2 m >=? fun deseq ->
-      file_page deseq#sample_clustering
+      file_page ~path:[ m.model_id ; "mRNA" ; "deseq2" ; "sample_clustering.svg" ] deseq#sample_clustering
     )
 
   let deseq2_comparison_summary = assoc W.Model.list ~f:(fun m ->
       W.Transcriptome.deseq2 m >=? fun deseq ->
       file_page
-        ~path:[ "model" ; m.model_id ; "deseq2" ; "comparison_summary.tsv" ]
+        ~path:[ "model" ; m.model_id ; "mRNA" ; "deseq2" ; "comparison_summary.tsv" ]
         deseq#comparison_summary
     )
 
   let deseq2_sample_pca = assoc W.Model.list ~f:(fun m ->
       W.Transcriptome.deseq2 m >=? fun deseq ->
-      file_page deseq#sample_pca
+      file_page ~path:[ m.model_id ; "mRNA" ; "deseq2" ; "sample_pca.svg" ] deseq#sample_pca
     )
 
   (* let deseq2_comparisons = assoc W.Model.list ~f:(fun m -> *)
