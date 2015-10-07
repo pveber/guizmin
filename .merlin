@@ -1,9 +1,11 @@
 B _build/lib
 B _build/app
-PKG bistro
+PKG bistro.lib
+PKG bistro.std
 PKG core
 PKG netstring
 PKG lwt.unix
 PKG ppx_bistro
+PKG pvem
 PKG tyxml
 
