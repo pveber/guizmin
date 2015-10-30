@@ -4,6 +4,8 @@ open Common
 open Lwt_infix
 open Misc.Infix
 
+let ( // ) = Bistro.Workflow.select
+
 let string_of_path l = String.concat ~sep:"/" l
 
 let read_table fn =
@@ -286,16 +288,10 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
       | `single_end report ->
         file_page
           ~path:[ "sample" ; "quality_control" ; "FastQC" ; s.sample_id ]
-          (FastQC.html_report report)
-        >>= fun page ->
+          report
+        >>| fun page ->
 
-        file_page (FastQC.per_base_sequence_content report)
-        >>= fun per_base_sequence_content ->
-
-        file_page (FastQC.per_base_quality report)
-        >>| fun per_base_quality ->
-
-        `single_end (page, per_base_sequence_content, per_base_quality)
+        `single_end page
 
       | `paired_end (report_1, report_2) ->
         file_page
@@ -306,22 +302,9 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
         file_page
           ~path:[ "quality_control" ; "FastQC" ; s.sample_id ^ "_2" ]
           report_2
-        >>= fun page_2 ->
+        >>| fun page_2 ->
 
-        file_page (FastQC.per_base_sequence_content report_1)
-        >>= fun per_base_sequence_content_1 ->
-
-        file_page (FastQC.per_base_sequence_content report_2)
-        >>= fun per_base_sequence_content_2 ->
-
-        file_page (FastQC.per_base_quality report_1)
-        >>= fun per_base_quality_1 ->
-
-        file_page (FastQC.per_base_quality report_2)
-        >>| fun per_base_quality_2 ->
-
-        `paired_end ((page_1, per_base_sequence_content_1, per_base_quality_1),
-                     (page_2, per_base_sequence_content_2, per_base_quality_2))
+        `paired_end (page_1, page_2)
     )
 
   let signal_page = assoc W.Sample.list ~f:(fun s ->
@@ -336,7 +319,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
 
   let macs2_peaks = assoc W.Sample.list ~f:(fun s ->
       W.Sample.macs2_peak_calling s >=? fun x ->
-      file_page (Macs2.peaks_xls x)
+      file_page (x // Macs2.peaks_xls)
     )
 
   let deseq2_sample_clustering = assoc W.Model.list ~f:(fun m ->
@@ -465,33 +448,33 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
 
   module Sample_page = struct
 
-    let fastQC_single_end_paragraph s (html, snapshot1, snapshot2) =
+    let fastQC_single_end_paragraph s report =
       ul [
         li [
           k "Snapshot:" ;
           br () ;
-          img ~a:[a_style "width:40% ; margin: 0 10%"] ~src:(WWW.href snapshot1) ~alt:"" () ;
-          img ~a:[a_style "width:40%"] ~src:(WWW.href snapshot2) ~alt:"" () ;
+          img ~a:[a_style "width:40% ; margin: 0 10%"] ~src:(WWW.href_in_dir report FastQC.per_base_quality) ~alt:"" () ;
+          img ~a:[a_style "width:40%"] ~src:(WWW.href_in_dir report FastQC.per_base_sequence_content) ~alt:"" () ;
           br () ;
         ] ;
-        li [ k "Check the " ; WWW.a html [k "full report"] ] ;
+        li [ k "Check the " ; WWW.a report [k "full report"] ] ;
         li [ a ~a:[a_href "http://www.bioinformatics.babraham.ac.uk/projects/fastqc/"] [ k "More information on FastQC" ] ] ;
       ]
 
-    let fastQC_paired_end_paragraph s (html_1, snapshot1_1, snapshot2_1) (html_2, snapshot1_2, snapshot2_2) =
+    let fastQC_paired_end_paragraph s report1 report2 =
       ul [
         li [
           k "Snapshot (forward):" ;
           br () ;
-          img ~a:[a_style "width:40% ; margin: 0 10%"] ~src:(WWW.href snapshot1_1) ~alt:"" () ;
-          img ~a:[a_style "width:40%"] ~src:(WWW.href snapshot2_1) ~alt:"" () ;
+          img ~a:[a_style "width:40% ; margin: 0 10%"] ~src:(WWW.href_in_dir report1 FastQC.per_base_quality) ~alt:"" () ;
+          img ~a:[a_style "width:40%"] ~src:(WWW.href_in_dir report1 FastQC.per_base_sequence_content) ~alt:"" () ;
           br () ;
           k "Snapshot (reverse):" ;
           br () ;
-          img ~a:[a_style "width:40% ; margin: 0 10%"] ~src:(WWW.href snapshot1_2) ~alt:"" () ;
-          img ~a:[a_style "width:40%"] ~src:(WWW.href snapshot2_2) ~alt:"" () ;
+          img ~a:[a_style "width:40% ; margin: 0 10%"] ~src:(WWW.href_in_dir report2 FastQC.per_base_quality) ~alt:"" () ;
+          img ~a:[a_style "width:40%"] ~src:(WWW.href_in_dir report2 FastQC.per_base_sequence_content) ~alt:"" () ;
         ] ;
-        li [ k "Check the full reports:" ; WWW.a html_1 [k "Forward"] ; WWW.a html_2 [k "Reverse"] ] ;
+        li [ k "Check the full reports:" ; WWW.a report1 [k "Forward"] ; WWW.a report2 [k "Reverse"] ] ;
         li [ a ~a:[a_href "http://www.bioinformatics.babraham.ac.uk/projects/fastqc/"] [ k "More information on FastQC" ] ] ;
       ]
 

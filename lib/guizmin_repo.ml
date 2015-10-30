@@ -117,11 +117,11 @@ module Make(E : Engine) = struct
   let a d elts =
     Html5.M.(a ~a:[a_href (href d)] elts)
 
-  let a_in_dir dir p elts =
+  let a_in_dir dir (Bistro.Workflow.Selector p) elts =
     let path = dir.path @ p in
     let fspath = fspath path in
     if Sys.file_exists_exn fspath then
-      `Ok Html5.M.(a ~a:[a_href (string_of_path path)] elts)
+      Html5.M.(a ~a:[a_href (string_of_path path)] elts)
     else
       let msg =
         sprintf
@@ -129,6 +129,20 @@ module Make(E : Engine) = struct
           (string_of_path p)
           (string_of_path dir.path)
       in
-      `Error (`Failure msg)
+      failwith msg
+
+  let href_in_dir dir (Bistro.Workflow.Selector p) =
+    let path = dir.path @ p in
+    let fspath = fspath path in
+    if Sys.file_exists_exn fspath then
+      string_of_path path
+    else
+      let msg =
+        sprintf
+          "Path %s doesn't exist in dir %s"
+          (string_of_path p)
+          (string_of_path dir.path)
+      in
+      failwith msg
 
 end

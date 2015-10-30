@@ -5,6 +5,8 @@ open Bistro_std
 open Bistro_std.Types
 open Unrolled_workflow
 
+let ( // ) = Workflow.select
+
 let unsafe_file_of_url url : 'a workflow =
   let source () =
     if String.is_prefix ~prefix:"http://" url || String.is_prefix ~prefix:"ftp://" url
@@ -143,17 +145,17 @@ module Make(S : Settings) = struct
       Samtools.indexed_bam_of_sam (dna_seq_mapped_reads_sam s genome fqs)
 
     let dna_seq_mapped_reads s genome fqs =
-      Samtools.bam_of_indexed_bam (dna_seq_mapped_reads_indexed s genome fqs)
+      dna_seq_mapped_reads_indexed s genome fqs // Samtools.indexed_bam_to_bam
 
     let tophat s genome fqs =
       let index = Genome.bowtie2_index genome in
       Tophat.tophat2 index fqs
 
     let mrna_seq_mapped_reads_indexed s genome fqs =
-      Samtools.indexed_bam_of_bam (Tophat.accepted_hits (tophat s genome fqs))
+      Samtools.indexed_bam_of_bam (tophat s genome fqs // Tophat.accepted_hits)
 
     let mrna_seq_mapped_reads s genome fqs =
-      Samtools.bam_of_indexed_bam (mrna_seq_mapped_reads_indexed s genome fqs)
+      mrna_seq_mapped_reads_indexed s genome fqs // Samtools.indexed_bam_to_bam
 
     let mrna_seq_mapped_reads_sam s genome fqs =
       Samtools.sam_of_bam (mrna_seq_mapped_reads s genome fqs)
@@ -223,7 +225,7 @@ module Make(S : Settings) = struct
         bam
 
     let peak_calling s =
-      macs2_peak_calling s >>| Macs2.narrow_peaks
+      macs2_peak_calling s >>| fun w -> w // Macs2.narrow_peaks
 
     let read_counts_per_gene s =
       Model.gene_annotation (model s) >>= fun gff ->
