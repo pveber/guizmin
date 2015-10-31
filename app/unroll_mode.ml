@@ -457,7 +457,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
           img ~a:[a_style "width:40%"] ~src:(WWW.href_in_dir report FastQC.per_base_sequence_content) ~alt:"" () ;
           br () ;
         ] ;
-        li [ k "Check the " ; WWW.a report [k "full report"] ] ;
+        li [ k "Check the " ; WWW.a_in_dir report FastQC.html_report [k "full report"] ] ;
         li [ a ~a:[a_href "http://www.bioinformatics.babraham.ac.uk/projects/fastqc/"] [ k "More information on FastQC" ] ] ;
       ]
 
@@ -474,7 +474,7 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
           img ~a:[a_style "width:40% ; margin: 0 10%"] ~src:(WWW.href_in_dir report2 FastQC.per_base_quality) ~alt:"" () ;
           img ~a:[a_style "width:40%"] ~src:(WWW.href_in_dir report2 FastQC.per_base_sequence_content) ~alt:"" () ;
         ] ;
-        li [ k "Check the full reports:" ; WWW.a report1 [k "Forward"] ; WWW.a report2 [k "Reverse"] ] ;
+        li [ k "Check the full reports:" ; WWW.a_in_dir report1 FastQC.html_report [k "Forward"] ; WWW.a_in_dir report2 FastQC.html_report [k "Reverse"] ] ;
         li [ a ~a:[a_href "http://www.bioinformatics.babraham.ac.uk/projects/fastqc/"] [ k "More information on FastQC" ] ] ;
       ]
 
