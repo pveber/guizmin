@@ -206,10 +206,9 @@ module Make_website(W : Guizmin.Unrolled_workflow.S)(P : Params) = struct
 
   let multicolumn_ul ?(n = 3) items =
     let open Html5.M in
-    let items = List.map items ~f:(fun item -> li ~a:[a_style "float:left;width:10em"] [item]) in
-    div ~a:[a_style "margin-bottom:1em"] [
-      ul ~a:[a_style "width:30em"] items ;
-      br ~a:[a_style "clear:left"] () ;
+    let items = List.map items ~f:(fun item -> li [item]) in
+    div ~a:[a_style "column-count:3;-webkit-column-count:3;-moz-column-count:3;"] [
+      ul items ;
     ]
 
   let html_base =
