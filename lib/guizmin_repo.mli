@@ -1,4 +1,4 @@
-open Bistro_std.Types
+open Bistro.Std
 
 type path = string list
 type html_elt = [`Html] Html5.M.elt

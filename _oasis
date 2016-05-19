@@ -16,8 +16,8 @@ Library guizmin
                     Unroll_workflow,                    
                     Unrolled_workflow
   FindlibName:      guizmin
-  BuildDepends:     bistro.std, core, lwt, ppx_bistro, pvem, threads, tyxml
-  XMETARequires:    bistro.std, core, threads, lwt, pvem, tyxml
+  BuildDepends:     bistro.bioinfo, core, lwt, ppx_bistro, pvem, threads, tyxml
+  XMETARequires:    bistro.bioinfo, core, threads, lwt, pvem, tyxml
 
 
 Executable guizmin_app

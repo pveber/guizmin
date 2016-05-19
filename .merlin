@@ -1,7 +1,7 @@
 B _build/lib
 B _build/app
-PKG bistro.lib
-PKG bistro.std
+PKG bistro.utils
+PKG bistro.bioinfo
 PKG core
 PKG netstring
 PKG lwt.unix

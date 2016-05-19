@@ -1,8 +1,8 @@
 open Core.Std
-open Bistro_std
+open Bistro_bioinfo.Std
 open Common
 open Lwt_infix
-open Misc.Infix
+open Guizmin.Misc.Infix
 
 let ( // ) = Bistro.Workflow.select
 
@@ -777,11 +777,12 @@ let main opts dopts ged_file output_dir webroot = Guizmin.(
   check_errors description ;
   let module W = (val Unroll_workflow.from_description description) in
   let db = Db.init_exn "_guizmin" in
-  let scheduler = Scheduler.make ~np:dopts.np ~mem:(dopts.mem * 1024) db in
+  let backend = Scheduler.local_backend ~np:dopts.np ~mem:(dopts.mem * 1024) () in
+  let scheduler = Scheduler.make backend db in
   let workflow_output u =
     Scheduler.build' scheduler u >>= function
-    | `Ok s -> Lwt.return (`Ok s)
-    | `Error e -> Lwt.return (`Error (`Workflow_error e))
+    | Ok s -> Lwt.return (`Ok s)
+    | Error e -> Lwt.return (`Error (`Workflow_error e))
   in
   make_website (module W) workflow_output ~output_dir ~webroot >>= function
   | `Ok () -> Lwt.return ()
