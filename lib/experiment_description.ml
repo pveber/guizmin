@@ -51,12 +51,12 @@ and 'a se_or_pe = [
   | `single_end of 'a
   | `paired_end of 'a * 'a
 ]
-and ucsc_genome = [ `dm3 | `hg18 | `hg19 | `mm8 | `mm9 | `mm10 | `sacCer2 ]
+and ucsc_genome = [ `dm3 | `hg18 | `hg19 | `hg38 | `mm8 | `mm9 | `mm10 | `sacCer2 ]
 and ensembl_species =  [
   | `homo_sapiens
   | `mus_musculus
 ]
-with sexp
+[@@ deriving sexp]
 
 let se_or_pe_map x ~f = match x with
   | `single_end x -> `single_end (f x)
@@ -76,7 +76,7 @@ type error = [
   | `missing_factor_in_sample of string * string
   | `repeated_factor_in_sample of string * string
 ]
-with sexp
+[@@ deriving sexp]
 
 module Check(X : sig
                val config : t

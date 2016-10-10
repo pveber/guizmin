@@ -1,16 +1,15 @@
-let unique = Misc.unique
+let unique = Guizmin_misc.unique
 open Core.Std
 open Bistro.Std
+open Bistro.EDSL
 open Bistro_bioinfo.Std
 open Unrolled_workflow
-
-let ( / ) = Bistro.Workflow.select
 
 let unsafe_file_of_url url : 'a workflow =
   let source () =
     if String.is_prefix ~prefix:"http://" url || String.is_prefix ~prefix:"ftp://" url
     then Unix_tools.wget url
-    else Bistro.Workflow.input url
+    else input url
   in
   if Filename.check_suffix url ".gz"
   then Unix_tools.gunzip (source ())
@@ -206,7 +205,7 @@ module Make(S : Settings) = struct
       | _ -> None
 
     let macs2_gsize_of_ucsc_org = function
-      | `hg18 | `hg19         -> `hs
+      | `hg18 | `hg19 | `hg38 -> `hs
       | `mm8  | `mm9  | `mm10 -> `mm
       | `dm3                  -> `dm
       | `sacCer2              -> `gsize 12_000_000
@@ -221,7 +220,8 @@ module Make(S : Settings) = struct
         ~call_summits:true
         ~fix_bimodal:true
         ~extsize:200
-        bam
+        Macs2.bam
+        [ bam ]
 
     let peak_calling s =
       macs2_peak_calling s >>| fun w -> w / Macs2.narrow_peaks
