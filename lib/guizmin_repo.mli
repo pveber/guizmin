@@ -1,25 +1,14 @@
 open Bistro.Std
 
 type path = string list
-type html_elt = [`Html] Html5.M.elt
 
-type error = [
-    `Workflow_error of (Bistro.Workflow.u * string) list
-  | `Failure of string
-]
-
-module type Engine = sig
-  val root : string
-  val build : Bistro.Workflow.u -> [ `Ok of string | `Error of error ] Lwt.t
-end
-
-module Make(E : Engine) : sig
+module Make() : sig
   type 'a page
 
   val html_page :
     path ->
-    html_elt ->
-    [ `Ok of html page | `Error of error ] Lwt.t
+    Tyxml_html.doc ->
+    [`html] page
 
   val file_page :
     ?path:path ->
