@@ -4,6 +4,7 @@ open Experiment_description
 open Guizmin_misc.Infix
 open Bistro.Std
 open Bistro_bioinfo.Std
+open Website.Syntax
 
 module W = Website
 open Website.Infix
@@ -117,44 +118,8 @@ module Make(Params : Params)(P : Unrolled_workflow.S) = struct
 
 
   module Model = struct
-    open Option.Monad_infix
-
-    type param = model
-    type data = {
-      model : model ;
-      transcriptome : transcriptome ;
-    }
-    and transcriptome = {
-      deseq2 : deseq2 option
-    }
-    and deseq2 = {
-      comparison_summary : Deseq2.table output ;
-      comparisons : ((string * string * string) * Deseq2.table output) list ;
-      sample_pca_link : svg W.link ;
-    }
-
-    let deseq2 o =
-      W.pure (fun comparison_summary comparisons sample_pca_link -> { comparison_summary ; comparisons ; sample_pca_link })
-      $ W.pureW o#comparison_summary
-      $ W.list (
-        List.map o#comparisons ~f:(fun (cond, w) -> W.pure (fun b -> cond, b) $ W.pureW w)
-      )
-      $ W.pureP (W.data_page o#sample_pca)
-
-    let ( $? ) x f =
-      (match x with
-          | None -> W.pure None
-          | Some o -> W.pure (fun x -> Some x) $ f o)
-
-    let transcriptome m =
-      W.pure (fun deseq2 -> { deseq2 })
-      $ (P.Transcriptome.deseq2 m $? deseq2)
-
-    let data model =
-      W.pure (fun transcriptome -> { model ; transcriptome })
-      $ transcriptome model
-
-    let comparison_table (Bistro_app.Path path : Deseq2.table output) =
+    let comparison_table comparison =
+      let%map Bistro_app.Path path = comparison in
       match read_table path with
       | [] -> assert false
       | header :: data ->
@@ -174,7 +139,8 @@ module Make(Params : Params)(P : Unrolled_workflow.S) = struct
             (List.map data' ~f:(List.map ~f:(fun x -> td [ pcdata x ]) % tr))
         ]
 
-    let comparison_summary_table (Bistro_app.Path path : Deseq2.table output) =
+    let comparison_summary_table deseq2 =
+      let%map Bistro_app.Path path = W.pureW deseq2#comparison_summary in
       match read_table path with
       | [] -> assert false
       | header :: data ->
@@ -186,7 +152,10 @@ module Make(Params : Params)(P : Unrolled_workflow.S) = struct
         ]
 
     let comparison_tabs comparisons =
-      let tables = List.map comparisons ~f:(snd % comparison_table) in
+      let%map tables =
+        List.map comparisons ~f:(snd % W.pureW % comparison_table)
+        |> W.list
+      in
       List.map2_exn comparisons tables ~f:(fun ((name, l1, l2), _) table ->
           sprintf "deseq2-comp-%s-%s-%s" name l1 l2,
           sprintf "%s: %s vs %s" name l1 l2,
@@ -194,21 +163,26 @@ module Make(Params : Params)(P : Unrolled_workflow.S) = struct
         )
       |> tabs
 
-    let mRNA_diff_expr_subsection d =
-      let comparison_summary_table = comparison_summary_table d.comparison_summary in
-      let comparison_tabs = comparison_tabs d.comparisons in
+    let mRNA_diff_expr_subsection deseq2 =
+      let%map comparison_summary_table = comparison_summary_table deseq2
+      and comparison_tabs = comparison_tabs deseq2#comparisons in
       subsection
         ~a:[a_id "mRNA-differential-expression-with-DESeq2"] "Differential expression with DESeq2"
         [ comparison_summary_table ; comparison_tabs ]
 
-    let mRNA_section d =
-      opt d.transcriptome.deseq2 @@ fun deseq2 ->
+    let ( >>? ) x f =
+      Option.value_map x ~default:(W.pure []) ~f
+
+    let mRNA_section m =
+      P.Transcriptome.deseq2 m >>? fun deseq2 ->
+      let%map sample_pca_link = W.pureP (W.data_page deseq2#sample_pca)
+      and mRNA_diff_expr_subsection = mRNA_diff_expr_subsection deseq2 in
       section ~a:[a_id "mRNA"] "mRNA levels" [
         medskip ;
         [ p [ strong [ k"Sample overview " ] ; ] ] ;
         (* [ img ~a:[a_style "width:40%"] ~src:(W.href clustering) ~alt:"" () ] ; *)
-        [ img ~a:[a_style "width:40%"] ~src:(W.href deseq2.sample_pca_link) ~alt:"" () ] ;
-        mRNA_diff_expr_subsection deseq2 ;
+        [ img ~a:[a_style "width:40%"] ~src:(W.href sample_pca_link) ~alt:"" () ] ;
+        mRNA_diff_expr_subsection ;
       ]
 
     let title m = [
@@ -216,14 +190,16 @@ module Make(Params : Params)(P : Unrolled_workflow.S) = struct
       hr () ;
     ]
 
-    let sections d =
+    let sections m =
+      let%map mRNA_section = mRNA_section m in
       List.concat [
-        mRNA_section d ;
+        mRNA_section ;
       ]
 
-    let render ({ model = m } as d) =
+    let make m =
+      let%map sections = sections m in
       let page_title = sprintf "Model :: %s" m.model_id in
-      let contents = List.concat [ title m ; medskip ; medskip ; sections d ] in
+      let contents = List.concat [ title m ; medskip ; medskip ; sections ] in
       html page_title contents
   end
 

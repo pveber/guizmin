@@ -10,6 +10,7 @@ val pureW : 'a Bistro.workflow -> 'a data build
 val pureP : 'a page -> 'a link build
 val app : ('a -> 'b) build -> 'a build -> 'b build
 val list : 'a build list -> 'a list build
+val option : 'a build option -> 'a option build
 
 module Infix : sig
   val ( $ ) : ('a -> 'b) build -> 'a build -> 'b build
@@ -29,6 +30,14 @@ val a_sel :
   [> `A of 'c] Tyxml_html.elt
 
 val generate : _ build -> dest:string -> unit Bistro_app.t
+
+module Syntax : sig
+  module Let_syntax : sig
+    type 'a t = 'a build
+    val map  : 'a t -> f:('a -> 'b) -> 'b t
+    val both : 'a t -> 'b t -> ('a * 'b) t
+  end
+end
 
 (* module Make() : sig *)
 (*   type html *)

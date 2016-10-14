@@ -7,6 +7,7 @@ PKG core
 PKG netstring
 PKG lwt.unix
 PKG ppx_bistro
+PKG ppx_let
 PKG ppx_sexp_conv
 PKG pvem
 PKG tyxml
