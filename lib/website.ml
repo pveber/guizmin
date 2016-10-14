@@ -7,62 +7,157 @@ let string_of_path = Bistro.string_of_path
 
 type html
 
-type 'a build = {
+type 'a build = 'a with_deps App.t
+
+and 'a with_deps = {
   deps : any_page list ;
-  value : 'a App.t ;
+  value : 'a ;
 }
 
-and 'a page = {
+and any_page = {
   path : path ;
-  contents : 'a contents
+  contents : contents ;
 }
 
-and 'a contents =
-  | Html : Tyxml_html.doc -> html contents
-  | Data : 'a App.path -> 'a App.path contents
+and contents =
+  | Html of Tyxml_html.doc
+  | Bistro_output of string
 
-and any_page = Page : _ page -> any_page
+type 'a page = any_page
 
-type 'a link = path
 type 'a data = 'a Bistro_app.path
 
-let html_page path elt =
-  let p = { path ; contents = Html elt } in
-  { deps = [ Page p ] ; value = App.pure p }
+type 'a link = path
+
+let pure x = App.pure {
+  deps = [] ;
+  value =  x ;
+}
+
+let workflow w =
+  let open App in
+  app
+    (pure (fun x -> { deps = [] ; value = x }))
+    (pureW w ident)
+
+(* let link p = *)
+(*   let open App in *)
+(*   app *)
+(*     (pure (fun (Page x) -> { deps = [ p ] ; value = x.path })) *)
+(*     (pure p) *)
 
 
-let data_page path fspath =
-  let p = { path ; contents = Data fspath } in
-  { deps = [ Page p ] ; value = App.pure p }
+let add_dep accu d =
+  d :: accu
+(* FIXME !!! *)
 
-(* let with_page page f = *)
-(*   let res = f page.value.path in *)
-(*   { res with deps = Page page.value :: res.deps } *)
+let deps_union x y =
+  List.fold x ~init:y ~f:add_dep
 
-(* let with_link path f g = *)
-(*   let y = g path in *)
-(*   let page = html_page path (f y.value) in *)
-(*   { page with deps = page.deps @ y.deps } *)
+let app f x =
+  let open App in
+  pure (fun f x -> { deps = deps_union f.deps x.deps ;
+                     value = f.value x.value })
+  $ f
+  $ x
 
-let return _ = assert false
-let bind _ = assert false
-let bindP _ = assert false
-let bindD _ = assert false
-let bindL _ = assert false
+let list xs =
+  let open App in
+  pure (
+    fun xs -> {
+        deps = List.fold xs ~init:[] ~f:(fun accu x -> deps_union x.deps accu ) ;
+        value = List.map xs ~f:(fun x -> x.value) ;
+      }
+  )
+  $ list xs
 
-let map _ = assert false
-let mapP _ = assert false
-let mapD _ = assert false
+let assoc xs =
+  let zip builds = List.map2_exn xs builds ~f:(fun (k, _) v -> k, v) in
+  let builds = List.map xs ~f:snd |> list in
+  let open App in
+  pure (fun builds -> { builds with value = zip builds.value })
+  $ builds
 
-let a _ = assert false
+let option = function
+  | None -> pure None
+  | Some b -> app (pure (fun x -> Some x)) b
 
-let a_sel _ = assert false
+let link b =
+  let open App in
+  let f { value = p ; deps } =
+    { deps = add_dep deps p ;
+      value = p.path }
+  in
+  app (pure f) b
 
-let href _ = assert false
+module Infix = struct
+  let ( $ ) = app
+  let ( >>| ) x f = app (pure f) x
+end
 
-let generate _ = assert false
+let html path elt =
+  { path ; contents = Html elt }
 
+let data ?path w =
+  let path = match path with
+    | None -> [ "file" ; Bistro.Workflow.id w ]
+    | Some p -> p
+  in
+  let open App in
+  pure (
+    fun { value = Path p } ->
+      { value = { path ; contents = Bistro_output p } ;
+        deps = [] }
+  )
+  $ workflow w
 
+let href path = string_of_path path
+
+let a path elts =
+  Tyxml_html.(a ~a:[a_href (href path)] elts)
+
+let a_sel dir (Bistro.Selector p) elts =
+  let path = dir @ p in
+  Tyxml_html.(a ~a:[a_href (string_of_path path)] elts)
+
+let write_html ~dest ~path h =
+  assert false
+
+let write_data ~dest ~path fspath =
+  assert false
+
+let write ~dest pages =
+  List.iter pages ~f:(function
+      | { path ; contents = Html h } ->
+        write_html ~dest ~path h
+      | { path ; contents = Bistro_output fspath } ->
+        write_data ~dest ~path fspath
+    )
+
+let generate b ~dest =
+  let open App in
+  let f { deps ; value = p } =
+    write (p :: deps) ~dest
+  in
+  app (pure f) b
+
+module Syntax = struct
+  module Let_syntax = struct
+    type 'a t = 'a build
+    let map x ~f = app (pure f) x
+    let both x y =
+      let open App in
+      pure (
+        fun x y ->
+          {
+            deps = deps_union x.deps y.deps ;
+            value = x.value, y.value
+          }
+      )
+      $ x
+      $ y
+  end
+end
 
 module Make() = struct
   type _ page = {
@@ -140,4 +235,3 @@ module Make() = struct
 end
 
 (* module App = Bistro_app *)
-

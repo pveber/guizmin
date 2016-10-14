@@ -1,23 +1,26 @@
 type path = string list
 type 'a build
 type 'a page
-type 'a link
 type html
 type 'a data = 'a Bistro_app.path
+type 'a link
 
 val pure  : 'a -> 'a build
-val pureW : 'a Bistro.workflow -> 'a data build
-val pureP : 'a page -> 'a link build
+val workflow : 'a Bistro.workflow -> 'a data build
+
 val app : ('a -> 'b) build -> 'a build -> 'b build
 val list : 'a build list -> 'a list build
+val assoc : ('a * 'b build) list -> ('a * 'b) list build
 val option : 'a build option -> 'a option build
+val link : 'a page build -> 'a link build
 
 module Infix : sig
   val ( $ ) : ('a -> 'b) build -> 'a build -> 'b build
+  val ( >>| ) : 'a build -> ('a -> 'b) -> 'b build
 end
 
-val html_page : path -> Tyxml_html.doc -> html page
-val data_page : ?path:path -> 'a Bistro.workflow -> 'a page
+val html : path -> Tyxml_html.doc -> html page
+val data : ?path:path -> 'a Bistro.workflow -> 'a data page build
 
 val a : _ link -> 'a Tyxml_html.elt list -> [> `A of 'a] Tyxml_html.elt
 
@@ -29,7 +32,7 @@ val a_sel :
   'c Tyxml_html.elt list ->
   [> `A of 'c] Tyxml_html.elt
 
-val generate : _ build -> dest:string -> unit Bistro_app.t
+val generate : _ page build -> dest:string -> unit Bistro_app.t
 
 module Syntax : sig
   module Let_syntax : sig

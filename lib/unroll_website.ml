@@ -13,6 +13,21 @@ let read_table fn =
   In_channel.read_lines fn
   |> List.map ~f:(String.split ~on:'\t')
 
+let assoc_make keys ~f = List.map keys ~f:(fun k -> k, f k)
+
+let assoc_make' keys ~f =
+  List.filter_map keys ~f:(fun k ->
+      Option.map (f k) ~f:(fun v -> k, v)
+    )
+
+let assoc_map xs ~f =
+  List.map xs ~f:(fun (k, v) -> k, f v)
+
+let assoc_mapi xs ~f =
+  List.map xs ~f:(fun (k, v) -> k, f k v)
+
+let ( $ ) xs k = List.Assoc.find_exn xs k
+
 module type Params = sig
   val dest : string
   val webroot : string
@@ -20,16 +35,6 @@ end
 
 type path = string list
 type 'a output = 'a Bistro_app.path
-
-module type Service = sig
-  type param
-  type data
-
-  val domain : param list
-  val path : param -> path
-  val data : param -> data Website.build
-  val render : data -> Tyxml_html.doc
-end
 
 module Make(Params : Params)(P : Unrolled_workflow.S) = struct
   open Params
@@ -116,10 +121,16 @@ module Make(Params : Params)(P : Unrolled_workflow.S) = struct
     else
       (h4 ?a [k title]) :: intro @ contents
 
+  module Model_X_transcriptome_deseq2_sample_pca = struct
+    let path m = [ "model" ; m.model_id ; "transcriptome" ; "deseq2" ; "sample_pca.svg" ]
+
+    let list =
+      assoc_make' P.Model.list P.Transcriptome.deseq2
+      |> assoc_map ~f:(fun deseq2 -> W.data deseq2#sample_pca)
+  end
 
   module Model = struct
-    let comparison_table comparison =
-      let%map Bistro_app.Path path = comparison in
+    let comparison_table (Bistro_app.Path path : Deseq2.table output) =
       match read_table path with
       | [] -> assert false
       | header :: data ->
@@ -140,7 +151,7 @@ module Make(Params : Params)(P : Unrolled_workflow.S) = struct
         ]
 
     let comparison_summary_table deseq2 =
-      let%map Bistro_app.Path path = W.pureW deseq2#comparison_summary in
+      let%map Bistro_app.Path path = W.workflow deseq2#comparison_summary in
       match read_table path with
       | [] -> assert false
       | header :: data ->
@@ -152,14 +163,11 @@ module Make(Params : Params)(P : Unrolled_workflow.S) = struct
         ]
 
     let comparison_tabs comparisons =
-      let%map tables =
-        List.map comparisons ~f:(snd % W.pureW % comparison_table)
-        |> W.list
-      in
-      List.map2_exn comparisons tables ~f:(fun ((name, l1, l2), _) table ->
+      let%map comparisons = W.assoc (assoc_map comparisons ~f:W.workflow) in
+      List.map comparisons ~f:(fun ((name, l1, l2), table) ->
           sprintf "deseq2-comp-%s-%s-%s" name l1 l2,
           sprintf "%s: %s vs %s" name l1 l2,
-          table
+          comparison_table table
         )
       |> tabs
 
@@ -175,7 +183,7 @@ module Make(Params : Params)(P : Unrolled_workflow.S) = struct
 
     let mRNA_section m =
       P.Transcriptome.deseq2 m >>? fun deseq2 ->
-      let%map sample_pca_link = W.pureP (W.data_page deseq2#sample_pca)
+      let%map sample_pca_link = W.link (Model_X_transcriptome_deseq2_sample_pca.list $ m)
       and mRNA_diff_expr_subsection = mRNA_diff_expr_subsection deseq2 in
       section ~a:[a_id "mRNA"] "mRNA levels" [
         medskip ;
@@ -196,69 +204,62 @@ module Make(Params : Params)(P : Unrolled_workflow.S) = struct
         mRNA_section ;
       ]
 
+    let path m = [ "model" ; m.model_id ^ ".html" ]
+
     let make m =
       let%map sections = sections m in
       let page_title = sprintf "Model :: %s" m.model_id in
       let contents = List.concat [ title m ; medskip ; medskip ; sections ] in
-      html page_title contents
+      W.html
+        (path m)
+        (html page_title contents)
+
+
+    let list = assoc_make P.Model.list ~f:make
   end
 
-  (* module Model_transcriptome_deseq2_comparison_summary = struct *)
-  (*   type param = model *)
-  (*   type data = Deseq2.table output *)
 
-  (*   let domain = List.filter W.Model.list ~f:(fun m -> W.Transcriptome.deseq2 m <> None) *)
-  (*   let path m = [ m.model_id ; "transcriptome" ; "deseq2" ; "comparison_summary"] *)
-  (*   let data_term m  *)
-  (* end *)
+  module Index = struct
+    let path = [ "index.html" ]
 
+    let browse_by_model_div =
+      let%map links = assoc_map Model.list ~f:W.link |> W.assoc in
+      let links = List.map links ~f:(fun (m, l) ->
+          W.a l [ k m.model_id ]
+        )
+      in
+      multicolumn_ul links
 
+    let browse_by_div =
+      let%map browse_by_model_div = browse_by_model_div in
+      let tabs = tabs [
+          (* "browse-by-sample", "Sample", [ browse_by_sample_div ] ; *)
+          "browse-by-model",  "Model",  [ browse_by_model_div ] ;
+        ]
+      in
+      div ((k "Browse by...") :: tabs)
 
-    (* let list = assoc W.Model.list ~f:(fun m -> *)
-    (*     make m >>= *)
-    (*     html_page [ "model" ; m.model_id ^ ".html" ] *)
-    (*   ) *)
+    let page =
+      let%map browse_by_div = browse_by_div in
+      W.html path (
+        html "Guizmin workflow" [
+          h1 [b [k"Project " ; i [k P.project_name]]] ;
+          hr () ;
+          br () ;
+          br () ;
+          browse_by_div ;
+        ]
+      )
 
-  (*   let list = [] *)
-  (* end *)
+  end
 
-  (* module Index = struct *)
-  (*   let path = [ "index.html" ] *)
-
-  (*   (\* let browse_by_model_div = *\) *)
-  (*   (\*   Model_page.list *\) *)
-  (*   (\*   |> List.map ~f:(fun (m, page_m) -> W.a page_m [ k m.model_id ]) *\) *)
-  (*   (\*   |> multicolumn_ul *\) *)
-
-  (*   let browse_by_div = *)
-  (*     (\* browse_by_sample_div >>= fun browse_by_sample_div -> *\) *)
-  (*     let tabs = tabs [ *)
-  (*         (\* "browse-by-sample", "Sample", [ browse_by_sample_div ] ; *\) *)
-  (*         (\* "browse-by-model",  "Model",  [ browse_by_model_div ] ; *\) *)
-  (*       ] *)
-  (*     in *)
-  (*     div ((k "Browse by...") :: tabs) *)
-
-  (*   let contents = *)
-  (*     html "Guizmin workflow" [ *)
-  (*       h1 [b [k"Project " ; i [k P.project_name]]] ; *)
-  (*       hr () ; *)
-  (*       br () ; *)
-  (*       br () ; *)
-  (*       browse_by_div ; *)
-  (*     ] *)
-
-  (*   let page = W.html_page path contents *)
-  (* end *)
-
-  (* let make () = Index.page *)
 end
 
-(* let generate ~dest ~webroot (module Project : Unrolled_workflow.S) = *)
-(*   let module Params = struct *)
-(*     let dest = dest *)
-(*     let webroot = webroot *)
-(*   end *)
-(*   in *)
-(*   let module WWW = Make(Params)(Project) in *)
-(*   W.generate ~dest (WWW.make ()) *)
+let generate ~dest ~webroot (module Project : Unrolled_workflow.S) =
+  let module Params = struct
+    let dest = dest
+    let webroot = webroot
+  end
+  in
+  let module WWW = Make(Params)(Project) in
+  W.generate ~dest WWW.Index.page
