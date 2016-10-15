@@ -120,18 +120,40 @@ let a_sel dir (Bistro.Selector p) elts =
   let path = dir @ p in
   Tyxml_html.(a ~a:[a_href (string_of_path path)] elts)
 
-let write_html ~dest ~path h =
-  assert false
+let write_html ~dest ~path doc =
+  let fspath = Filename.concat dest (string_of_path path) in
+  Unix.mkdir_p (Filename.dirname fspath) ;
+  Out_channel.with_file fspath ~f:(fun oc ->
+      Tyxml_html.pp () (Format.formatter_of_out_channel oc) doc
+    )
 
-let write_data ~dest ~path fspath =
-  assert false
+let symlink src dst =
+  let create_link =
+    if Sys.file_exists dst = `Yes then Unix.(
+        if (lstat dst).st_kind <> S_LNK || readlink dst <> src
+        then (
+          unlink dst ;
+          true
+        )
+        else false
+      )
+    else true
+  in
+  if create_link
+  then
+    Sys.command_exn (Printf.sprintf "ln -s `readlink -f %s` %s" src dst)
+
+let write_bistro_output ~dest ~path fspath =
+  let dest = Filename.concat dest (string_of_path path) in
+  Unix.mkdir_p (Filename.dirname fspath) ;
+  symlink fspath dest
 
 let write ~dest pages =
   List.iter pages ~f:(function
       | { path ; contents = Html h } ->
         write_html ~dest ~path h
       | { path ; contents = Bistro_output fspath } ->
-        write_data ~dest ~path fspath
+        write_bistro_output ~dest ~path fspath
     )
 
 let generate b ~dest =
