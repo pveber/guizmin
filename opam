@@ -1,20 +1,30 @@
 opam-version: "1.2"
 name: "guizmin"
 version: "dev"
-maintainer: "pveber <philippe.veber@gmail.com>"
-authors: "pveber <philippe.veber@gmail.com>"
-homepage: "https://github.com/pveber/guizmin/"
+maintainer: "Philippe Veber <philippe.veber@gmail.com>"
+authors: "Philippe Veber <philippe.veber@gmail.com>"
+homepage: "https://github.com/pveber/guizmin"
+bug-reports: "https://github.com/pveber/guizmin/issues"
+license: "GPL3"
 dev-repo: "https://github.com/pveber/guizmin.git"
-license: "GPL"
+
 build: [
-  ["./configure" "--prefix=%{prefix}%"]
-  [make]
+  [make "native"]
 ]
-install: [make "install"]
-remove: [
-  ["ocamlfind" "remove" "guizmin"]
+
+install: [
+  [make "META"]
+  [make "%{name}%.install"]
 ]
+
+remove: ["ocamlfind" "remove" "guizmin"]
+
 depends: [
-  "bistro"
-  "tyxml"
+  "biocaml"   {= "dev"}
+  "bistro"    {= "dev"}
+  "ppx_deriving"
+  "ppx_let"
+  "ppx_sexp_conv"
+  "ocamlfind" {build}
+  "solvuu-build" {build & = "dev"}
 ]
