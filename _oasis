@@ -12,13 +12,14 @@ Library guizmin
   Pack:             true
   Modules:          Experiment_description,
                     Guizmin_misc,
+                    Unroll,
                     Unroll_workflow,
                     Unroll_website,
                     Unrolled_workflow,
                     Website
   FindlibName:      guizmin
-  BuildDepends:     bistro.bioinfo, core, lwt, ppx_bistro, ppx_let, ppx_sexp_conv, pvem, threads, tyxml
-  XMETARequires:    bistro.bioinfo, core, threads, lwt, pvem, tyxml
+  BuildDepends:     bistro.bioinfo, bistro.utils, core, lwt, ppx_bistro, ppx_let, ppx_sexp_conv, pvem, threads, tyxml
+  XMETARequires:    bistro.bioinfo, bistro.utils, core, threads, lwt, pvem, tyxml
 
 
 Executable guizmin_app
