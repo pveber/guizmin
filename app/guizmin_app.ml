@@ -1,12 +1,12 @@
 open Core.Std
 
-let () = Command.(
-    group ~summary:"Automatically derived genomics analysis workflows" [
-      "unroll", Guizmin.Unroll.command ;
-      "genome-assembly-benchmark", Guizmin.Genome_assembly_benchmark.command ;
-    ]
-    |> run
-  )
+let () =
+  let open Command in
+  group ~summary:"Automatically derived genomics analysis workflows" [
+    "unroll", Guizmin.Unroll.command ;
+    "genome-assembly-benchmark", Guizmin.Genome_assembly_benchmark.command ;
+  ]
+  |> run
 
 (* let help copts man_format cmds topic = match topic with *)
 (*   | None -> `Help (`Pager, None) (\* help about the program. *\) *)
