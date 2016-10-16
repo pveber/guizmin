@@ -113,16 +113,18 @@ let ecoli = {
            fetch_fq_gz "http://spades.bioinf.spbau.ru/spades_test_datasets/ecoli_mc/s_6_3.fastq.gz") ;
 }
 
-let whole_pipeline () =
-  List.concat [
-    pipeline bsubtilis ;
-    pipeline ecoli_articial ;
-    pipeline ecoli ;
-  ]
+let whole_pipeline preview_mode =
+  if preview_mode then pipeline ecoli_articial
+  else
+    List.concat [
+      pipeline bsubtilis ;
+      pipeline ecoli_articial ;
+      pipeline ecoli ;
+    ]
 
-let main preview_mode outdir np mem () =
-  let term = Bistro_app.of_repo ~outdir (whole_pipeline ()) in
-  Bistro_app.run ~np ~mem:(mem * 1024) term
+let main preview_mode outdir np mem verbose () =
+  let term = Bistro_app.of_repo ~outdir (whole_pipeline preview_mode) in
+  Bistro_app.run ~np ~mem:(mem * 1024) ~verbose term
 
 let spec =
   let open Command.Spec in
@@ -131,6 +133,7 @@ let spec =
   +> flag "--outdir"  (required string) ~doc:"DIR Directory where to link exported targets"
   +> flag "--np"      (optional_with_default 4 int) ~doc:"INT Number of processors"
   +> flag "--mem"     (optional_with_default 4 int) ~doc:"INT Available memory (in GB)"
+  +> flag "--verbose" no_arg ~doc:" Displays progression log"
 
 let command =
   Command.basic
