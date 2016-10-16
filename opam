@@ -26,5 +26,5 @@ depends: [
   "ppx_let"
   "ppx_sexp_conv"
   "ocamlfind" {build}
-  "solvuu-build" {build & = "dev"}
+  "solvuu-build" {build}
 ]
