@@ -1,7 +1,4 @@
 open Core.Std
-open Common
-
-open Core.Std
 
 let () = Command.(
     group ~summary:"Automatically derived genomics analysis workflows" [
