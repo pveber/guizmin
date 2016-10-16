@@ -3,7 +3,7 @@ open Core.Std
 let () = Command.(
     group ~summary:"Automatically derived genomics analysis workflows" [
       "unroll", Guizmin.Unroll.command ;
-      (* "genome-assembly-benchmark", Genome_assembly_benchmark.command ; *)
+      "genome-assembly-benchmark", Guizmin.Genome_assembly_benchmark.command ;
     ]
     |> run
   )
