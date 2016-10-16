@@ -6,3 +6,5 @@ _build
 *.native
 *.byte
 _guizmin
+.merlin
+.ocamlinit
