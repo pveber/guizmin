@@ -3,7 +3,7 @@ open Bistro.Std
 open Bistro_bioinfo.Std
 open Bistro.EDSL
 
-let env = docker_image ~account:"pveber" ~name:"idba" ~tag:"1.1.3" ()
+let env = docker_image ~account:"loneknightpy" ~name:"idba" ()
 
 type fq2fa_input = [
   | `Se of [`sanger] fastq workflow
