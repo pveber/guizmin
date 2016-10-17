@@ -5,8 +5,8 @@ open Bistro.EDSL
 
 type velvet_output = [`velvet_output] directory
 
-let velvet ?cov_cutoff ?min_contig_lgth ~hash_length ~ins_length ~exp_cov fq1 fq2 =
-  workflow ~mem:(10 * 1024) ~descr:"velvet" [
+let velvet ?(mem_spec = 10) ?cov_cutoff ?min_contig_lgth ~hash_length ~ins_length ~exp_cov fq1 fq2 =
+  workflow ~mem:(mem_spec * 1024) ~descr:"velvet" [
     mkdir_p dest ;
     cmd "velveth" [
       dest ;

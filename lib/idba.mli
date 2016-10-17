@@ -12,7 +12,7 @@ val fq2fa : ?filter:bool -> fq2fa_input -> fasta workflow
 
 type idba_ud_output = [`idba_ud_output] directory
 
-val idba_ud : fasta workflow -> idba_ud_output workflow
+val idba_ud : ?mem_spec:int -> fasta workflow -> idba_ud_output workflow
 
 val idba_ud_contigs : (idba_ud_output, fasta) selector
 val idba_ud_scaffolds : (idba_ud_output, fasta) selector

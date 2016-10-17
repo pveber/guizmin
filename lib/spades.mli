@@ -7,6 +7,7 @@ val spades :
   ?single_cell:bool ->
   ?iontorrent:bool ->
   ?pe:[`sanger] fastq workflow list * [`sanger] fastq workflow list ->
+  ?mem_spec:int ->
   unit ->
   spades_output workflow
 

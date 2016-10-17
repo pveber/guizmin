@@ -4,6 +4,7 @@ open Bistro_bioinfo.Std
 type velvet_output = [`velvet_output] directory
 
 val velvet :
+  ?mem_spec:int ->
   ?cov_cutoff:int ->
   ?min_contig_lgth:int ->
   hash_length:int ->

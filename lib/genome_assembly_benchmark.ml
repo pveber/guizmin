@@ -15,23 +15,24 @@ let fetch_fq_gz url : [`sanger] fastq workflow =
   Unix_tools.wget url
   |> Unix_tools.gunzip
 
-let pipeline { name ; genome_size ; reference ; reads = ((reads_1, reads_2) as reads) } =
+let pipeline mem_spec { name ; genome_size ; reference ; reads = ((reads_1, reads_2) as reads) } =
   let spades_assembly =
     let pe = [ reads_1 ], [ reads_2 ] in
-    Spades.spades ~pe () / Spades.contigs
+    Spades.spades ~mem_spec ~pe () / Spades.contigs
   in
   let idba_ud_assembly =
-    Idba.(idba_ud (fq2fa (`Pe_merge reads)))
+    Idba.(idba_ud ~mem_spec (fq2fa (`Pe_merge reads)))
     / Idba.idba_ud_contigs
   in
   let velvet_assembly =
     Velvet.velvet
-    ~cov_cutoff:4
-    ~min_contig_lgth:100
-    ~hash_length:21
-    ~ins_length:400
-    ~exp_cov:7.5
-    reads_1 reads_2
+      ~mem_spec
+      ~cov_cutoff:4
+      ~min_contig_lgth:100
+      ~hash_length:21
+      ~ins_length:400
+      ~exp_cov:7.5
+      reads_1 reads_2
     / Velvet.contigs
   in
   let cisa_assembly : fasta workflow =
@@ -113,17 +114,17 @@ let ecoli = {
            fetch_fq_gz "http://spades.bioinf.spbau.ru/spades_test_datasets/ecoli_mc/s_6_3.fastq.gz") ;
 }
 
-let whole_pipeline preview_mode =
-  if preview_mode then pipeline ecoli_articial
+let whole_pipeline preview_mode mem_spec =
+  if preview_mode then pipeline mem_spec ecoli_articial
   else
     List.concat [
-      pipeline bsubtilis ;
-      pipeline ecoli_articial ;
-      pipeline ecoli ;
+      pipeline mem_spec bsubtilis ;
+      pipeline mem_spec ecoli_articial ;
+      pipeline mem_spec ecoli ;
     ]
 
 let main preview_mode outdir np mem verbose () =
-  let term = Bistro_app.of_repo ~outdir (whole_pipeline preview_mode) in
+  let term = Bistro_app.of_repo ~outdir (whole_pipeline preview_mode mem) in
   Bistro_app.run ~np ~mem:(mem * 1024) ~verbose term
 
 let spec =
