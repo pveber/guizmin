@@ -38,7 +38,7 @@ let workflow w =
   let open App in
   app
     (pure (fun x -> { deps = [] ; value = x }))
-    (pureW w ident)
+    (pureW w)
 
 (* let link p = *)
 (*   let open App in *)

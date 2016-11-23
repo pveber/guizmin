@@ -125,7 +125,7 @@ let whole_pipeline preview_mode mem_spec =
 
 let main preview_mode outdir np mem verbose () =
   let term = Bistro_app.of_repo ~outdir (whole_pipeline preview_mode mem) in
-  Bistro_app.run ~np ~mem:(mem * 1024) ~verbose term
+  Bistro_app.run ~np ~mem:(mem * 1024) term
 
 let spec =
   let open Command.Spec in
