@@ -57,7 +57,11 @@ let () =
       build_static_file ".merlin" (merlin_file items);
       build_static_file ".ocamlinit" (ocamlinit_file items);
       build_static_file "project.mk" (makefile items ~project_name);
-      Findlib.build_meta_file (meta_file ~version libs);
+      (
+        match meta_file ~version libs with
+        | None -> ()
+        | Some x -> Findlib.build_meta_file x
+      );
       build_static_file (sprintf "%s.install" project_name)
         (install_file items);
     )
