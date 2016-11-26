@@ -5,6 +5,7 @@ let () =
   group ~summary:"Automatically derived genomics analysis workflows" [
     "unroll", Guizmin.Unroll.command ;
     "genome-assembly-benchmark", Guizmin.Genome_assembly_benchmark.command ;
+    "denovo-rnaseq", Guizmin.Denovo_rnaseq.command ;
   ]
   |> run
 
