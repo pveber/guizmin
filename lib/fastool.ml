@@ -9,7 +9,7 @@ let fastool fqgz =
   workflow ~descr:"fastool" [
     pipe [
       cmd "zcat" [ dep fqgz ] ;
-      cmd "fastool" ~stdout:dest [
+      cmd "fastool" ~env ~stdout:dest [
         string "--illumina-trinity"
       ] ;
     ]
