@@ -54,7 +54,7 @@ let () =
       List.iter libs ~f:build_lib;
       List.iter apps ~f:build_app;
 
-      build_static_file ".merlin" (merlin_file items);
+      build_static_file ".merlin" (merlin_file ~short_paths items);
       build_static_file ".ocamlinit" (ocamlinit_file items);
       build_static_file "project.mk" (makefile items ~project_name);
       (
