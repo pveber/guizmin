@@ -17,7 +17,7 @@ and paired_end = {
 }
 
 type 'a art_illumina_output =
-  [ `art_illumina_output of 'a ] directory
+  [ `art_illumina_output of 'a ]
   constraint 'a = < aln : _ ;
                     errfree_sam : _ ;
                     sam : _ ;
@@ -48,7 +48,7 @@ val art_illumina :
   < aln : 'a;
     errfree_sam : 'b;
     read_model : 'rm;
-    sam : 'c > art_illumina_output workflow
+    sam : 'c > art_illumina_output directory workflow
 
 val se_fastq : unit -> (< read_model : [`single_end] ; .. > art_illumina_output,
                         [`sanger] fastq) selector

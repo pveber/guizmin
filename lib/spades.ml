@@ -13,14 +13,14 @@ let pe_args (ones, twos) =
     List.mapi twos ~f:(opt 2)
   )
 
-type spades_output = [`spades_output] directory
+type spades_output
 
 let spades
     ?single_cell ?iontorrent
     ?pe
     ?(mem_spec = 10)
     ()
-  : spades_output workflow
+  : spades_output directory workflow
   =
   workflow ~np:4 ~mem:(mem_spec * 1024) ~descr:"spades" [
     mkdir_p dest ;

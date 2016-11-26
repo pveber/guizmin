@@ -3,7 +3,7 @@ open Bistro.Std
 open Bistro_bioinfo.Std
 open Bistro.EDSL
 
-type velvet_output = [`velvet_output] directory
+type velvet_output
 
 let velvet ?(mem_spec = 10) ?cov_cutoff ?min_contig_lgth ~hash_length ~ins_length ~exp_cov fq1 fq2 =
   workflow ~mem:(mem_spec * 1024) ~descr:"velvet" [

@@ -4,7 +4,7 @@ open Bistro_bioinfo.Std
 open Bistro.EDSL
 
 
-type output = [`reapr_output] directory
+type output
 
 let reapr (fq_1, fq_2) assembly =
   let bam = seq ~sep:"/" [ tmp ; string "mapped.bam" ] in

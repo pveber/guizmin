@@ -1,7 +1,7 @@
 open Bistro.Std
 open Bistro_bioinfo.Std
 
-type velvet_output = [`velvet_output] directory
+type velvet_output
 
 val velvet :
   ?mem_spec:int ->
@@ -12,6 +12,6 @@ val velvet :
   exp_cov:float ->
   [`sanger] fastq workflow ->
   [`sanger] fastq workflow ->
-  velvet_output workflow
+  velvet_output directory workflow
 
 val contigs : (velvet_output, fasta) selector

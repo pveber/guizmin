@@ -27,9 +27,9 @@ let fq2fa ?filter input =
   ]
 
 
-type idba_ud_output = [`idba_ud_output] directory
+type idba_ud_output
 
-let idba_ud ?(mem_spec = 10) fa : idba_ud_output workflow =
+let idba_ud ?(mem_spec = 10) fa : idba_ud_output directory workflow =
   workflow ~np:4 ~mem:(mem_spec * 1024) ~descr:"idba_ud" [
     mkdir_p dest ;
     cmd "idba_ud" ~env [

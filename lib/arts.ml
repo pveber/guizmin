@@ -29,7 +29,7 @@ let ite
     | False -> y
 
 type 'a art_illumina_output =
-  [ `art_illumina_output of 'a ] directory
+  [ `art_illumina_output of 'a ]
   constraint 'a = < aln : _ ;
                     errfree_sam : _ ;
                     sam : _ ;
@@ -72,7 +72,7 @@ let art_illumina
   : < aln : 'a ;
       errfree_sam : 'b ;
       sam : 'c ;
-      read_model : 'rm > art_illumina_output workflow
+      read_model : 'rm > art_illumina_output directory workflow
   =
   workflow ~descr:"art_illumina" [
     mkdir_p dest ;
