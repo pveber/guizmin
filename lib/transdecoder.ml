@@ -10,14 +10,16 @@ type transdecoder_output
 let transdecoder fa : transdecoder_output directory workflow =
   workflow ~descr:"transdecoder.longOrfs" [
     mkdir_p tmp ;
-    cmd "ln" [ string "-s " ; dep fa ; tmp // "transcripts.fa" ] ;
-    and_list [
-      cmd "cd" [ tmp ] ;
-      cmd "TransDecoder.LongOrfs" ~env [ opt "-t" string "transcripts.fa" ] ;
-      cmd "TransDecoder.Predict"  ~env [ opt "-t" string "transcripts.fa" ] ;
-    ] ;
-    mkdir_p dest ;
-    mv (tmp // "transcripts.fa.transdecoder.*") dest ;
+    docker env (
+      and_list [
+        cmd "ln" [ string "-s " ; dep fa ; tmp // "transcripts.fa" ] ;
+        cmd "cd" [ tmp ] ;
+        cmd "TransDecoder.LongOrfs" [ opt "-t" string "transcripts.fa" ] ;
+        cmd "TransDecoder.Predict"  [ opt "-t" string "transcripts.fa" ] ;
+        mkdir_p dest ;
+        mv (tmp // "transcripts.fa.transdecoder.*") dest ;
+      ]
+    ) ;
   ]
 
 let cds : (transdecoder_output, fasta) selector =
