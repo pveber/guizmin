@@ -18,7 +18,7 @@ let trinity ?(mem = 128) fa1 fa2 =
       opt "--max_memory" ident (seq [ string "$((" ; Bistro.EDSL.mem ; string " / 1024))G" ]) ;
       opt "--output" ident tmp_dest ;
     ] ;
-    cmd "mv" [
+    cmd "mv" ~env [
       tmp_dest // "Trinity.fasta" ;
       dest ;
     ]
