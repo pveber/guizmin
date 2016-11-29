@@ -9,7 +9,7 @@ type kallisto_output
 
 let index fas =
   workflow ~descr:"kallisto-index" [
-    cmd "kallisto index" [
+    cmd "kallisto index" ~env [
       opt "-i" ident dest ;
       list ~sep:" " dep fas ;
     ]
@@ -17,7 +17,7 @@ let index fas =
 
 let quant ?bootstrap_samples idx fq1 fq2 : kallisto_output directory workflow =
   workflow ~descr:"kallisto-quant" ~np:4 [
-    cmd "kallisto quant" [
+    cmd "kallisto quant" ~env [
       opt "-i" dep idx ;
       opt "-o" ident dest ;
       opt "-t" ident np ;
