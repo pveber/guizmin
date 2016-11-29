@@ -257,10 +257,12 @@ while(my $seq = $seqin->next_seq) {
 print "Written $nexport sequences\n";|}
 
 
+let env = docker_image ~account:"pveber" ~name:"bistro-base" ~tag:"jessie" ()
+
 let select_contig abundance fa =
   workflow ~descr:"trinity_asb_to_one_contig_per_comp.pl" [
     mkdir_p tmp ;
-    cmd "perl" [
+    cmd "perl" ~env [
       file_dump (string select_contig_script) ;
       opt "-byexp" dep abundance ;
       dep fa ;
