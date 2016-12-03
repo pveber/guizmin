@@ -54,7 +54,12 @@ let pipeline preview_mode species fq1_path fq2_path =
 
 let main preview_mode outdir species np mem fq1_path fq2_path () =
   let targets = pipeline preview_mode species fq1_path fq2_path in
-  Bistro_app.run ~np ~mem:(mem * 1024) (Bistro_app.of_repo ~outdir targets)
+  let logger =
+    Bistro_logger.tee
+      (Bistro_console_logger.create ())
+      (Bistro_html_logger.create "report.html")
+  in
+  Bistro_app.run ~logger ~np ~mem:(mem * 1024) (Bistro_app.of_repo ~outdir targets)
 
 let spec =
   let open Command.Spec in
