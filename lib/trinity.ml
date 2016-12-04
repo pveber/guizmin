@@ -9,7 +9,7 @@ let trinity ?(mem = 128) fa1 fa2 =
   let tmp_dest = tmp // "trinity" in
   workflow ~descr:"trinity" ~np:4 ~mem:(mem * 1024) [
     mkdir_p tmp ;
-    cmd "Trinity" ~env [
+    cmd "Trinity" ~env ~stdout:(string "/dev/null")[
       string "--verbose" ;
       string "--seqType fa" ;
       opt "--left" dep fa1 ;
