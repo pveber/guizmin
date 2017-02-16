@@ -33,6 +33,7 @@ let pipeline preview_mode species fq1_path fq2_path =
   let fa1 = Fastool.fastool trimmed_fq1_gz in
   let fa2 = Fastool.fastool trimmed_fq2_gz in
   let trinity_assembly = Trinity.trinity ~mem:(if preview_mode then 8 else 128) fa1 fa2 in
+  let assembly_stats = Trinity.uniq_count_stats trinity_assembly (gunzip trimmed_fq1_gz) (gunzip trimmed_fq2_gz) in
   let kallisto_run = Kallisto.quant (Kallisto.index [ trinity_assembly ]) trimmed_fq1_gz trimmed_fq2_gz in
   let transdecoder_run = Transdecoder.transdecoder trinity_assembly in
   let canonical_transcripts =
@@ -47,6 +48,7 @@ let pipeline preview_mode species fq1_path fq2_path =
     [ "fastQC" ; "post_trimming" ; "1" ] %> post_trimming_fastqc1 ;
     [ "fastQC" ; "post_trimming" ; "2" ] %> post_trimming_fastqc2 ;
     [ "trinity_assembly.fa" ] %> trinity_assembly ;
+    [ "assembly_stats" ] %> assembly_stats ;
     [ "transdecoder" ] %> transdecoder_run ;
     [ "kallisto" ] %> kallisto_run ;
     [ "canonical_transcripts.fa" ] %> canonical_transcripts ;

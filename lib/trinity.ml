@@ -23,3 +23,15 @@ let trinity ?(mem = 128) fa1 fa2 =
       dest ;
     ]
   ]
+
+let uniq_count_stats fa fq1 fq2 =
+  let index = Bowtie2.bowtie2_build fa in
+  let sam = Bowtie2.bowtie2 ~mode:`local ~no_unal:true index (`paired_end ([ fq1 ], [ fq2 ])) in
+  let sorted_bam =
+    Samtools.indexed_bam_of_sam sam / Samtools.indexed_bam_to_bam
+  in
+  workflow ~descr:"trinity.uniq_count_stats.pl" [
+    cmd "$TRINITY_HOME/util/SAM_nameSorted_to_uniq_count_stats.pl" ~env [
+      dep sorted_bam ;
+    ]
+  ]
