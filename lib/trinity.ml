@@ -3,7 +3,7 @@ open Bistro.Std
 open Bistro_bioinfo.Std
 open Bistro.EDSL
 
-let env = docker_image ~account:"pveber" ~name:"trinity" ~tag:"2.3.2" ()
+let env = docker_image ~account:"pveber" ~name:"trinity" ~tag:"2.4.0" ()
 
 let trinity ?(mem = 128) fa1 fa2 =
   let tmp_dest = tmp // "trinity" in
