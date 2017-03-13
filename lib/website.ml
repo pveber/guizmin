@@ -3,7 +3,7 @@ open Core.Std
 module App = Bistro_app
 
 type path = string list
-let string_of_path = Bistro.string_of_path
+let string_of_path = Bistro.Path.to_string
 
 type html
 
