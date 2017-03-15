@@ -15,7 +15,7 @@ let lib =
   let name = "guizmin" in
   Project.lib name
     ~annot ~bin_annot ~g ~short_paths ~thread
-    ~pkg:name
+    ~install:(`Findlib name)
     ~dir:"lib"
     ~style:(`Pack name)
     ~findlib_deps:[
@@ -54,16 +54,16 @@ let () =
       List.iter libs ~f:build_lib;
       List.iter apps ~f:build_app;
 
-      build_static_file ".merlin" (merlin_file ~short_paths:(Some ()) items);
-      build_static_file ".ocamlinit" (ocamlinit_file items);
-      build_static_file "project.mk" (makefile items ~project_name);
+      build_static_file ".merlin" (fun () -> merlin_file ~short_paths:(Some ()) items);
+      build_static_file ".ocamlinit" (fun () -> ocamlinit_file items);
+      build_static_file "project.mk" (fun () -> makefile items ~project_name);
       (
         match meta_file ~version libs with
         | None -> ()
         | Some x -> Findlib.build_meta_file x
       );
       build_static_file (sprintf "%s.install" project_name)
-        (install_file items);
+        (fun () -> install_file items);
     )
   | _ -> ()
 
