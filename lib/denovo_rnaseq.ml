@@ -61,7 +61,7 @@ let main preview_mode outdir species np mem fq1_path fq2_path () =
       (Bistro_console_logger.create ())
       (Bistro_html_logger.create "report.html")
   in
-  Bistro_app.run ~logger ~np ~mem:(mem * 1024) (Bistro_app.of_repo ~outdir targets)
+  Bistro_app.run ~keep_all:false ~logger ~np ~mem:(mem * 1024) (Bistro_app.of_repo ~outdir targets)
 
 let spec =
   let open Command.Spec in
