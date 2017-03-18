@@ -7,7 +7,7 @@ let env = docker_image ~account:"pveber" ~name:"trinity" ~tag:"2.4.0" ()
 
 let trinity ?(mem = 128) fa1 fa2 =
   let tmp_dest = tmp // "trinity" in
-  workflow ~descr:"trinity" ~np:4 ~mem:(mem * 1024) [
+  workflow ~descr:"trinity" ~np:32 ~mem:(mem * 1024) [
     mkdir_p tmp ;
     cmd "Trinity" ~env ~stdout:(string "/dev/null")[
       string "--verbose" ;
