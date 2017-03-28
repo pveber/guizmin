@@ -32,7 +32,7 @@ let uniq_count_stats fa fq1 fq2 =
     |> Samtools.sam_of_bam
   in
   workflow ~descr:"trinity.uniq_count_stats.pl" [
-    cmd "$TRINITY_HOME/util/SAM_nameSorted_to_uniq_count_stats.pl" ~env [
+    cmd "$TRINITY_HOME/util/SAM_nameSorted_to_uniq_count_stats.pl" ~env ~stdout:dest [
       dep sorted_sam ;
     ]
   ]
