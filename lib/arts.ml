@@ -47,7 +47,7 @@ and paired_end = {
 }
 
 let args_of_read_model
-  : type u. u read_model -> Bistro.Expr.t list
+  : type u. u read_model -> Bistro.Template.t list
   = function
     | Single_end len ->
       [ opt "--len" int len ]

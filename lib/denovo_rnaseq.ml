@@ -42,7 +42,7 @@ let pipeline preview_mode species fq1_path fq2_path =
     |> Utils.select_contig Kallisto.(kallisto_run / abundance)
 
   in
-  Bistro_app.[
+  Bistro_repo.[
     [ "fastQC" ; "initial" ; "1" ] %> initial_fastqc1 ;
     [ "fastQC" ; "initial" ; "2" ] %> initial_fastqc2 ;
     [ "fastQC" ; "post_trimming" ; "1" ] %> post_trimming_fastqc1 ;
@@ -61,7 +61,7 @@ let main preview_mode outdir species np mem fq1_path fq2_path () =
       (Bistro_console_logger.create ())
       (Bistro_html_logger.create "report.html")
   in
-  Bistro_app.run ~keep_all:false ~logger ~np ~mem:(mem * 1024) (Bistro_app.of_repo ~outdir targets)
+  Bistro_app.run ~keep_all:false ~logger ~np ~mem:(mem * 1024) (Bistro_repo.to_app ~outdir targets)
 
 let spec =
   let open Command.Spec in

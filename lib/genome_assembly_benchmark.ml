@@ -56,9 +56,8 @@ let pipeline mem_spec { name ; genome_size ; reference ; reads = ((reads_1, read
         reapr_spades / Reapr.assembly ;
       ]
   in
-  let open Bistro_app in
   let rep x = "output" :: name :: x in
-  [
+  Bistro_repo.[
     rep [ "SPAdes" ; "contigs.fa"] %> spades_assembly ;
     rep [ "IDBA" ; ] %> idba_ud_assembly ;
     rep [ "Velvet" ; ] %> velvet_assembly ;
@@ -124,7 +123,7 @@ let whole_pipeline preview_mode mem_spec =
     ]
 
 let main preview_mode outdir np mem verbose () =
-  let term = Bistro_app.of_repo ~outdir (whole_pipeline preview_mode mem) in
+  let term = Bistro_repo.to_app ~outdir (whole_pipeline preview_mode mem) in
   Bistro_app.run ~np ~mem:(mem * 1024) term
 
 let spec =

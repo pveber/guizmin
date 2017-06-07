@@ -13,7 +13,12 @@ let main ged dest webroot np mem () =
   check_errors description ;
   let whole_workflow = Unroll_workflow.from_description description in
   let term = Unroll_website.generate ~dest ~webroot whole_workflow in
-  Bistro_app.run ~np ~mem:(mem * 1024) ~dag_dump:"dag.pdf" term
+  let logger =
+    Bistro_logger.tee
+      (Bistro_console_logger.create ())
+      (Bistro_dot_output.create "dag.dot")
+  in
+  Bistro_app.run ~np ~mem:(mem * 1024) ~logger term
 
 let spec =
   let open Command.Spec in
