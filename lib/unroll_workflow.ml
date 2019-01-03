@@ -1,18 +1,16 @@
 let unique = Guizmin_misc.unique
-open Core.Std
-open Bistro.Std
-open Bistro.EDSL
-open Bistro_bioinfo.Std
-open Unrolled_workflow
+open Core
+open Bistro
+open Bistro_bioinfo
 
 let unsafe_file_of_url url : 'a workflow =
   let source () =
     if String.is_prefix ~prefix:"http://" url || String.is_prefix ~prefix:"ftp://" url
-    then Unix_tools.wget url
-    else input url
+    then Bistro_unix.wget url
+    else Workflow.input url
   in
   if Filename.check_suffix url ".gz"
-  then Unix_tools.gunzip (source ())
+  then Bistro_unix.gunzip (source ())
   else source ()
 
 
@@ -113,11 +111,11 @@ module Make(S : Settings) = struct
       function
       | `fastq (encoding, se_or_pe) ->
         let f urls =
-          let g x = List.map urls ~f:(fun url -> Fastq.to_sanger x (unsafe_file_of_url url)) in
+          let g _ = List.map urls ~f:(fun url -> unsafe_file_of_url url) in
           match encoding with
           | `sanger -> g Fastq.Sanger
-          | `solexa -> g Fastq.Solexa
-          | `phred64 -> g Fastq.Phred64
+          | `solexa -> assert false (* FIXME *)
+          | `phred64 -> assert false (* FIXME *)
         in
         se_or_pe_map se_or_pe ~f
       | `sra (se_or_pe, sra) ->
@@ -135,28 +133,28 @@ module Make(S : Settings) = struct
       se_or_pe_map fqs ~f
 
 
-    let dna_seq_mapped_reads_sam s genome fqs =
+    let dna_seq_mapped_reads_sam genome fqs =
       let index = Genome.bowtie_index genome in
       Bowtie.bowtie ~v:2 ~m:1 index fqs
 
-    let dna_seq_mapped_reads_indexed s genome fqs =
-      Samtools.indexed_bam_of_sam (dna_seq_mapped_reads_sam s genome fqs)
+    let dna_seq_mapped_reads_indexed genome fqs =
+      Samtools.indexed_bam_of_sam (dna_seq_mapped_reads_sam genome fqs)
 
-    let dna_seq_mapped_reads s genome fqs =
-      dna_seq_mapped_reads_indexed s genome fqs / Samtools.indexed_bam_to_bam
+    let dna_seq_mapped_reads genome fqs =
+      dna_seq_mapped_reads_indexed genome fqs |> Samtools.indexed_bam_to_bam
 
-    let tophat s genome fqs =
+    let tophat genome fqs =
       let index = Genome.bowtie2_index genome in
       Tophat.tophat2 index fqs
 
-    let mrna_seq_mapped_reads_indexed s genome fqs =
-      Samtools.indexed_bam_of_bam (tophat s genome fqs / Tophat.accepted_hits)
+    let mrna_seq_mapped_reads_indexed genome fqs =
+      Samtools.indexed_bam_of_bam (tophat genome fqs |> Tophat.accepted_hits)
 
-    let mrna_seq_mapped_reads s genome fqs =
-      mrna_seq_mapped_reads_indexed s genome fqs / Samtools.indexed_bam_to_bam
+    let mrna_seq_mapped_reads genome fqs =
+      mrna_seq_mapped_reads_indexed genome fqs |> Samtools.indexed_bam_to_bam
 
-    let mrna_seq_mapped_reads_sam s genome fqs =
-      Samtools.sam_of_bam (mrna_seq_mapped_reads s genome fqs)
+    let mrna_seq_mapped_reads_sam genome fqs =
+      Samtools.sam_of_bam (mrna_seq_mapped_reads genome fqs)
 
 
     let mapped_reads s =
@@ -167,9 +165,9 @@ module Make(S : Settings) = struct
       | `TF_ChIP _
       | `EM_ChIP _
       | `FAIRE ->
-        Some (dna_seq_mapped_reads s g_s fqs)
+        Some (dna_seq_mapped_reads g_s fqs)
       | `mRNA ->
-        Some (mrna_seq_mapped_reads s g_s fqs)
+        Some (mrna_seq_mapped_reads g_s fqs)
 
     let mapped_reads_sam s =
       genome s >>= fun g_s ->
@@ -179,9 +177,9 @@ module Make(S : Settings) = struct
       | `TF_ChIP _
       | `EM_ChIP _
       | `FAIRE ->
-        Some (dna_seq_mapped_reads_sam s g_s fqs)
+        Some (dna_seq_mapped_reads_sam g_s fqs)
       | `mRNA ->
-        Some (mrna_seq_mapped_reads_sam s g_s fqs)
+        Some (mrna_seq_mapped_reads_sam g_s fqs)
 
     let mapped_reads_indexed s =
       genome s >>= fun g_s ->
@@ -191,9 +189,9 @@ module Make(S : Settings) = struct
       | `TF_ChIP _
       | `EM_ChIP _
       | `FAIRE ->
-        Some (dna_seq_mapped_reads_indexed s g_s fqs)
+        Some (dna_seq_mapped_reads_indexed g_s fqs)
       | `mRNA ->
-        Some (mrna_seq_mapped_reads_indexed s g_s fqs)
+        Some (mrna_seq_mapped_reads_indexed g_s fqs)
 
     let signal s =
       ucsc_genome s >>= fun org ->
@@ -209,6 +207,7 @@ module Make(S : Settings) = struct
       | `mm8  | `mm9  | `mm10 -> `mm
       | `dm3                  -> `dm
       | `sacCer2              -> `gsize 12_000_000
+      | `droSim1              -> `gsize (assert false) (* FIXME *)
 
     let macs2_peak_calling s =
       chIP_TF s >>= fun _ -> (* just to make sure we're dealing with TF ChIP samples *)
@@ -224,7 +223,7 @@ module Make(S : Settings) = struct
         [ bam ]
 
     let peak_calling s =
-      macs2_peak_calling s >>| fun w -> w / Macs2.narrow_peaks
+      macs2_peak_calling s >>| fun w -> w |> Macs2.narrow_peaks
 
     let read_counts_per_gene s =
       Model.gene_annotation (model s) >>= fun gff ->
@@ -238,7 +237,7 @@ module Make(S : Settings) = struct
 
     let list =
       List.map Sample.list ~f:Sample.condition
-      |> List.dedup
+      |> List.dedup_and_sort ~compare:Poly.compare
 
     let rec product = function
       | [] -> []
@@ -268,18 +267,18 @@ module Make(S : Settings) = struct
       | _ ->
         let factors =
           List.map factors ~f:(fun x -> x.factor_name)
-          |> List.sort ~cmp:compare
+          |> List.sort ~compare:Poly.compare
         in
         let samples = List.map samples ~f:(fun (s, counts) ->
             let factors_s =
               s.sample_condition
-              |> List.sort ~cmp:compare
+              |> List.sort ~compare:Poly.compare
               |> List.map ~f:snd
             in
             factors_s, counts
           )
         in
-        Some (Deseq2.main_effects factors samples)
+        Some (DESeq2.main_effects factors samples)
   end
 
   (* class tf_chip_seq_sample sample data genome tf = *)

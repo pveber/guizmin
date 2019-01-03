@@ -1,9 +1,9 @@
-open Core.Std
+open Core
 
 let () =
   let open Command in
   group ~summary:"Automatically derived genomics analysis workflows" [
-    "unroll", Guizmin.Unroll.command ;
+    (* "unroll", Guizmin.Unroll.command ; *)
     "genome-assembly-benchmark", Guizmin.Genome_assembly_benchmark.command ;
     "denovo-rnaseq", Guizmin.Denovo_rnaseq.command ;
   ]

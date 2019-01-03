@@ -1,0 +1,5 @@
+(library
+ (name guizmin)
+ (public_name guizmin)
+ (libraries bistro.bioinfo bistro.utils core tyxml)
+ (preprocess (pps ppx_let ppx_sexp_conv)))

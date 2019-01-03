@@ -1,18 +1,15 @@
-open Bistro.Std
-open Bistro_bioinfo.Std
+open Bistro
+open Bistro_bioinfo
 
 type fq2fa_input = [
-  | `Se of [`sanger] fastq workflow
-  | `Pe_merge of [`sanger] fastq workflow * [`sanger] fastq workflow
-  | `Pe_paired of [`sanger] fastq workflow
+  | `Se of sanger_fastq pworkflow
+  | `Pe_merge of sanger_fastq pworkflow * sanger_fastq pworkflow
+  | `Pe_paired of sanger_fastq pworkflow
 ]
 
-val fq2fa : ?filter:bool -> fq2fa_input -> fasta workflow
+val fq2fa : ?filter:bool -> fq2fa_input -> fasta pworkflow
 
+val idba_ud : ?mem_spec:int -> fasta pworkflow -> [`idba] dworkflow
 
-type idba_ud_output
-
-val idba_ud : ?mem_spec:int -> fasta workflow -> idba_ud_output directory workflow
-
-val idba_ud_contigs : (idba_ud_output, fasta) selector
-val idba_ud_scaffolds : (idba_ud_output, fasta) selector
+val idba_ud_contigs : [`idba] dworkflow -> fasta pworkflow
+val idba_ud_scaffolds : [`idba] dworkflow -> fasta pworkflow

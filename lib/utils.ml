@@ -1,7 +1,6 @@
-open Core.Std
-open Bistro.Std
-open Bistro_bioinfo.Std
-open Bistro.EDSL
+open Core
+open Bistro
+open Bistro.Shell_dsl
 
 
 (* process substitution for gunzip *)
@@ -260,7 +259,7 @@ print "Written $nexport sequences\n";|}
 let env = docker_image ~account:"pveber" ~name:"bistro-base" ~tag:"jessie" ()
 
 let select_contig abundance fa =
-  workflow ~descr:"trinity_asb_to_one_contig_per_comp.pl" [
+  Workflow.shell ~descr:"trinity_asb_to_one_contig_per_comp.pl" [
     mkdir_p tmp ;
     cmd "perl" ~env [
       file_dump (string select_contig_script) ;
@@ -271,7 +270,7 @@ let select_contig abundance fa =
   ]
 
 let rename_contigs species fa =
-  workflow ~descr:"rename species" [
+  Workflow.shell ~descr:"rename species" [
     cmd "sed" ~stdout:dest [
       string (sprintf {|"s/^>\(.*\)$/>%s_\1/"|} species) ;
       dep fa

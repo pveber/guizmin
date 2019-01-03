@@ -1,16 +1,14 @@
-open Bistro.Std
-open Bistro_bioinfo.Std
-
-type cisa_output = [`cisa_output] directory
+open Bistro
+open Bistro_bioinfo
 
 val merge :
   ?min_length:int ->
-  (string * fasta workflow) list -> fasta workflow
+  (string * fasta pworkflow) list -> fasta pworkflow
 
 val cisa :
   int ->
-  fasta workflow ->
-  fasta workflow
+  fasta pworkflow ->
+  fasta pworkflow
 
 (*   ?single_cell:bool -> *)
 (*   ?iontorrent:bool -> *)

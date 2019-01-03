@@ -1,7 +1,6 @@
-open Core.Std
-open Bistro.Std
-open Bistro_bioinfo.Std
-open Bistro.EDSL
+open Bistro
+open Bistro_bioinfo
+open Bistro.Shell_dsl
 
 let env = docker_image ~account:"pveber" ~name:"art" ~tag:"20160605" ()
 
@@ -28,12 +27,15 @@ let ite
     | True -> x
     | False -> y
 
-type 'a art_illumina_output =
-  [ `art_illumina_output of 'a ]
-  constraint 'a = < aln : _ ;
-                    errfree_sam : _ ;
-                    sam : _ ;
-                    read_model : _ >
+
+type ('a, 'b, 'c, 'd) art_illumina_output = <
+  directory ;
+  contents : [`art_illumina] ;
+  aln : 'a ;
+  errfree_sam : 'b ;
+  sam : 'c ;
+  read_model : 'd ;
+>
 
 type _ read_model =
   | Single_end : int -> [`single_end] read_model
@@ -47,7 +49,7 @@ and paired_end = {
 }
 
 let args_of_read_model
-  : type u. u read_model -> Bistro.Template.t list
+  : type u. u read_model -> template list
   = function
     | Single_end len ->
       [ opt "--len" int len ]
@@ -67,14 +69,9 @@ let art_illumina
     ~(aln_output : 'a tbool)
     ~(errfree_sam_output : 'b tbool)
     ~(sam_output : 'c tbool)
-    (read_model : 'rm read_model) depth (fa : fasta workflow)
-
-  : < aln : 'a ;
-      errfree_sam : 'b ;
-      sam : 'c ;
-      read_model : 'rm > art_illumina_output directory workflow
+    (read_model : 'rm read_model) depth (fa : fasta pworkflow)
   =
-  workflow ~descr:"art_illumina" [
+  Workflow.shell ~descr:"art_illumina" [
     mkdir_p dest ;
     cmd "art_illumina" ~env [
       option (opt "--qprof1" string) qprof1 ;
@@ -103,10 +100,10 @@ let art_illumina
   ]
 
 
-let se_fastq () = selector [ "sample.fq" ]
+let se_fastq x = Workflow.select x [ "sample.fq" ]
 
-let pe_fastq x =
-  selector [
+let pe_fastq x y =
+  Workflow.select y [
     match x with
     | `One -> "sample1.fq"
     | `Two -> "sample2.fq"

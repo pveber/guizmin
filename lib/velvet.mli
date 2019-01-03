@@ -1,7 +1,5 @@
-open Bistro.Std
-open Bistro_bioinfo.Std
-
-type velvet_output
+open Bistro
+open Bistro_bioinfo
 
 val velvet :
   ?mem_spec:int ->
@@ -10,8 +8,8 @@ val velvet :
   hash_length:int ->
   ins_length:int ->
   exp_cov:float ->
-  [`sanger] fastq workflow ->
-  [`sanger] fastq workflow ->
-  velvet_output directory workflow
+  sanger_fastq pworkflow ->
+  sanger_fastq pworkflow ->
+  [`velvet] dworkflow
 
-val contigs : (velvet_output, fasta) selector
+val contigs : [`velvet] dworkflow -> fasta pworkflow

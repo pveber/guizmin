@@ -8,23 +8,8 @@ bug-reports: "https://github.com/pveber/guizmin/issues"
 license: "GPL3"
 dev-repo: "https://github.com/pveber/guizmin.git"
 
-build: [
-  [make "native"]
-]
-
-install: [
-  [make "META"]
-  [make "%{name}%.install"]
-]
-
-remove: ["ocamlfind" "remove" "guizmin"]
+build: ["dune" "build" "-p" name "-j" jobs]
 
 depends: [
-  "biocaml"   {= "dev"}
   "bistro"    {= "dev"}
-  "ppx_deriving"
-  "ppx_let"
-  "ppx_sexp_conv"
-  "ocamlfind" {build}
-  "solvuu-build" {build}
 ]

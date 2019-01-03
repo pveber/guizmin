@@ -1,28 +1,27 @@
-open Core.Std
-open Bistro.Std
-open Bistro_bioinfo.Std
-
-let ( / ) = Bistro.EDSL.( / )
+open Core
+open Bistro
+open Bistro_bioinfo
+open Bistro_utils
 
 type dataset = {
   name : string ;
-  reference : fasta workflow ;
+  reference : fasta pworkflow ;
   genome_size : int ;
-  reads : [`sanger] fastq workflow * [`sanger] fastq workflow ;
+  reads : sanger_fastq pworkflow * sanger_fastq pworkflow ;
 }
 
-let fetch_fq_gz url : [`sanger] fastq workflow =
-  Unix_tools.wget url
-  |> Unix_tools.gunzip
+let fetch_fq_gz url : sanger_fastq pworkflow =
+  Bistro_unix.wget url
+  |> Bistro_unix.gunzip
 
 let pipeline mem_spec { name ; genome_size ; reference ; reads = ((reads_1, reads_2) as reads) } =
   let spades_assembly =
     let pe = [ reads_1 ], [ reads_2 ] in
-    Spades.spades ~mem_spec ~pe () / Spades.contigs
+    Spades.spades ~memory:mem_spec ~pe () |> Spades.contigs
   in
   let idba_ud_assembly =
     Idba.(idba_ud ~mem_spec (fq2fa (`Pe_merge reads)))
-    / Idba.idba_ud_contigs
+    |> Idba.idba_ud_contigs
   in
   let velvet_assembly =
     Velvet.velvet
@@ -33,9 +32,9 @@ let pipeline mem_spec { name ; genome_size ; reference ; reads = ((reads_1, read
       ~ins_length:400
       ~exp_cov:7.5
       reads_1 reads_2
-    / Velvet.contigs
+    |> Velvet.contigs
   in
-  let cisa_assembly : fasta workflow =
+  let cisa_assembly : fasta pworkflow =
     Cisa.merge [
       "SPAdes", spades_assembly ;
       "IDBA", idba_ud_assembly ;
@@ -53,11 +52,11 @@ let pipeline mem_spec { name ; genome_size ; reference ; reads = ((reads_1, read
         idba_ud_assembly ;
         velvet_assembly ;
         cisa_assembly ;
-        reapr_spades / Reapr.assembly ;
+        reapr_spades |> Reapr.assembly ;
       ]
   in
   let rep x = "output" :: name :: x in
-  Bistro_repo.[
+  Repo.[
     rep [ "SPAdes" ; "contigs.fa"] %> spades_assembly ;
     rep [ "IDBA" ; ] %> idba_ud_assembly ;
     rep [ "Velvet" ; ] %> velvet_assembly ;
@@ -80,13 +79,13 @@ let sequencer n fa =
         (`Read_count n) fa
     )
   in
-  (ao / Arts.pe_fastq `One,
-   ao / Arts.pe_fastq `Two)
+  (Arts.pe_fastq `One ao,
+   Arts.pe_fastq `Two ao)
 
 
-let bsubtilis_genome : fasta workflow =
-  Unix_tools.wget "ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/bacteria/Bacillus_subtilis/representative/GCF_000227465.1_ASM22746v1/GCF_000227465.1_ASM22746v1_genomic.fna.gz"
-  |> Unix_tools.gunzip
+let bsubtilis_genome : fasta pworkflow =
+  Bistro_unix.wget "ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/bacteria/Bacillus_subtilis/representative/GCF_000227465.1_ASM22746v1/GCF_000227465.1_ASM22746v1_genomic.fna.gz"
+  |> Bistro_unix.gunzip
 
 let bsubtilis = {
   name = "B.subtilis" ;
@@ -95,8 +94,8 @@ let bsubtilis = {
   reads = sequencer 100_000 bsubtilis_genome ;
 }
 
-let ecoli_genome : fasta workflow =
-  Unix_tools.wget "http://www.ncbi.nlm.nih.gov/nuccore/49175990?report=fasta"
+let ecoli_genome : fasta pworkflow =
+  Bistro_unix.wget "http://www.ncbi.nlm.nih.gov/nuccore/49175990?report=fasta"
 
 let ecoli_articial = {
   name = "E.coli (artificial)" ;
@@ -122,21 +121,20 @@ let whole_pipeline preview_mode mem_spec =
       pipeline mem_spec ecoli ;
     ]
 
-let main preview_mode outdir np mem verbose () =
-  let term = Bistro_repo.to_app ~outdir (whole_pipeline preview_mode mem) in
-  Bistro_app.run ~np ~mem:(mem * 1024) term
-
-let spec =
-  let open Command.Spec in
-  empty
-  +> flag "--preview-mode" no_arg ~doc:" Run on a small subset of the data"
-  +> flag "--outdir"  (required string) ~doc:"DIR Directory where to link exported targets"
-  +> flag "--np"      (optional_with_default 4 int) ~doc:"INT Number of processors"
-  +> flag "--mem"     (optional_with_default 4 int) ~doc:"INT Available memory (in GB)"
-  +> flag "--verbose" no_arg ~doc:" Displays progression log"
+let main ~preview_mode ~outdir ~np ~mem ~quiet () =
+  let loggers = if quiet then [] else [ Console_logger.create () ] in
+  Repo.build_main ~loggers ~outdir ~np ~mem:(`GB mem) (whole_pipeline preview_mode mem)
 
 let command =
+  let open Command.Let_syntax in
   Command.basic
     ~summary:"Genome assembler benchmark for prokaryotes"
-    spec
-    main
+    [%map_open
+      let preview_mode = flag "--preview-mode" no_arg ~doc:" Run on a small subset of the data"
+      and outdir = flag "--outdir"  (required string) ~doc:"DIR Directory where to link exported targets"
+      and np = flag "--np"      (optional_with_default 4 int) ~doc:"INT Number of processors"
+      and mem = flag "--mem"     (optional_with_default 4 int) ~doc:"INT Available memory (in GB)"
+      and quiet = flag "--quiet" no_arg ~doc:" Don't display progression log"
+      in
+      main ~preview_mode ~outdir ~np ~mem ~quiet
+    ]

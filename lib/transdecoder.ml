@@ -1,14 +1,12 @@
-open Core.Std
-open Bistro.Std
-open Bistro_bioinfo.Std
-open Bistro.EDSL
+open Bistro
+open Bistro.Shell_dsl
 
 let env = docker_image ~account:"pveber" ~name:"transdecoder" ~tag:"3.0.1" ()
 
 type transdecoder_output
 
-let transdecoder fa : transdecoder_output directory workflow =
-  workflow ~descr:"transdecoder.longOrfs" [
+let transdecoder fa =
+  Workflow.shell ~descr:"transdecoder.longOrfs" [
     mkdir_p tmp ;
     docker env (
       and_list [
@@ -22,5 +20,4 @@ let transdecoder fa : transdecoder_output directory workflow =
     ) ;
   ]
 
-let cds : (transdecoder_output, fasta) selector =
-  selector ["transcripts.fa.transdecoder.cds"]
+let cds x = Workflow.select x ["transcripts.fa.transdecoder.cds"]

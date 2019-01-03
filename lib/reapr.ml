@@ -1,14 +1,9 @@
-open Core.Std
-open Bistro.Std
-open Bistro_bioinfo.Std
-open Bistro.EDSL
-
-
-type output
+open Bistro
+open Bistro.Shell_dsl
 
 let reapr (fq_1, fq_2) assembly =
   let bam = seq ~sep:"/" [ tmp ; string "mapped.bam" ] in
-  workflow ~descr:"reapr" [
+  Workflow.shell ~descr:"reapr" [
     mkdir_p tmp ;
     cmd "reapr" [
       string "smaltmap" ;
@@ -25,4 +20,4 @@ let reapr (fq_1, fq_2) assembly =
     ]
   ]
 
-let assembly = selector ["04.break.broken_assembly.fa"]
+let assembly x = Workflow.select x ["04.break.broken_assembly.fa"]

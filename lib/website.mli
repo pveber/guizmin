@@ -1,46 +1,46 @@
-type path = string list
-type 'a build
-type 'a page
-type html
-type 'a data = 'a Bistro_app.path
-type 'a link
+(* type path = string list
+ * type 'a build
+ * type 'a page
+ * type html
+ * type 'a data = 'a Bistro.path
+ * type 'a link
+ * 
+ * val pure  : 'a -> 'a build
+ * val workflow : 'a Bistro.workflow -> 'a data build
+ * 
+ * val app : ('a -> 'b) build -> 'a build -> 'b build
+ * val list : 'a build list -> 'a list build
+ * val assoc : ('a * 'b build) list -> ('a * 'b) list build
+ * val option : 'a build option -> 'a option build
+ * val link : 'a page build -> 'a link build
+ * 
+ * module Infix : sig
+ *   val ( $ ) : ('a -> 'b) build -> 'a build -> 'b build
+ *   val ( >>| ) : 'a build -> ('a -> 'b) -> 'b build
+ * end
+ * 
+ * val html : path -> Tyxml_html.doc -> html page
+ * val data : ?path:path -> 'a Bistro.workflow -> 'a data page build
+ * 
+ * val a : _ link -> 'a Tyxml_html.elt list -> [> `A of 'a] Tyxml_html.elt
+ * 
+ * val href : _ link -> string *)
 
-val pure  : 'a -> 'a build
-val workflow : 'a Bistro.workflow -> 'a data build
+(* val a_sel :
+ *   #Bistro.directory data link ->
+ *   ('a, 'b) Bistro.selector ->
+ *   'c Tyxml_html.elt list ->
+ *   [> `A of 'c] Tyxml_html.elt *)
 
-val app : ('a -> 'b) build -> 'a build -> 'b build
-val list : 'a build list -> 'a list build
-val assoc : ('a * 'b build) list -> ('a * 'b) list build
-val option : 'a build option -> 'a option build
-val link : 'a page build -> 'a link build
+(* val generate : _ page build -> dest:string -> unit Bistro_app.t *)
 
-module Infix : sig
-  val ( $ ) : ('a -> 'b) build -> 'a build -> 'b build
-  val ( >>| ) : 'a build -> ('a -> 'b) -> 'b build
-end
-
-val html : path -> Tyxml_html.doc -> html page
-val data : ?path:path -> 'a Bistro.workflow -> 'a data page build
-
-val a : _ link -> 'a Tyxml_html.elt list -> [> `A of 'a] Tyxml_html.elt
-
-val href : _ link -> string
-
-val a_sel :
-  'a Bistro.directory data link ->
-  ('a, 'b) Bistro.selector ->
-  'c Tyxml_html.elt list ->
-  [> `A of 'c] Tyxml_html.elt
-
-val generate : _ page build -> dest:string -> unit Bistro_app.t
-
-module Syntax : sig
-  module Let_syntax : sig
-    type 'a t = 'a build
-    val map  : 'a t -> f:('a -> 'b) -> 'b t
-    val both : 'a t -> 'b t -> ('a * 'b) t
-  end
-end
+(* module Syntax : sig
+ *   module Let_syntax : sig
+ *     type 'a t = 'a build
+ *     val map  : 'a t -> f:('a -> 'b) -> 'b t
+ *     val both : 'a t -> 'b t -> ('a * 'b) t
+ *   end
+ * end *)
 
 (* module Make() : sig *)
 (*   type html *)

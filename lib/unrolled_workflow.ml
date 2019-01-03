@@ -1,5 +1,5 @@
-open Bistro.Std
-open Bistro_bioinfo.Std
+open Bistro
+open Bistro_bioinfo
 open Experiment_description
 
 type condition = (factor * string) list
@@ -13,9 +13,9 @@ module type S = sig
 
     val list : t list
 
-    val sequence : t -> fasta workflow
-    val bowtie_index : t -> Bowtie.index workflow
-    val bowtie2_index : t -> Bowtie2.index workflow
+    val sequence : t -> fasta pworkflow
+    val bowtie_index : t -> Bowtie.index pworkflow
+    val bowtie2_index : t -> Bowtie2.index pworkflow
   end
 
   module Model : sig
@@ -23,7 +23,7 @@ module type S = sig
 
     val list : t list
     val annotation : t -> annotation option
-    val gene_annotation : t -> gff workflow option
+    val gene_annotation : t -> gff pworkflow option
   end
 
   module Sample : sig
@@ -39,23 +39,23 @@ module type S = sig
 
     (** Short read samples *)
     val short_read_data : t -> short_read_data option
-    val sanger_fastq  : t -> [`sanger] fastq workflow list se_or_pe option
-    val fastQC_report : t -> FastQC.report workflow se_or_pe option
+    val sanger_fastq  : t -> sanger_fastq pworkflow list se_or_pe option
+    val fastQC_report : t -> FastQC.report pworkflow se_or_pe option
 
     (** Short read samples with a reference genome *)
-    val mapped_reads : t -> bam workflow option
-    val mapped_reads_indexed : t -> [ `indexed_bam ] directory workflow option
-    val mapped_reads_sam : t -> sam workflow option
+    val mapped_reads : t -> bam pworkflow option
+    val mapped_reads_indexed : t -> [ `indexed_bam ] dworkflow option
+    val mapped_reads_sam : t -> sam pworkflow option
 
-    val signal : t -> Ucsc_gb.bigWig workflow option
+    val signal : t -> Ucsc_gb.bigWig pworkflow option
 
     (** Peak calling stuff *)
     val chIP_TF : t -> string option
-    val macs2_peak_calling : t -> [`macs2_callpeak_output] directory workflow option
-    val peak_calling : t -> Macs2.narrow_peaks workflow option
+    val macs2_peak_calling : t -> Macs2.narrow_output pworkflow option
+    val peak_calling : t -> Macs2.narrow_peaks pworkflow option
 
     (** mRNA-seq analysis *)
-    val read_counts_per_gene : t -> Htseq.count_tsv workflow option
+    val read_counts_per_gene : t -> Htseq.count_tsv pworkflow option
   end
 
   module Condition : sig
@@ -65,6 +65,6 @@ module type S = sig
   end
 
   module Transcriptome : sig
-    val deseq2 : Model.t -> Deseq2.output option
+    val deseq2 : Model.t -> DESeq2.output option
   end
 end

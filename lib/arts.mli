@@ -1,5 +1,5 @@
-open Bistro.Std
-open Bistro_bioinfo.Std
+open Bistro
+open Bistro_bioinfo
 
 type _ tbool =
   | True  : [`True] tbool
@@ -16,12 +16,14 @@ and paired_end = {
   matepair : bool ;
 }
 
-type 'a art_illumina_output =
-  [ `art_illumina_output of 'a ]
-  constraint 'a = < aln : _ ;
-                    errfree_sam : _ ;
-                    sam : _ ;
-                    read_model : _ >
+type ('a, 'b, 'c, 'd) art_illumina_output = <
+  directory ;
+  contents : [`art_illumina] ;
+  aln : 'a ;
+  errfree_sam : 'b ;
+  sam : 'c ;
+  read_model : 'd ;
+>
 
 val art_illumina :
   ?qprof1:string ->
@@ -44,16 +46,14 @@ val art_illumina :
   sam_output:'c tbool ->
   'rm read_model ->
   [< `Coverage_fold of float | `Read_count of int ] ->
-  Bistro_bioinfo.Std.fasta Bistro.Std.workflow ->
-  < aln : 'a;
-    errfree_sam : 'b;
-    read_model : 'rm;
-    sam : 'c > art_illumina_output directory workflow
+  fasta pworkflow ->
+  ('a, 'b, 'c, 'd) art_illumina_output pworkflow
 
-val se_fastq : unit -> (< read_model : [`single_end] ; .. > art_illumina_output,
-                        [`sanger] fastq) selector
+val se_fastq :
+  (_, _, _, [`single_end]) art_illumina_output pworkflow
+  -> sanger_fastq pworkflow
 
 val pe_fastq :
   [`One | `Two] ->
-  (< read_model : [`paired_end] ; .. > art_illumina_output,
-   [`sanger] fastq) selector
+  (_, _, _, [`paired_end]) art_illumina_output pworkflow
+  -> sanger_fastq pworkflow

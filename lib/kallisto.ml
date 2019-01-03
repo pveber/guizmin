@@ -1,22 +1,21 @@
-open Core.Std
-open Bistro.Std
-open Bistro_bioinfo.Std
-open Bistro.EDSL
+open Core
+open Bistro
+open Bistro.Shell_dsl
 
 let env = docker_image ~account:"pveber" ~name:"kallisto" ~tag:"0.43.0" ()
 
 type kallisto_output
 
 let index fas =
-  workflow ~descr:"kallisto-index" [
+  Workflow.shell ~descr:"kallisto-index" [
     cmd "kallisto index" ~env [
       opt "-i" ident dest ;
       list ~sep:" " dep fas ;
     ]
   ]
 
-let quant ?bootstrap_samples idx fq1 fq2 : kallisto_output directory workflow =
-  workflow ~descr:"kallisto-quant" ~np:4 [
+let quant ?bootstrap_samples idx fq1 fq2 =
+  Workflow.shell ~descr:"kallisto-quant" ~np:4 [
     cmd "kallisto quant" ~env [
       opt "-i" dep idx ;
       opt "-o" ident dest ;
@@ -27,5 +26,5 @@ let quant ?bootstrap_samples idx fq1 fq2 : kallisto_output directory workflow =
     ]
   ]
 
-let abundance : (kallisto_output, [`tsv]) selector =
-  selector [ "abundance.tsv" ]
+let abundance x =
+  Workflow.select x [ "abundance.tsv" ]

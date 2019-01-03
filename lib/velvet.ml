@@ -1,12 +1,9 @@
-open Core.Std
-open Bistro.Std
-open Bistro_bioinfo.Std
-open Bistro.EDSL
-
-type velvet_output
+open Core
+open Bistro
+open Bistro.Shell_dsl
 
 let velvet ?(mem_spec = 10) ?cov_cutoff ?min_contig_lgth ~hash_length ~ins_length ~exp_cov fq1 fq2 =
-  workflow ~mem:(mem_spec * 1024) ~descr:"velvet" [
+  Workflow.shell ~mem:(Workflow.int (mem_spec * 1024)) ~descr:"velvet" [
     mkdir_p dest ;
     cmd "velveth" [
       dest ;
@@ -28,4 +25,4 @@ let velvet ?(mem_spec = 10) ?cov_cutoff ?min_contig_lgth ~hash_length ~ins_lengt
     ]
   ]
 
-let contigs = selector ["contigs.fa"]
+let contigs x = Workflow.select x ["contigs.fa"]

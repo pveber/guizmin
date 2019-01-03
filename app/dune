@@ -1,0 +1,11 @@
+(executable
+ (name guizmin_app)
+ (public_name guizmin)
+ (libraries guizmin)
+ (modules guizmin_app))
+
+(executable
+ (name quickstart)
+ (public_name quickstart)
+ (libraries guizmin lterm)
+ (modules quickstart))

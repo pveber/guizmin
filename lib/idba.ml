@@ -1,17 +1,17 @@
-open Core.Std
-open Bistro.Std
-open Bistro_bioinfo.Std
-open Bistro.EDSL
+open Core
+open Bistro
+open Bistro_bioinfo
+open Bistro.Shell_dsl
 
 let env = docker_image ~account:"pveber" ~name:"idba" ~tag:"1.1.3" ()
 
 type fq2fa_input = [
-  | `Se of [`sanger] fastq workflow
-  | `Pe_merge of [`sanger] fastq workflow * [`sanger] fastq workflow
-  | `Pe_paired of [`sanger] fastq workflow
+  | `Se of sanger_fastq pworkflow
+  | `Pe_merge of sanger_fastq pworkflow * sanger_fastq pworkflow
+  | `Pe_paired of sanger_fastq pworkflow
 ]
 
-let fq2fa ?filter input =
+let fq2fa ?filter:_ input = (* FIXME filter *)
   let args = match input with
     | `Se fq -> dep fq
     | `Pe_merge (fq1, fq2) ->
@@ -19,18 +19,15 @@ let fq2fa ?filter input =
     | `Pe_paired fq ->
       opt "--paired" dep fq
   in
-  workflow ~descr:"fq2fa" [
+  Workflow.shell ~descr:"fq2fa" [
     cmd "fq2fa" ~env [
       args ;
       dest ;
     ]
   ]
 
-
-type idba_ud_output
-
-let idba_ud ?(mem_spec = 10) fa : idba_ud_output directory workflow =
-  workflow ~np:4 ~mem:(mem_spec * 1024) ~descr:"idba_ud" [
+let idba_ud ?(mem_spec = 10) fa =
+  Workflow.shell ~np:4 ~mem:(Workflow.int (mem_spec * 1024)) ~descr:"idba_ud" [
     mkdir_p dest ;
     cmd "idba_ud" ~env [
       opt "--read" dep fa ;
@@ -39,5 +36,5 @@ let idba_ud ?(mem_spec = 10) fa : idba_ud_output directory workflow =
     ]
   ]
 
-let idba_ud_contigs = selector ["contig.fa"]
-let idba_ud_scaffolds = selector ["scaffold.fa"]
+let idba_ud_contigs x = Workflow.select x ["contig.fa"]
+let idba_ud_scaffolds x = Workflow.select x ["scaffold.fa"]

@@ -49,7 +49,8 @@ and 'a se_or_pe = [
   | `single_end of 'a
   | `paired_end of 'a * 'a
 ]
-and ucsc_genome = [ `dm3 | `hg18 | `hg19 | `hg38 | `mm8 | `mm9 | `mm10 | `sacCer2 ]
+and ucsc_genome =
+  [ `dm3 | `droSim1 | `hg18 | `hg19 | `hg38 | `mm8 | `mm9 | `mm10 | `sacCer2 ]
 and ensembl_species = [
   | `homo_sapiens
   | `mus_musculus

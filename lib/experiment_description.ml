@@ -1,4 +1,4 @@
-open Core_kernel.Std
+open Core_kernel
 
 type t = statement list
 and statement =
@@ -51,7 +51,8 @@ and 'a se_or_pe = [
   | `single_end of 'a
   | `paired_end of 'a * 'a
 ]
-and ucsc_genome = [ `dm3 | `hg18 | `hg19 | `hg38 | `mm8 | `mm9 | `mm10 | `sacCer2 ]
+and ucsc_genome =
+  [ `dm3 | `droSim1 | `hg18 | `hg19 | `hg38 | `mm8 | `mm9 | `mm10 | `sacCer2 ]
 and ensembl_species =  [
   | `homo_sapiens
   | `mus_musculus
@@ -84,12 +85,12 @@ module Check(X : sig
   open X
 
   let extract f = List.filter_map config ~f
-  let extract_unique f = List.dedup (extract f)
+  (* let extract_unique f = List.dedup_and_sort ~compare:Poly.compare (extract f) *)
   let find_dups l =
     let rec aux seen dups = function
       | [] -> dups
       | h :: t ->
-        if List.mem seen h then
+        if List.mem ~equal:Poly.equal seen h then
           aux seen (h :: dups) t
         else
           aux (h :: seen) dups t
@@ -109,7 +110,7 @@ module Check(X : sig
     | _ -> None
   )
 
-  let unique_factors = List.dedup factors
+  let unique_factors = List.dedup_and_sort ~compare:Poly.compare factors
 
   let models =
     extract (
@@ -130,7 +131,7 @@ module Check(X : sig
   let sample_ids = List.map samples ~f:(fun s -> s.sample_id)
   let factor_names = List.map factors ~f:(fun f -> f.factor_name)
 
-  let undeclared item xs x = if List.mem xs x then None else (Some (`undeclared (item, x)))
+  let undeclared item xs x = if List.mem ~equal:Poly.equal xs x then None else (Some (`undeclared (item, x)))
 
   let undeclared_factors =
     List.map samples ~f:(fun s ->
@@ -144,7 +145,7 @@ module Check(X : sig
 
   let multiply_declared_factors = find_dups factor_names
   let multiply_declared_samples = find_dups sample_ids
-  let multiply_declared_models = List.(map models ~f:(fun s -> s.model_id) |! find_dups)
+  let multiply_declared_models = List.(map models ~f:(fun s -> s.model_id) |> find_dups)
   let project_declaration_error = match projects with
     | [] -> [ `missing_project_description ]
     | [ _ ] -> []
@@ -152,7 +153,7 @@ module Check(X : sig
 
   let missing_factor_in_condition c =
     let factors_in_c = List.map c ~f:fst in
-    List.find unique_factors ~f:(fun f -> not (List.mem factors_in_c f.factor_name))
+    List.find unique_factors ~f:(fun f -> not (List.mem ~equal:Poly.equal factors_in_c f.factor_name))
 
   let missing_factor_in_samples =
     List.filter_map samples ~f:(fun s ->
@@ -161,7 +162,7 @@ module Check(X : sig
       )
 
   let repeated_factor_in_condition c =
-    List.find_a_dup (List.map c ~f:fst)
+    List.find_a_dup ~compare:Poly.compare (List.map c ~f:fst)
 
   let repeated_factor_in_samples =
     List.filter_map samples ~f:(fun s ->

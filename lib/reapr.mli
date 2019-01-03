@@ -1,12 +1,10 @@
-open Bistro.Std
-open Bistro_bioinfo.Std
-
-type output
+open Bistro
+open Bistro_bioinfo
 
 val reapr :
-  [`sanger] fastq workflow * [`sanger] fastq workflow ->
-  fasta workflow ->
-  output directory workflow
+  sanger_fastq pworkflow * sanger_fastq pworkflow ->
+  fasta pworkflow ->
+  [`reapr] dworkflow
 
-val assembly : (output, fasta) selector
+val assembly : [`reapr] dworkflow -> fasta pworkflow
 

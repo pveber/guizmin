@@ -1,11 +1,8 @@
-open Core.Std
-open Bistro.Std
-open Bistro_bioinfo.Std
-open Bistro.EDSL
+open Core
+open Bistro
+open Bistro.Shell_dsl
 
 let env = docker_image ~account:"pveber" ~name:"cisa" ~tag:"20140304" ()
-
-type cisa_output = [`cisa_output] directory
 
 let merge ?(min_length = 100) xs =
   let config_line (label, fa) =
@@ -27,17 +24,10 @@ let merge ?(min_length = 100) xs =
     |> seq ~sep:""
     )
   in
-  workflow ~descr:"cisa.Merge" [
+  Workflow.shell ~descr:"cisa.Merge" [
     mkdir_p tmp ;
     cmd "Merge.py" ~env [ config_file ] ;
   ]
-
-let which prg =
-  let cmd = "which " ^ prg in
-  let ic = Unix.open_process_in cmd in
-  match In_channel.input_line ic with
-  | None -> failwithf "Could not find %s in $PATH" prg ()
-  | Some p -> p
 
 let cisa genome_size contigs =
   let ( := ) var expr = seq ~sep:"" [string var ; string "=" ; expr ] in
@@ -74,7 +64,7 @@ yes | CISA.py $CONFIG
       ]
     )
   in
-  workflow ~descr:"cisa" [
+  Workflow.shell ~descr:"cisa" [
     mkdir_p tmp ;
     cmd "bash" [ script ] ;
   ]

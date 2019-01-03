@@ -1,15 +1,13 @@
-open Bistro.Std
-open Bistro_bioinfo.Std
-
-type spades_output
+open Bistro
+open Bistro_bioinfo
 
 val spades :
   ?single_cell:bool ->
   ?iontorrent:bool ->
-  ?pe:[`sanger] fastq workflow list * [`sanger] fastq workflow list ->
+  ?pe:sanger_fastq pworkflow list * sanger_fastq pworkflow list ->
   ?mem_spec:int ->
   unit ->
-  spades_output directory workflow
+  [`spades] dworkflow
 
-val contigs : (spades_output, fasta) selector
-val scaffolds : (spades_output, fasta) selector
+val contigs : [`spades] dworkflow -> fasta pworkflow
+val scaffolds : [`spades] dworkflow -> fasta pworkflow

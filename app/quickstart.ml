@@ -19,7 +19,7 @@ let ui term =
   run term vbox waiter
 
 let main_thread () =
-  lwt term = Lazy.force LTerm.stdout in
+  let%lwt term = Lazy.force LTerm.stdout in
   ui term
 
 let main copts output =
